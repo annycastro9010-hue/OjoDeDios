@@ -536,6 +536,114 @@
         padding: 4px 10px;
       }
     }
+
+    /* CONTROLES TÁCTILES VIRTUALES (MÓVIL) */
+    .virtual-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 20px;
+      pointer-events: none;
+      z-index: 25;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .virtual-dpad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    .dpad-middle {
+      display: flex;
+      align-items: center;
+    }
+
+    .dpad-center {
+      width: 44px;
+      height: 44px;
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    .dpad-btn {
+      width: 50px;
+      height: 50px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 2px solid #475569;
+      color: #38bdf8;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      touch-action: none;
+      transition: background 0.1s;
+    }
+
+    .dpad-btn.pressed, .dpad-btn:active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
+    }
+
+    .virtual-actions {
+      display: flex;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .action-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      touch-action: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+      transition: all 0.1s;
+    }
+
+    .action-btn span {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      margin-top: 2px;
+    }
+
+    .btn-act {
+      background: #059669;
+      border: 3px solid #34d399;
+      color: #ffffff;
+    }
+    .btn-act.pressed, .btn-act:active {
+      background: #10b981;
+      transform: scale(0.94);
+      box-shadow: 0 0 16px rgba(52, 211, 153, 0.8);
+    }
+
+    .btn-asc {
+      background: #ca8a04;
+      border: 3px solid #fde047;
+      color: #ffffff;
+    }
+    .btn-asc.pressed, .btn-asc:active {
+      background: #eab308;
+      transform: scale(0.94);
+      box-shadow: 0 0 16px rgba(253, 224, 71, 0.8);
+    }
   </style>
 </head>
 <body>
@@ -717,6 +825,26 @@
   <!-- Ayuda de Controles en Posesión -->
   <div class="controls-help" id="controlsHelp">
     <b>[WASD / Flechas]</b> Moverse &nbsp;|&nbsp; <b>[ESPACIO / E]</b> Cosechar o Entregar &nbsp;|&nbsp; <b>[Q / ESC]</b> Desposeer
+  </div>
+
+  <!-- Controles Táctiles Virtuales en Modo Posesión (Móvil / Tablet) -->
+  <div class="virtual-controls" id="virtualControls">
+    <!-- D-Pad Virtual (Izquierda) -->
+    <div class="virtual-dpad">
+      <button class="dpad-btn dpad-up" id="padUp">▲</button>
+      <div class="dpad-middle">
+        <button class="dpad-btn dpad-left" id="padLeft">◀</button>
+        <div class="dpad-center"></div>
+        <button class="dpad-btn dpad-right" id="padRight">▶</button>
+      </div>
+      <button class="dpad-btn dpad-down" id="padDown">▼</button>
+    </div>
+
+    <!-- Botones de Acción (Derecha) -->
+    <div class="virtual-actions">
+      <button class="action-btn btn-act" id="padAction">E<br><span>Acción</span></button>
+      <button class="action-btn btn-asc" id="padAscend">Q<br><span>Ascender</span></button>
+    </div>
   </div>
 
   <div class="notification" id="notification"></div>

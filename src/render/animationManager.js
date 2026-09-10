@@ -1,38 +1,35 @@
-// Gestor de animaciones desacoplado para soportar tanto renderizado procedural
-// como SpriteSheets externos creados por animadores (Aseprite / PNG).
+// Motor de Animación Desacoplado de Alta Fidelidad Estilo The Minish Cap
+// Soporta tanto renderizado procedural ultra-nítido como SpriteSheets externos (Aseprite / PNG)
 
 export class AnimationManager {
   constructor() {
-    this.sheets = new Map(); // Hojas de sprites externas cargadas
+    this.sheets = new Map();
   }
 
-  // Permite a cualquier animador registrar una hoja de sprites externa en el futuro
-  // Ejemplo: registerSheet('cultivator', '/assets/cultivator_spritesheet.png', 16, 16, config)
-  registerSheet(id, imageSrc, frameWidth = 16, frameHeight = 16, animConfig = {}) {
+  registerSheet(type, imageSrc, frameW = 16, frameH = 16, animConfig = {}) {
     const img = new Image();
     img.src = imageSrc;
     const sheetData = {
       image: img,
-      loaded: false,
-      frameW: frameWidth,
-      frameH: frameHeight,
-      anims: animConfig // { walk_down: [0,1,2,3], idle: [0], ... }
+      frameW,
+      frameH,
+      anims: animConfig,
+      loaded: false
     };
     img.onload = () => {
       sheetData.loaded = true;
-      console.log(`[AnimationManager] SpriteSheet '${id}' cargada con éxito.`);
     };
-    this.sheets.set(id, sheetData);
+    this.sheets.set(type, sheetData);
   }
 
-  // Dibuja el personaje: si existe una hoja externa cargada la usa; si no, usa el motor Minish Cap
   draw(ctx, type, x, y, direction = 'down', frame = 0, isMoving = false, hasCargo = false, isPossessed = false) {
     const sheet = this.sheets.get(type);
 
     ctx.save();
+    ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.floor(x), Math.floor(y));
 
-    // 1. Sombra translúcida bajo los pies (Característica visual clave de Zelda Minish Cap)
+    // 1. Sombra elíptica translúcida bajo los pies (Minish Cap grounding)
     this.drawGroundShadow(ctx, 8, 14);
 
     // Si es un niño / cría, escalar para que sea pequeño y adorable
@@ -41,15 +38,13 @@ export class AnimationManager {
       ctx.translate(3, 5);
     }
 
-    // 2. Si hay hoja de sprites externa cargada por un animador:
     if (sheet && sheet.loaded) {
       this.drawExternalFrame(ctx, sheet, direction, frame, isMoving);
     } else {
-      // 3. Renderizado Procedural Nativo de Alta Fidelidad Estilo Minish Cap
       this.drawMinishCharacter(ctx, type, direction, frame, isMoving, hasCargo);
     }
 
-    // 4. Efectos Celestiales si está poseído
+    // Efectos Celestiales si está poseído
     if (isPossessed) {
       this.drawPossessionAura(ctx);
     }
@@ -57,17 +52,13 @@ export class AnimationManager {
     ctx.restore();
   }
 
-  // Sombra circular elíptica estilo Zelda GBA
   drawGroundShadow(ctx, cx, cy) {
-    ctx.save();
-    ctx.fillStyle = 'rgba(10, 15, 25, 0.4)';
+    ctx.fillStyle = 'rgba(10, 15, 25, 0.42)';
     ctx.beginPath();
     ctx.ellipse(cx, cy, 6, 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
   }
 
-  // Dibuja frame desde imagen externa
   drawExternalFrame(ctx, sheet, dir, frame, isMoving) {
     const animKey = isMoving ? `walk_${dir}` : `idle_${dir}`;
     const frames = sheet.anims[animKey] || [0];
@@ -84,13 +75,8 @@ export class AnimationManager {
     );
   }
 
-  // Motor Minish Cap Procedural (4 direcciones x 4 frames de marcha completa)
+  // Motor Minish Cap Procedural de Alta Fidelidad
   drawMinishCharacter(ctx, type, dir, frame, isMoving, hasCargo) {
-    // Cálculo del ciclo de caminata Minish Cap:
-    // Frame 0: Contacto pie izquierdo, brazo derecho adelante
-    // Frame 1: Paso neutral (head bob -1px)
-    // Frame 2: Contacto pie derecho, brazo izquierdo adelante
-    // Frame 3: Paso neutral (head bob -1px)
     const stepCycle = isMoving ? (frame % 4) : 0;
     const headBob = isMoving ? (stepCycle % 2 === 1 ? -1 : 0) : 0;
 
@@ -109,24 +95,31 @@ export class AnimationManager {
       }
     }
 
-    // Colores según tipo
     const colors = this.getCharacterPalette(type);
 
-    // ================= DIBUJAR SEGÚN DIRECCIÓN =================
+    // Contorno sutil del cuerpo para dar volumen pixel art
+    ctx.fillStyle = colors.outline || '#1c1917';
+    ctx.fillRect(3, 5 + headBob, 10, 7);
+
+    // ================= DIBUJO SEGÚN DIRECCIÓN =================
     if (dir === 'down') {
-      // Piernas
+      // Piernas y calzado
       ctx.fillStyle = colors.pants;
       ctx.fillRect(4, 11 + legLeftOffset, 3, 3);
       ctx.fillRect(9, 11 + legRightOffset, 3, 3);
       ctx.fillStyle = colors.shoes;
-      ctx.fillRect(4, 13 + legLeftOffset, 3, 1.5);
-      ctx.fillRect(9, 13 + legRightOffset, 3, 1.5);
+      ctx.fillRect(4, 13 + legLeftOffset, 3, 2);
+      ctx.fillRect(9, 13 + legRightOffset, 3, 2);
 
       // Torso / Ropa
       ctx.fillStyle = colors.shirt;
       ctx.fillRect(4, 6 + headBob, 8, 5);
 
-      // Brazos
+      // Cinturón o detalle
+      ctx.fillStyle = colors.belt || '#78350f';
+      ctx.fillRect(4, 10 + headBob, 8, 1);
+
+      // Brazos y manos
       ctx.fillStyle = colors.skin;
       ctx.fillRect(2, 7 + armLeftOffset + headBob, 2, 3);
       ctx.fillRect(12, 7 + armRightOffset + headBob, 2, 3);
@@ -134,7 +127,8 @@ export class AnimationManager {
       // Cabeza y Cara
       ctx.fillStyle = colors.skin;
       ctx.fillRect(5, 3 + headBob, 6, 4);
-      // Ojos estilo anime pixel Zelda (2x2 píxeles)
+
+      // Ojos estilo Zelda (2x2 px con brillo)
       ctx.fillStyle = '#111827';
       ctx.fillRect(5, 4 + headBob, 2, 2);
       ctx.fillRect(9, 4 + headBob, 2, 2);
@@ -142,7 +136,7 @@ export class AnimationManager {
       ctx.fillRect(5, 4 + headBob, 1, 1);
       ctx.fillRect(9, 4 + headBob, 1, 1);
 
-      // Sombrero / Gorra
+      // Detalles específicos de la cabeza (sombreros, barbas, rastas)
       this.drawHeadwear(ctx, type, 'down', headBob, colors);
 
       // Cargamento frontal
@@ -154,23 +148,23 @@ export class AnimationManager {
         ctx.strokeRect(5, 7 + headBob, 6, 4);
       }
     } else if (dir === 'up') {
-      // Vista Trasera
+      // Piernas traseras
       ctx.fillStyle = colors.pants;
       ctx.fillRect(4, 11 + legLeftOffset, 3, 3);
       ctx.fillRect(9, 11 + legRightOffset, 3, 3);
       ctx.fillStyle = colors.shoes;
-      ctx.fillRect(4, 13 + legLeftOffset, 3, 1.5);
-      ctx.fillRect(9, 13 + legRightOffset, 3, 1.5);
+      ctx.fillRect(4, 13 + legLeftOffset, 3, 2);
+      ctx.fillRect(9, 13 + legRightOffset, 3, 2);
 
       // Espalda
       ctx.fillStyle = colors.shirt;
       ctx.fillRect(4, 6 + headBob, 8, 5);
 
-      // Si lleva mochila o fardo a la espalda
       if (hasCargo) {
         ctx.fillStyle = '#10b981';
         ctx.fillRect(4, 5 + headBob, 8, 5);
         ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1;
         ctx.strokeRect(4, 5 + headBob, 8, 5);
       }
 
@@ -182,16 +176,15 @@ export class AnimationManager {
       const isRight = dir === 'right';
       ctx.save();
       if (!isRight) {
-        // Volteo horizontal para vista izquierda
         ctx.translate(16, 0);
         ctx.scale(-1, 1);
       }
 
-      // Piernas en perfil (adelante y atrás)
+      // Piernas en perfil
       ctx.fillStyle = colors.pants;
       ctx.fillRect(6 + legLeftOffset, 11, 4, 3);
       ctx.fillStyle = colors.shoes;
-      ctx.fillRect(6 + legLeftOffset, 13, 4, 1.5);
+      ctx.fillRect(6 + legLeftOffset, 13, 4, 2);
 
       // Torso lateral
       ctx.fillStyle = colors.shirt;
@@ -204,20 +197,20 @@ export class AnimationManager {
       // Cara perfil
       ctx.fillStyle = colors.skin;
       ctx.fillRect(7, 3 + headBob, 5, 4);
-      // Ojo perfil
+
+      // Ojo perfil con brillo
       ctx.fillStyle = '#111827';
       ctx.fillRect(10, 4 + headBob, 2, 2);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(11, 4 + headBob, 1, 1);
 
-      // Sombrero perfil
       this.drawHeadwear(ctx, type, 'side', headBob, colors);
 
-      // Fardo en los brazos
       if (hasCargo) {
         ctx.fillStyle = '#10b981';
         ctx.fillRect(11, 6 + headBob, 5, 4);
         ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1;
         ctx.strokeRect(11, 6 + headBob, 5, 4);
       }
 
@@ -226,8 +219,93 @@ export class AnimationManager {
   }
 
   drawHeadwear(ctx, type, view, bob, colors) {
-    if (type === 'cultivator') {
-      // Sombrero campesino de paja estilo Zelda
+    if (type === 'prophet') {
+      // Barba canosa flotante y velo sagrado
+      if (view === 'down') {
+        ctx.fillStyle = '#f8fafc'; // Barba blanca
+        ctx.fillRect(6, 6 + bob, 4, 3);
+        ctx.fillRect(7, 9 + bob, 2, 2);
+        // Velo
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(4, 1 + bob, 8, 3);
+        ctx.fillStyle = '#38bdf8'; // Ribete celestial
+        ctx.fillRect(4, 3 + bob, 8, 1);
+      } else if (view === 'side') {
+        ctx.fillStyle = '#f8fafc'; // Barba perfil
+        ctx.fillRect(10, 6 + bob, 3, 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(6, 1 + bob, 6, 3);
+      } else {
+        ctx.fillStyle = '#ffffff'; // Manto trasero
+        ctx.fillRect(4, 1 + bob, 8, 6);
+      }
+    } else if (type === 'musician' || type === 'hippie') {
+      // Bob Marley: Gorro Rasta y Rastas ondeando
+      if (view === 'down') {
+        // Gorro Tricolor (Rojo, Amarillo, Verde)
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(4, 0 + bob, 8, 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(4, 2 + bob, 8, 1);
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(4, 3 + bob, 8, 1);
+        // Rastas laterales
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(3, 4 + bob, 2, 5);
+        ctx.fillRect(11, 4 + bob, 2, 5);
+      } else if (view === 'side') {
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(5, 0 + bob, 7, 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(5, 2 + bob, 7, 1);
+        // Rastas cayendo atrás
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(4, 3 + bob, 3, 6);
+      } else {
+        ctx.fillStyle = '#1c1917'; // Rastas en la espalda
+        ctx.fillRect(4, 4 + bob, 8, 6);
+      }
+    } else if (type === 'soldier') {
+      // Casco de acero militar M1 con brillo metálico
+      ctx.fillStyle = colors.hat;
+      if (view === 'side') {
+        ctx.fillRect(6, 0 + bob, 7, 3);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(7, 0 + bob, 4, 1); // Brillo metálico
+      } else {
+        ctx.fillRect(4, 0 + bob, 8, 3);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(6, 0 + bob, 4, 1);
+      }
+    } else if (type === 'healer' || type === 'medic') {
+      // Velo médico con Cruz Roja
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(4, 1 + bob, 8, 3);
+      if (view === 'down') {
+        ctx.fillStyle = '#ef4444'; // Cruz Roja en el pecho/frente
+        ctx.fillRect(7, 2 + bob, 2, 2);
+      }
+    } else if (type === 'boss') {
+      // Gafas oscuras y peinado elegante
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(4, 1 + bob, 8, 3);
+      if (view === 'down') {
+        ctx.fillStyle = '#000000'; // Gafas oscuras
+        ctx.fillRect(4, 4 + bob, 8, 2);
+        ctx.fillStyle = '#facc15'; // Cadena de oro
+        ctx.fillRect(7, 8 + bob, 2, 1);
+      }
+    } else if (type === 'child') {
+      // Gorrita hacia atrás y mechones
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(4, 1 + bob, 8, 3);
+      if (view === 'down') {
+        ctx.fillStyle = '#78350f'; // Mechón castaño
+        ctx.fillRect(5, 3 + bob, 2, 1);
+        ctx.fillRect(9, 3 + bob, 2, 1);
+      }
+    } else {
+      // Sombrero campesino de paja tejido estilo Minish Cap
       ctx.fillStyle = colors.hat;
       if (view === 'down' || view === 'up') {
         ctx.fillRect(1, 1 + bob, 14, 3);
@@ -238,32 +316,10 @@ export class AnimationManager {
         ctx.fillStyle = colors.hatBand;
         ctx.fillRect(5, -1 + bob, 8, 2);
       }
-    } else if (type === 'police') {
-      // Gorra de policía con visera y placa
-      ctx.fillStyle = colors.hat;
-      ctx.fillRect(3, 0 + bob, 10, 3);
-      if (view === 'down') {
-        ctx.fillStyle = '#facc15'; // Placa dorada
-        ctx.fillRect(7, 0 + bob, 2, 2);
-        ctx.fillStyle = '#0f172a'; // Visera
-        ctx.fillRect(3, 3 + bob, 10, 1.5);
-      } else if (view === 'side') {
-        ctx.fillStyle = '#0f172a'; // Visera saliente
-        ctx.fillRect(9, 2 + bob, 4, 1.5);
-      }
-    } else if (type === 'boss') {
-      // Sombrero elegante / pelo oscuro
-      ctx.fillStyle = colors.hat;
-      ctx.fillRect(3, 0 + bob, 10, 3);
-      if (view === 'down') {
-        ctx.fillStyle = '#000'; // Gafas de sol
-        ctx.fillRect(4, 4 + bob, 8, 2);
-      }
     }
   }
 
   drawPossessionAura(ctx) {
-    // Aura divina con pulso senoidal y halo dorado
     const pulse = Math.sin(Date.now() * 0.009) * 0.2 + 0.45;
     const grad = ctx.createRadialGradient(8, 8, 3, 8, 8, 16);
     grad.addColorStop(0, `rgba(255, 235, 59, ${pulse})`);
@@ -273,7 +329,7 @@ export class AnimationManager {
     ctx.arc(8, 8, 18, 0, Math.PI * 2);
     ctx.fill();
 
-    // Halo giratorio
+    // Halo celestial
     ctx.strokeStyle = '#fef08a';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -285,56 +341,57 @@ export class AnimationManager {
     if (type === 'prophet') {
       return {
         skin: '#f5cda5',
-        shirt: '#ffffff', // Túnica sagrada blanca
-        pants: '#38bdf8', // Manto celestial
-        shoes: '#78350f', // Sandalias
-        hat: '#fef08a',
-        hatBand: '#eab308'
+        shirt: '#ffffff',
+        pants: '#0284c7',
+        shoes: '#78350f',
+        belt: '#eab308',
+        hat: '#ffffff',
+        hatBand: '#38bdf8',
+        outline: '#1e293b'
       };
     } else if (type === 'musician' || type === 'hippie') {
       return {
-        skin: '#f5cda5',
-        shirt: '#f59e0b', // Ropa tie-dye colorida estilo Bob Marley
-        pants: '#10b981', // Pantalones verdes
+        skin: '#d4a373',
+        shirt: '#f59e0b',
+        pants: '#059669',
         shoes: '#78350f',
-        hat: '#ef4444',   // Gorro rastafari rojo/amarillo/verde
-        hatBand: '#facc15'
+        belt: '#dc2626',
+        hat: '#ef4444',
+        hatBand: '#facc15',
+        outline: '#1c1917'
       };
     } else if (type === 'fisherman') {
       return {
         skin: '#f5cda5',
-        shirt: '#0284c7', // Azul marino
+        shirt: '#0284c7',
         pants: '#334155',
         shoes: '#1e293b',
-        hat: '#f1f5f9',   // Gorro marinero
-        hatBand: '#0284c7'
+        belt: '#0369a1',
+        hat: '#f1f5f9',
+        hatBand: '#0284c7',
+        outline: '#0f172a'
       };
     } else if (type === 'soldier') {
       return {
         skin: '#f5cda5',
-        shirt: '#4b5563', // Uniforme militar de los 40s
+        shirt: '#4b5563',
         pants: '#374151',
         shoes: '#111827',
-        hat: '#4b5563',   // Casco de acero
-        hatBand: '#1f2937'
+        belt: '#1f2937',
+        hat: '#4b5563',
+        hatBand: '#1f2937',
+        outline: '#111827'
       };
     } else if (type === 'healer' || type === 'medic') {
       return {
         skin: '#f5cda5',
-        shirt: '#f8fafc', // Bata blanca
+        shirt: '#f8fafc',
         pants: '#0284c7',
         shoes: '#334155',
-        hat: '#ef4444',   // Cruz roja / boina médica
-        hatBand: '#ffffff'
-      };
-    } else if (type === 'police') {
-      return {
-        skin: '#f5cda5',
-        shirt: '#1e3a8a',
-        pants: '#0f172a',
-        shoes: '#020617',
-        hat: '#1e3a8a',
-        hatBand: '#facc15'
+        belt: '#ef4444',
+        hat: '#ffffff',
+        hatBand: '#ef4444',
+        outline: '#1e293b'
       };
     } else if (type === 'boss') {
       return {
@@ -342,27 +399,34 @@ export class AnimationManager {
         shirt: '#991b1b',
         pants: '#f8fafc',
         shoes: '#450a0a',
+        belt: '#facc15',
         hat: '#18181b',
-        hatBand: '#facc15'
+        hatBand: '#facc15',
+        outline: '#271915'
       };
     } else if (type === 'child') {
       return {
         skin: '#f5cda5',
-        shirt: '#fb923c', // Naranja infantil
+        shirt: '#fb923c',
         pants: '#38bdf8',
         shoes: '#0284c7',
+        belt: '#ea580c',
         hat: '#facc15',
-        hatBand: '#ea580c'
+        hatBand: '#ea580c',
+        outline: '#1c1917'
       };
     }
-    // Cultivador / Campesino default
+
+    // Cultivador / Aldeano estándar
     return {
       skin: '#f5cda5',
       shirt: '#f1f5f9',
       pants: '#5c3a21',
       shoes: '#331f13',
+      belt: '#78350f',
       hat: '#d4a359',
-      hatBand: '#b88439'
+      hatBand: '#b88439',
+      outline: '#1c1917'
     };
   }
 }

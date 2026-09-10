@@ -77,6 +77,10 @@ const questHarvest = document.getElementById('questHarvest');
 const questDeliver = document.getElementById('questDeliver');
 const ascendBtn = document.getElementById('ascendBtn');
 const notification = document.getElementById('notification');
+const virtualControls = document.getElementById('virtualControls');
+if (virtualControls) {
+  controller.bindTouchControls(virtualControls);
+}
 
 function notify(text) {
   notification.innerText = text;
@@ -533,6 +537,13 @@ function enterPossession(npc) {
       controlsHelp.style.display = 'block';
       ascendBtn.style.display = 'none';
 
+      // Mostrar controles virtuales táctiles en móviles o pantallas estrechas
+      const virtualControls = document.getElementById('virtualControls');
+      const isTouchOrNarrow = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth < 850);
+      if (virtualControls && isTouchOrNarrow) {
+        virtualControls.style.display = 'flex';
+      }
+
       const quest = questSystem.generateQuestFor(npc, currentEra);
       questTitle.innerText = quest.title;
       questDesc.innerText = quest.description;
@@ -558,6 +569,11 @@ function exitPossession() {
   bottomToolbar.style.display = 'flex';
   possessedHud.style.display = 'none';
   controlsHelp.style.display = 'none';
+
+  const virtualControls = document.getElementById('virtualControls');
+  if (virtualControls) {
+    virtualControls.style.display = 'none';
+  }
 
   notify("☁️ Tu alma ha ascendido de regreso al Trono Celestial");
 }

@@ -38,6 +38,37 @@ export class PlayerController {
     });
   }
 
+  bindTouchControls(container) {
+    if (!container) return;
+    const bindBtn = (selector, keyName) => {
+      const btn = (container.querySelector ? container.querySelector(selector) : null) || (typeof document !== 'undefined' && document.querySelector ? document.querySelector(selector) : null);
+      if (!btn) return;
+      const start = (e) => {
+        e.preventDefault();
+        this.keys[keyName] = true;
+        btn.classList.add('pressed');
+      };
+      const end = (e) => {
+        e.preventDefault();
+        this.keys[keyName] = false;
+        btn.classList.remove('pressed');
+      };
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', end, { passive: false });
+      btn.addEventListener('touchcancel', end, { passive: false });
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+      btn.addEventListener('mouseleave', end);
+    };
+
+    bindBtn('#padUp', 'up');
+    bindBtn('#padDown', 'down');
+    bindBtn('#padLeft', 'left');
+    bindBtn('#padRight', 'right');
+    bindBtn('#padAction', 'action');
+    bindBtn('#padAscend', 'ascend');
+  }
+
   update(possessedNpc, grid, onQuestProgress, onAscendRequest, tileSize = 8) {
     if (!possessedNpc) return;
 
