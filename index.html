@@ -334,6 +334,132 @@
       display: none;
     }
 
+    /* MODAL DE MAPAS */
+    .map-modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 480px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 3px solid #38bdf8;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+      border-radius: 14px;
+      padding: 20px;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      display: none;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      color: #ffd700;
+    }
+
+    .map-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .map-card {
+      background: #1e293b;
+      border: 2px solid #334155;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .map-card:hover {
+      background: #0284c7;
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+    }
+
+    .map-card-icon {
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+
+    .map-card-title {
+      font-size: 18px;
+      color: #f8fafc;
+      font-weight: bold;
+    }
+
+    .map-card-desc {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    /* PANEL DE CRÓNICAS / CHISMES */
+    .chronicles-panel {
+      position: absolute;
+      top: 65px;
+      left: 18px;
+      width: 320px;
+      max-height: 420px;
+      background: rgba(15, 23, 42, 0.94);
+      border: 2px solid #eab308;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75);
+      border-radius: 12px;
+      padding: 14px;
+      z-index: 15;
+      backdrop-filter: blur(6px);
+      display: none;
+      flex-direction: column;
+    }
+
+    .chronicles-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .chronicles-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #facc15;
+    }
+
+    .chronicles-list {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .chronicle-entry {
+      background: #0f172a;
+      border-left: 3px solid #38bdf8;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 16px;
+      color: #e2e8f0;
+    }
+
+    .chronicle-time {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+
     .notification {
       position: absolute;
       bottom: 85px;
@@ -387,10 +513,60 @@
     <button class="tool-btn" data-tool="lightning">⚡ Rayo</button>
     <button class="tool-btn" data-tool="rain">🌧️ Lluvia</button>
     <button class="tool-btn" data-tool="spawn_cultivator">👨‍🌾 Jíbaro</button>
+    <button class="tool-btn" data-tool="spawn_child">👶 Niño</button>
+    <button class="tool-btn" data-tool="spawn_animal">🐕 Animal</button>
     <button class="tool-btn" data-tool="spawn_police">👮 Policía</button>
     <button class="tool-btn" data-tool="spawn_boss">👑 Patrón</button>
+    <button class="tool-btn" data-tool="love">💘 Amor</button>
+    <button class="tool-btn" data-tool="discord">⚔️ Cizaña</button>
     <button class="tool-btn" data-tool="inspect">🧠 Mente</button>
+    <button class="tool-btn" id="btnOpenChronicles">📜 Chismes</button>
+    <button class="tool-btn" id="btnOpenMaps">🗺️ Mapas</button>
     <button class="tool-btn possess-btn" data-tool="possess">👁️ POSEER</button>
+  </div>
+
+  <!-- Modal Selector de Mapas -->
+  <div class="map-modal" id="mapModal">
+    <div class="modal-header">
+      <div class="modal-title">🗺️ SELECCIONAR MAPA DEL MUNDO</div>
+      <span class="mind-close" id="mapClose">✖</span>
+    </div>
+    <div class="map-grid">
+      <div class="map-card" data-map="archipelago">
+        <div class="map-card-icon">🏝️</div>
+        <div class="map-card-title">Isla Clandestina</div>
+        <div class="map-card-desc">Archipiélago con muelles secretos y almacén del cártel.</div>
+      </div>
+      <div class="map-card" data-map="valley">
+        <div class="map-card-icon">🏞️</div>
+        <div class="map-card-title">El Valle Sagrado</div>
+        <div class="map-card-desc">Ríos caudalosos, puentes de madera y casonas de labranza.</div>
+      </div>
+      <div class="map-card" data-map="volcano">
+        <div class="map-card-icon">🌋</div>
+        <div class="map-card-title">Tierras de Azufre</div>
+        <div class="map-card-desc">Volcán central, lagos de lava, ceniza y riscos oscuros.</div>
+      </div>
+      <div class="map-card" data-map="genesis">
+        <div class="map-card-icon">🌌</div>
+        <div class="map-card-title">Génesis Primordial</div>
+        <div class="map-card-desc">Océano infinito vacío. Sé Dios y moldea la tierra desde cero.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Crónicas y Dramas del Mundo -->
+  <div class="chronicles-panel" id="chroniclesPanel">
+    <div class="chronicles-header">
+      <div class="chronicles-title">📰 CRÓNICAS Y DRAMAS EN VIVO</div>
+      <span class="mind-close" id="chroniclesClose">✖</span>
+    </div>
+    <div class="chronicles-list" id="chroniclesList">
+      <div class="chronicle-entry">
+        <div class="chronicle-time">Inicio</div>
+        <div>👁️ El Ojo de Dios observa la isla. Los primeros habitantes respiran en paz.</div>
+      </div>
+    </div>
   </div>
 
   <!-- Panel de Inspección de Mente y Pensamientos -->

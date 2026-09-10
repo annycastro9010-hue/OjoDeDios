@@ -29,6 +29,18 @@ export class NPC {
 
     // Mente, personalidad y sensaciones
     this.brain = new NPCBrain(type);
+
+    // Relaciones Sociales, Pareja y Crianza
+    this.partnerId = null;
+    this.rivalId = null;
+    this.hasChild = false;
+    this.parentId = null;
+    this.age = 0;
+
+    if (type === 'child') {
+      this.speed = 1.0;
+      this.brain.title = "Niño de la Aldea";
+    }
   }
 
   update(grid, allNpcs, tileSize = 8, onClandestineSale = null, onPoliceAlert = null) {
@@ -51,6 +63,8 @@ export class NPC {
       this.updatePolice(grid, allNpcs, tileSize, onPoliceAlert);
     } else if (this.type === 'boss') {
       this.updateBoss(grid, allNpcs, tileSize);
+    } else if (this.type === 'child') {
+      this.updateChild(allNpcs);
     }
 
     // Aplicar movimiento
@@ -258,6 +272,54 @@ export class NPC {
       } else {
         this.vx = 0;
         this.vy = 0;
+      }
+    }
+  }
+
+  updateChild(allNpcs) {
+    this.age++;
+    this.stateTimer--;
+
+    // Crecimiento a la adultez
+    if (this.age > 3000) {
+      this.type = 'cultivator';
+      this.speed = 0.85;
+      this.brain.title = "Joven Cultivador";
+      this.brain.setThoughtBubble("🎉 ¡Ya soy mayor de edad! A trabajar la tierra.", 180);
+      return;
+    }
+
+    // Seguir a los padres si están cerca
+    if (this.parentId) {
+      const parent = allNpcs.find(n => n.id === this.parentId);
+      if (parent) {
+        const d = this.distTo(parent);
+        if (d > 42) {
+          const angle = Math.atan2(parent.y - this.y, parent.x - this.x);
+          this.vx = Math.cos(angle) * this.speed;
+          this.vy = Math.sin(angle) * this.speed;
+          this.updateDirection();
+          return;
+        }
+      }
+    }
+
+    // Corretear jugando
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 45 + Math.floor(Math.random() * 55);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 1.15);
+      this.vy = Math.sin(angle) * (this.speed * 1.15);
+      this.updateDirection();
+
+      const childThoughts = [
+        "¡Mira una mariposa!",
+        "¡A que no me atrapas!",
+        "¡Qué bonita es la isla!",
+        "Tengo hambre, quiero fruta fresca."
+      ];
+      if (Math.random() < 0.35) {
+        this.brain.setThoughtBubble(childThoughts[Math.floor(Math.random() * childThoughts.length)], 90);
       }
     }
   }

@@ -11,7 +11,7 @@ export class GameRenderer {
     this.waterTime = 0;
   }
 
-  render(grid, npcs, camera, possessedNpc, mouseWorldPos, currentTool, brushRadius) {
+  render(grid, npcs, animals = [], camera, possessedNpc, mouseWorldPos, currentTool, brushRadius) {
     const ctx = this.ctx;
     this.waterTime += 0.05;
 
@@ -78,7 +78,12 @@ export class GameRenderer {
       ctx.fillText(b.name, b.x * ts + 12, b.y * ts - 4);
     }
 
-    // 4. Renderizar NPCs con AnimationManager (soporta tanto procedural como SpriteSheets externos)
+    // 4. Renderizar Animales de la Isla
+    for (const animal of animals) {
+      animal.draw(ctx);
+    }
+
+    // 5. Renderizar NPCs con AnimationManager (soporta tanto procedural como SpriteSheets externos)
     const sortedNpcs = [...npcs].sort((a, b) => a.y - b.y);
     for (const npc of sortedNpcs) {
       const isPossessed = (possessedNpc && possessedNpc.id === npc.id);

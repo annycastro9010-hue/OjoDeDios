@@ -35,6 +35,12 @@ export class AnimationManager {
     // 1. Sombra translúcida bajo los pies (Característica visual clave de Zelda Minish Cap)
     this.drawGroundShadow(ctx, 8, 14);
 
+    // Si es un niño / cría, escalar para que sea pequeño y adorable
+    if (type === 'child') {
+      ctx.scale(0.72, 0.72);
+      ctx.translate(3, 5);
+    }
+
     // 2. Si hay hoja de sprites externa cargada por un animador:
     if (sheet && sheet.loaded) {
       this.drawExternalFrame(ctx, sheet, direction, frame, isMoving);

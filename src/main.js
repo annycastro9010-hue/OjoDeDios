@@ -7,6 +7,9 @@ import { PlayerController } from './player/controller.js';
 import { QuestSystem } from './quests/questSystem.js';
 import { sound } from './audio/soundFX.js';
 import { vfx } from './render/fx.js';
+import { MapGenerator } from './world/mapGenerator.js';
+import { Animal } from './entities/animals.js';
+import { social, chronicles } from './social/relations.js';
 
 // Inicialización de lienzo
 const canvas = document.getElementById('gameCanvas');
@@ -32,6 +35,7 @@ let brushRadius = 2;
 let isMouseDown = false;
 let mousePos = { x: 0, y: 0 };
 let nextNpcId = 1;
+let nextAnimalId = 1;
 
 // Estadísticas de la isla
 let clandestineCash = 250;
@@ -45,6 +49,14 @@ function spawnNpc(type, x, y) {
   return npc;
 }
 
+// Fauna / Animales de la isla
+const animals = [];
+function spawnAnimal(type, x, y) {
+  const a = new Animal(nextAnimalId++, type, x, y);
+  animals.push(a);
+  return a;
+}
+
 // Spawns iniciales en posiciones clave
 const cx = Math.floor(grid.width / 2) * 8;
 const cy = Math.floor(grid.height / 2) * 8;
@@ -52,8 +64,14 @@ spawnNpc('boss', cx - 80, cy - 50); // El Patrón en el almacén
 spawnNpc('cultivator', cx - 20, cy);
 spawnNpc('cultivator', cx + 40, cy - 20);
 spawnNpc('cultivator', cx - 50, cy + 30);
+spawnNpc('child', cx - 30, cy + 10);
 spawnNpc('police', cx + 70, cy + 40);
 spawnNpc('police', cx - 100, cy + 10);
+
+// Animales iniciales
+spawnAnimal('dog', cx - 15, cy + 5);
+spawnAnimal('pig', cx + 30, cy + 25);
+spawnAnimal('croc', cx + 110, cy + 60);
 
 camera.setMode('god', null, grid.width, grid.height);
 
@@ -198,6 +216,70 @@ function triggerRain() {
   npcs.forEach(n => n.brain.onDivineEvent('rain'));
 }
 
+// Modales y Paneles
+const mapModal = document.getElementById('mapModal');
+const mapClose = document.getElementById('mapClose');
+const btnOpenMaps = document.getElementById('btnOpenMaps');
+const chroniclesPanel = document.getElementById('chroniclesPanel');
+const chroniclesClose = document.getElementById('chroniclesClose');
+const btnOpenChronicles = document.getElementById('btnOpenChronicles');
+const chroniclesList = document.getElementById('chroniclesList');
+
+// Listener de nuevas noticias / dramas en vivo
+chronicles.onNewChronicle = (entry) => {
+  if (!chroniclesList) return;
+  const item = document.createElement('div');
+  item.className = 'chronicle-entry';
+  item.innerHTML = `<div class="chronicle-time">${entry.time}</div><div>${entry.text}</div>`;
+  chroniclesList.insertBefore(item, chroniclesList.firstChild);
+  if (chroniclesList.children.length > 30) {
+    chroniclesList.removeChild(chroniclesList.lastChild);
+  }
+};
+
+// Modal de Mapas
+btnOpenMaps.addEventListener('click', () => {
+  mapModal.style.display = 'block';
+});
+mapClose.addEventListener('click', () => {
+  mapModal.style.display = 'none';
+});
+document.querySelectorAll('.map-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const mapType = card.dataset.map;
+    MapGenerator.generate(grid, mapType);
+    mapModal.style.display = 'none';
+    camera.setMode('god', null, grid.width, grid.height);
+
+    // Reiniciar población base
+    npcs.length = 0;
+    animals.length = 0;
+    const midX = Math.floor(grid.width / 2) * 8;
+    const midY = Math.floor(grid.height / 2) * 8;
+    spawnNpc('cultivator', midX - 20, midY);
+    spawnNpc('cultivator', midX + 20, midY);
+    spawnNpc('child', midX - 10, midY + 15);
+    spawnNpc('police', midX + 40, midY - 20);
+    spawnAnimal('dog', midX - 5, midY);
+
+    const title = card.querySelector('.map-card-title').innerText;
+    chronicles.add(`🌍 ¡GÉNESIS! El mundo ha sido reformado en: ${title}`, 'divine');
+    notify(`🌍 Mundo reformado: ${title}`);
+  });
+});
+
+// Panel de Crónicas
+btnOpenChronicles.addEventListener('click', () => {
+  chroniclesPanel.style.display = chroniclesPanel.style.display === 'flex' ? 'none' : 'flex';
+});
+chroniclesClose.addEventListener('click', () => {
+  chroniclesPanel.style.display = 'none';
+});
+
+// Variables para poderes de Cupido y Discordia
+let selectedLover = null;
+let selectedRival = null;
+
 // Acciones según herramienta
 function handlePointerAction() {
   if (mode !== 'god') return;
@@ -222,13 +304,23 @@ function handlePointerAction() {
     camera.triggerShake(7, 16);
     vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
     notify("⚡ ¡El castigo de Dios ha caído!");
-    // Reacción mental de pavor y fe
     npcs.forEach(n => n.brain.onDivineEvent('lightning'));
   } else if (currentTool === 'rain') {
     triggerRain();
   } else if (currentTool === 'spawn_cultivator') {
     spawnNpc('cultivator', worldCoords.x, worldCoords.y);
-    notify("👨‍🌾 Nuevo cultivador con mente y personalidad reclutado");
+    notify("👨‍🌾 Nuevo cultivador reclutado");
+    isMouseDown = false;
+  } else if (currentTool === 'spawn_child') {
+    spawnNpc('child', worldCoords.x, worldCoords.y);
+    notify("👶 Ha nacido un niño en la aldea");
+    chronicles.add("👶 ¡BENDICIÓN! Un nuevo niño corretea alegremente por la isla.", "birth");
+    isMouseDown = false;
+  } else if (currentTool === 'spawn_animal') {
+    const types = ['dog', 'pig', 'croc'];
+    const selected = types[Math.floor(Math.random() * types.length)];
+    spawnAnimal(selected, worldCoords.x, worldCoords.y);
+    notify(`🐾 Ha aparecido un animal: ${selected.toUpperCase()}`);
     isMouseDown = false;
   } else if (currentTool === 'spawn_police') {
     spawnNpc('police', worldCoords.x, worldCoords.y);
@@ -238,13 +330,42 @@ function handlePointerAction() {
     spawnNpc('boss', worldCoords.x, worldCoords.y);
     notify("👑 El Patrón ha llegado");
     isMouseDown = false;
+  } else if (currentTool === 'love') {
+    const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
+    if (clickedNpc) {
+      if (!selectedLover) {
+        selectedLover = clickedNpc;
+        notify(`💘 Has flechado a ${clickedNpc.brain.name}. Ahora haz click en el segundo aldeano...`);
+      } else if (selectedLover.id !== clickedNpc.id) {
+        social.blessLove(selectedLover, clickedNpc);
+        sound.playAscend();
+        vfx.addShockwave(clickedNpc.x, clickedNpc.y, 35, '#ec4899');
+        notify(`💖 ¡${selectedLover.brain.name} y ${clickedNpc.brain.name} se han enamorado!`);
+        selectedLover = null;
+      }
+      isMouseDown = false;
+    }
+  } else if (currentTool === 'discord') {
+    const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
+    if (clickedNpc) {
+      if (!selectedRival) {
+        selectedRival = clickedNpc;
+        notify(`⚔️ Has marcado a ${clickedNpc.brain.name}. Haz click en su futuro rival...`);
+      } else if (selectedRival.id !== clickedNpc.id) {
+        social.sowDiscord(selectedRival, clickedNpc);
+        sound.playAlert();
+        vfx.addShockwave(clickedNpc.x, clickedNpc.y, 35, '#ef4444');
+        notify(`⚡ ¡${selectedRival.brain.name} y ${clickedNpc.brain.name} ahora son enemigos mortales!`);
+        selectedRival = null;
+      }
+      isMouseDown = false;
+    }
   } else if (currentTool === 'inspect') {
     const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
     if (clickedNpc) {
       openMindPanel(clickedNpc);
     }
   } else if (currentTool === 'possess') {
-    // Buscar el NPC más cercano al click
     const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
     if (clickedNpc) {
       enterPossession(clickedNpc);
@@ -373,6 +494,19 @@ function gameLoop() {
     );
   }
 
+  // Actualización de Fauna y Animales
+  for (const animal of animals) {
+    animal.update(grid, npcs, animals, 8);
+  }
+
+  // Sistema Social Emergente: Romance, Celos, Riñas y Crianza
+  social.update(npcs, (babyX, babyY, pA, pB) => {
+    const baby = spawnNpc('child', babyX, babyY);
+    baby.parentId = pA.id;
+    sound.playAscend();
+    vfx.addShockwave(babyX, babyY, 25, '#f472b6');
+  });
+
   // Descenso natural de alerta policial con el tiempo
   if (frameCount % 180 === 0 && policeAlert > 5) {
     policeAlert = Math.max(0, policeAlert - 2);
@@ -391,9 +525,9 @@ function gameLoop() {
   // 5. Actualización de Cámara
   camera.update(mode === 'possessed' ? possessedNpc : null);
 
-  // 6. Renderizado
+  // 6. Renderizado (incluye NPCs, Animales, VFX y retícula)
   const worldMouse = camera.screenToWorld(mousePos.x, mousePos.y);
-  renderer.render(grid, npcs, camera, possessedNpc, worldMouse, currentTool, brushRadius);
+  renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius);
 
   // 6. Actualización de Estadísticas cada 30 frames
   if (frameCount % 30 === 0 && mode === 'god') {

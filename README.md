@@ -15,15 +15,23 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **🔥 Fuego:** Incendia cultivos y madera, generando humo y cenizas.
 * **⚡ Rayo:** Castigo celestial instantáneo que detona el área.
 * **🌧️ Lluvia:** Desata un diluvio que riega toda la isla.
-* **Spawners:** Genera más Campesinos/Jíbaros, Policías de patrulla o al mismísimo Patrón.
+* **Spawners:** Genera Campesinos/Jíbaros, Policías de patrulla, Niños/Aldeanitos, Animales (Perros, Cerdos, Caimanes) o al mismísimo Patrón.
+* **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
+* **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
 * **🧠 Mente (Inspección Psicológica):** Haz click en este botón y selecciona a cualquier aldeano para ver su nombre, personalidad, barras de Fe, Miedo, Codicia, Energía y su pensamiento íntimo en vivo. ¡Puedes infundirle fe o aterrorizarlo con un botón!
+* **📜 Chismes / Crónicas en Vivo:** Abre el periódico de la isla con el registro histórico de romances, traiciones, peleas callejeras y nacimientos.
+* **🗺️ Mapas del Mundo:** Elige entre 4 mundos distintos:
+  * 🌌 **Génesis Primordial:** Océano infinito vacío. Eres Dios en el inicio de los tiempos y moldeas la tierra desde cero.
+  * 🏞️ **El Valle Sagrado:** Río caudaloso, puentes de madera, casonas y taberna.
+  * 🌋 **Tierras de Azufre:** Volcán activo, cráteres de fuego, ceniza y riscos oscuros.
+  * 🏝️ **Isla Clandestina:** Archipiélago con muelles secretos y almacenes del cártel.
 * **👁️ POSEER:** Haz click en este botón y luego selecciona a cualquier personaje para entrar en su cuerpo.
 
-### 2. Mente y Sensaciones de los Aldeanos (`src/ai/brain.js`)
-* **Personalidades únicas:** Devoto Místico, Codicioso, Miedoso, Perezoso, Insumiso y Pacífico.
+### 2. Vida Social, Crianza y Emociones (`src/social/relations.js` & `src/ai/brain.js`)
+* **Familias y Crianza:** Las parejas establecidas pueden tener bebés. Los niños corretean, juegan imitando a los adultos y al cabo del tiempo crecen convirtiéndose en campesinos adultos.
+* **Dramas y Traiciones:** Si un aldeano coquetea con la pareja de otro, se desatan celos y peleas callejeras.
+* **Fauna y Animales:** Los perros siguen y defienden a sus dueños ladrando a las patrullas policiales; los cerdos pastan y los caimanes acechan en las aguas.
 * **Bocadillos de pensamiento en vivo:** Verás pequeños diálogos sobre sus cabezas con lo que sienten (*"¡Dios mío, qué fue ese trueno!"*, *"Si entrego esto compro mi terreno"*, *"Bendita lluvia celestial..."*).
-* **Evolución por experiencia:** Los aldeanos suben de nivel con sus entregas y evolucionan de *Peón Rural* a *Cultivador Ágil*, *Contrabandista Experto* o incluso *Profeta Iluminado* si acumulan suficiente fe.
-* **Reacciones a milagros:** Si lanzas un rayo o desatas una lluvia sagrada, o si ven a alguien poseído con halo celestial, sus niveles de fe y pánico reaccionan en tiempo real.
 
 ### 3. Modo Inmersivo (Zelda: The Minish Cap)
 La cámara hace un zoom cinemático continuo desde el cielo hasta situarse detrás de tu personaje con vista cenital pixel-art:
