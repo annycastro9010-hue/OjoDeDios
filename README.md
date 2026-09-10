@@ -16,9 +16,16 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **⚡ Rayo:** Castigo celestial instantáneo que detona el área.
 * **🌧️ Lluvia:** Desata un diluvio que riega toda la isla.
 * **Spawners:** Genera más Campesinos/Jíbaros, Policías de patrulla o al mismísimo Patrón.
+* **🧠 Mente (Inspección Psicológica):** Haz click en este botón y selecciona a cualquier aldeano para ver su nombre, personalidad, barras de Fe, Miedo, Codicia, Energía y su pensamiento íntimo en vivo. ¡Puedes infundirle fe o aterrorizarlo con un botón!
 * **👁️ POSEER:** Haz click en este botón y luego selecciona a cualquier personaje para entrar en su cuerpo.
 
-### 2. Modo Inmersivo (Zelda: The Minish Cap)
+### 2. Mente y Sensaciones de los Aldeanos (`src/ai/brain.js`)
+* **Personalidades únicas:** Devoto Místico, Codicioso, Miedoso, Perezoso, Insumiso y Pacífico.
+* **Bocadillos de pensamiento en vivo:** Verás pequeños diálogos sobre sus cabezas con lo que sienten (*"¡Dios mío, qué fue ese trueno!"*, *"Si entrego esto compro mi terreno"*, *"Bendita lluvia celestial..."*).
+* **Evolución por experiencia:** Los aldeanos suben de nivel con sus entregas y evolucionan de *Peón Rural* a *Cultivador Ágil*, *Contrabandista Experto* o incluso *Profeta Iluminado* si acumulan suficiente fe.
+* **Reacciones a milagros:** Si lanzas un rayo o desatas una lluvia sagrada, o si ven a alguien poseído con halo celestial, sus niveles de fe y pánico reaccionan en tiempo real.
+
+### 3. Modo Inmersivo (Zelda: The Minish Cap)
 La cámara hace un zoom cinemático continuo desde el cielo hasta situarse detrás de tu personaje con vista cenital pixel-art:
 * **WASD / Flechas:** Moverse por el mundo.
 * **ESPACIO / Tecla E:** Interactuar:

@@ -1,5 +1,6 @@
 import { ELEM } from '../sim/elements.js';
 import { sound } from '../audio/soundFX.js';
+import { NPCBrain } from '../ai/brain.js';
 
 export class NPC {
   constructor(id, type, x, y) {
@@ -25,11 +26,18 @@ export class NPC {
     this.isPossessed = false;
     this.alerted = false;
     this.alertTimer = 0;
+
+    // Mente, personalidad y sensaciones
+    this.brain = new NPCBrain(type);
   }
 
   update(grid, allNpcs, tileSize = 8, onClandestineSale = null, onPoliceAlert = null) {
     // Si está poseído por el jugador, los controles WASD manejan el movimiento
     if (this.isPossessed) return;
+
+    // Actualización de mente y pensamientos autónomos
+    const nearbyPolice = allNpcs.find(n => n.type === 'police' && n.id !== this.id && this.distTo(n) < 60);
+    this.brain.update(this, !!nearbyPolice, false);
 
     this.animTimer++;
     if (this.animTimer > 12) {
@@ -90,8 +98,13 @@ export class NPC {
       const d = Math.hypot(targetPxX - this.x, targetPxY - this.y);
 
       if (d < 12) {
-        // Entrega completada
-        if (onClandestineSale) onClandestineSale(this.cargo * 100);
+        // Entrega completada y ganancia de experiencia / evolución
+        const delivered = this.cargo;
+        if (onClandestineSale) onClandestineSale(delivered * 100);
+        this.brain.gainExp(delivered * 45, this);
+        this.brain.deliveredCargos += delivered;
+        this.brain.setThoughtBubble("💰 ¡Entregado con éxito!", 120);
+
         this.cargo = 0;
         this.state = 'wandering';
         this.stateTimer = 60;

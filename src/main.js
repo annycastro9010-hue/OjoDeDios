@@ -81,6 +81,77 @@ function notify(text) {
   }, 3200);
 }
 
+// Mind Panel Elements
+const mindPanel = document.getElementById('mindPanel');
+const mindNpcName = document.getElementById('mindNpcName');
+const mindClose = document.getElementById('mindClose');
+const mindNpcTitle = document.getElementById('mindNpcTitle');
+const mindNpcTrait = document.getElementById('mindNpcTrait');
+const barFaith = document.getElementById('barFaith');
+const barFear = document.getElementById('barFear');
+const barGreed = document.getElementById('barGreed');
+const barEnergy = document.getElementById('barEnergy');
+const mindThoughtText = document.getElementById('mindThoughtText');
+const btnBlessFaith = document.getElementById('btnBlessFaith');
+const btnScare = document.getElementById('btnScare');
+const btnPossessFromMind = document.getElementById('btnPossessFromMind');
+
+let inspectedNpc = null;
+
+function openMindPanel(npc) {
+  inspectedNpc = npc;
+  updateMindPanelUI();
+  mindPanel.style.display = 'block';
+  notify(`🧠 Inspeccionando la mente de ${npc.brain.name}`);
+}
+
+function updateMindPanelUI() {
+  if (!inspectedNpc || !inspectedNpc.brain) return;
+  const b = inspectedNpc.brain;
+  mindNpcName.innerText = `${b.name} (${inspectedNpc.type.toUpperCase()})`;
+  mindNpcTitle.innerText = `${b.title} (Nivel ${b.level})`;
+  mindNpcTrait.innerText = `Personalidad: ${b.trait.name}`;
+  barFaith.style.width = `${b.faith}%`;
+  barFear.style.width = `${b.fear}%`;
+  barGreed.style.width = `${b.greed}%`;
+  barEnergy.style.width = `${b.energy}%`;
+  mindThoughtText.innerText = `"${b.currentThought}"`;
+}
+
+mindClose.addEventListener('click', () => {
+  mindPanel.style.display = 'none';
+  inspectedNpc = null;
+});
+
+btnBlessFaith.addEventListener('click', () => {
+  if (!inspectedNpc) return;
+  inspectedNpc.brain.faith = Math.min(100, inspectedNpc.brain.faith + 25);
+  inspectedNpc.brain.fear = Math.max(0, inspectedNpc.brain.fear - 15);
+  inspectedNpc.brain.setThoughtBubble("🕊️ ¡Siento la gracia y paz del Creador!", 160);
+  sound.playAscend();
+  vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 25, '#ffd700');
+  updateMindPanelUI();
+  notify(`✨ Has infundido fe y calma en ${inspectedNpc.brain.name}`);
+});
+
+btnScare.addEventListener('click', () => {
+  if (!inspectedNpc) return;
+  inspectedNpc.brain.fear = Math.min(100, inspectedNpc.brain.fear + 35);
+  inspectedNpc.brain.setThoughtBubble("😱 ¡Qué presencia tan aterradora!", 160);
+  sound.playAlert();
+  camera.triggerShake(4, 8);
+  updateMindPanelUI();
+  notify(`⚡ Has hecho temblar a ${inspectedNpc.brain.name}`);
+});
+
+btnPossessFromMind.addEventListener('click', () => {
+  if (!inspectedNpc) return;
+  const target = inspectedNpc;
+  mindPanel.style.display = 'none';
+  inspectedNpc = null;
+  enterPossession(target);
+});
+
 // Gestión de botones de herramientas
 document.querySelectorAll('.tool-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -90,6 +161,8 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
 
     if (currentTool === 'possess') {
       notify("👁️ Haz click sobre cualquier aldeano o policía para poseer su cuerpo");
+    } else if (currentTool === 'inspect') {
+      notify("🧠 Haz click sobre cualquier aldeano para leer su mente y sensaciones");
     }
   });
 });
@@ -121,6 +194,8 @@ function triggerRain() {
     const ry = Math.floor(Math.random() * 8);
     grid.set(rx, ry, ELEM.WATER);
   }
+  // Reacción mental de los aldeanos
+  npcs.forEach(n => n.brain.onDivineEvent('rain'));
 }
 
 // Acciones según herramienta
@@ -147,11 +222,13 @@ function handlePointerAction() {
     camera.triggerShake(7, 16);
     vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
     notify("⚡ ¡El castigo de Dios ha caído!");
+    // Reacción mental de pavor y fe
+    npcs.forEach(n => n.brain.onDivineEvent('lightning'));
   } else if (currentTool === 'rain') {
     triggerRain();
   } else if (currentTool === 'spawn_cultivator') {
     spawnNpc('cultivator', worldCoords.x, worldCoords.y);
-    notify("👨‍🌾 Nuevo cultivador reclutado en la isla");
+    notify("👨‍🌾 Nuevo cultivador con mente y personalidad reclutado");
     isMouseDown = false;
   } else if (currentTool === 'spawn_police') {
     spawnNpc('police', worldCoords.x, worldCoords.y);
@@ -161,6 +238,11 @@ function handlePointerAction() {
     spawnNpc('boss', worldCoords.x, worldCoords.y);
     notify("👑 El Patrón ha llegado");
     isMouseDown = false;
+  } else if (currentTool === 'inspect') {
+    const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
+    if (clickedNpc) {
+      openMindPanel(clickedNpc);
+    }
   } else if (currentTool === 'possess') {
     // Buscar el NPC más cercano al click
     const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
@@ -174,9 +256,15 @@ function handlePointerAction() {
 function enterPossession(npc) {
   notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.type.toUpperCase()}!`);
 
-  // Ocultar HUD macro
+  // Ocultar HUD macro y panel de mente si estaba abierto
   topBar.style.display = 'none';
   bottomToolbar.style.display = 'none';
+  if (mindPanel) mindPanel.style.display = 'none';
+  inspectedNpc = null;
+
+  // Reacción de asombro místico en aldeanos vecinos (testigos del milagro)
+  npcs.filter(n => n.id !== npc.id && Math.hypot(n.x - npc.x, n.y - npc.y) < 120)
+      .forEach(n => n.brain.onDivineEvent('saw_possession'));
 
   // Iniciar vórtice celestial y onda de choque
   vfx.startPossession(
@@ -319,6 +407,11 @@ function gameLoop() {
       if (grid.grid[i] === ELEM.PLANT_BLOOM) crops++;
     }
     statCrops.innerText = crops;
+
+    // Actualizar panel de mente en tiempo real si está abierto
+    if (inspectedNpc) {
+      updateMindPanelUI();
+    }
   }
 
   requestAnimationFrame(gameLoop);

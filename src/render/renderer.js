@@ -101,6 +101,36 @@ export class GameRenderer {
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText('!', npc.x + 8, npc.y - 6);
       }
+
+      // 💭 Bocadillo de pensamiento emergente sobre la cabeza del aldeano
+      if (npc.brain && npc.brain.bubbleText) {
+        ctx.save();
+        ctx.font = '7px sans-serif';
+        const text = npc.brain.bubbleText;
+        const textMetrics = ctx.measureText(text);
+        const pad = 3;
+        const bw = textMetrics.width + pad * 2;
+        const bh = 11;
+        const bx = Math.floor(npc.x + 8 - bw / 2);
+        const by = Math.floor(npc.y - 15);
+
+        // Caja de diálogo flotante
+        ctx.fillStyle = 'rgba(254, 252, 232, 0.94)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, bw, bh);
+
+        // Puntos de pensamiento hacia la cabeza
+        ctx.fillStyle = 'rgba(254, 252, 232, 0.94)';
+        ctx.fillRect(npc.x + 7, by + bh, 2, 2);
+
+        // Texto del pensamiento
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, npc.x + 8, by + 8);
+        ctx.restore();
+      }
     }
 
     // 5. Renderizar Efectos Visuales VFX (Vórtice mágico, ondas de choque, chispas)
