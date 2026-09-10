@@ -100,18 +100,54 @@ class SoundSystem {
     if (this.muted) return;
     this.init();
     try {
-      // Efecto místico de descenso de alma
+      // Vórtice místico con arpegio descendente estilo Minish Cap
+      const freqs = [880, 784, 659, 587, 523, 440, 392, 330];
+      freqs.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const startT = this.ctx.currentTime + idx * 0.05;
+        osc.frequency.setValueAtTime(f, startT);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.8, startT + 0.12);
+        gain.gain.setValueAtTime(0.12, startT);
+        gain.gain.linearRampToValueAtTime(0.001, startT + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(startT);
+        osc.stop(startT + 0.12);
+      });
+    } catch (e) { }
+  }
+
+  playMinishLand() {
+    if (this.muted) return;
+    this.init();
+    try {
+      // Impacto de encarnación (grave + brillo)
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.35);
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.35);
+      osc.stop(this.ctx.currentTime + 0.25);
+
+      // Chispas agudas
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1046, this.ctx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(1760, this.ctx.currentTime + 0.18);
+      gain2.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain2.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+      osc2.connect(gain2);
+      gain2.connect(this.ctx.destination);
+      osc2.start();
+      osc2.stop(this.ctx.currentTime + 0.18);
     } catch (e) { }
   }
 

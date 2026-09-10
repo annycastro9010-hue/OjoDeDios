@@ -15,6 +15,13 @@ export class Camera {
     this.possessedScale = 3.0;
 
     this.isTransitioning = false;
+    this.shake = 0;
+    this.shakeDuration = 0;
+  }
+
+  triggerShake(intensity = 4, duration = 10) {
+    this.shake = intensity;
+    this.shakeDuration = duration;
   }
 
   setMode(mode, targetEntity = null, worldWidth = 140, worldHeight = 90, tileSize = 8) {
@@ -47,6 +54,14 @@ export class Camera {
     this.x += (this.targetX - this.x) * 0.08;
     this.y += (this.targetY - this.y) * 0.08;
     this.scale += (this.targetScale - this.scale) * 0.06;
+
+    // Reducción de sacudida
+    if (this.shakeDuration > 0) {
+      this.shakeDuration--;
+      this.shake *= 0.88;
+    } else {
+      this.shake = 0;
+    }
   }
 
   // Convierte coordenadas de pantalla (mouse click) a coordenadas de mundo en píxeles
@@ -71,7 +86,10 @@ export class Camera {
     ctx.save();
     ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
     ctx.scale(this.scale, this.scale);
-    ctx.translate(-this.x, -this.y);
+
+    const shakeX = (Math.random() - 0.5) * this.shake;
+    const shakeY = (Math.random() - 0.5) * this.shake;
+    ctx.translate(-this.x + shakeX, -this.y + shakeY);
   }
 
   restoreTransform(ctx) {

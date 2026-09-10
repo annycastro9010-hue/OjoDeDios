@@ -45,18 +45,32 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega (Almacén del Patrón y Muelle) inyectando dinero en la economía insular.
   - **Conos de visión de linterna:** Los policías proyectan un campo de visión angular (FOV). Si un sospechoso o el jugador ingresa al haz de luz con cargamento ilegal, se dispara el estado de persecución con alerta sonora.
 
-### C. Motor de Sprites Pixel-Art (`src/render/sprites.js`)
-- En lugar de depender de imágenes estáticas externas que puedan fallar en red, el juego cuenta con un generador procedural de sprites de 16x16:
-  - Animación de pasos (bobbing alternado).
-  - 4 direcciones visuales (Arriba, Abajo, Izquierda, Derecha).
-  - Indicadores visuales de cargamento transportado.
-  - Halo místico y efecto de pulso celestial al ser poseído.
-  - *Extensibilidad:* Puedes reemplazar `sprites.js` en cualquier momento por una hoja de sprites (.png) exportada desde Aseprite sin necesidad de modificar la física ni la lógica de juego.
+### C. Motor de Animación Desacoplado (`src/render/animationManager.js`)
+El juego separa estrictamente la **lógica física** de la **representación visual**:
+- **Doble soporte (Procedural + SpriteSheets de artistas):**
+  - Si un pixel artist te entrega una hoja de sprites `.png` (hecha en Aseprite, Photoshop, etc.), simplemente la registras con:
+    ```javascript
+    animManager.registerSheet('cultivator', './assets/cultivator_walk.png', 16, 16, {
+      walk_down: [0, 1, 2, 3],
+      walk_up: [4, 5, 6, 7],
+      walk_left: [8, 9, 10, 11],
+      walk_right: [12, 13, 14, 15]
+    });
+    ```
+  - Si no hay imagen externa, el motor usa su generador nativo de alta fidelidad estilo **The Minish Cap** con ciclo completo de marcha en 4 direcciones, balanceo de brazos opuesto a las piernas, inclinación de cabeza al pisar y sombra elíptica de suelo.
 
-### D. Audio Procedural (`src/audio/soundFX.js`)
-- Implementado con la **Web Audio API** nativa del navegador.
-- Genera ondas cuadradas, senoidales y ruido blanco modulado por filtros pasa-bajos y pasa-banda.
-- Cero megabytes de descarga de audio y latencia de reproducción prácticamente nula.
+### D. Secuencia Mágica de Posesión y VFX (`src/render/fx.js`)
+- Inspirado en la reducción mágica de Link en *The Minish Cap*:
+  1. **Rayo Celestial:** Haz de luz que une el cielo con el personaje objetivo.
+  2. **Vórtice Espiral:** Partículas de polvo de oro girando y colapsando hacia el pecho del NPC.
+  3. **Onda de Choque y Sacudida de Pantalla (Screen Shake):** Al impactar la encarnación, se emite una onda circular dorada, bocanadas de polvo y un golpe de cámara (*screen punch*).
+  4. **Chispas y Aura Sagrada:** Partículas flotantes mientras mantengas la posesión.
+
+### E. Audio Procedural (`src/audio/soundFX.js`)
+- Sintetizado en tiempo real con Web Audio API:
+  - Arpegios descendentes para el vórtice místico.
+  - Sub-graves y chispas al aterrizar el alma en el cuerpo.
+  - Alertas estilo Metal Gear / Zelda y acordes celestiales mayores al ascender.
 
 ---
 

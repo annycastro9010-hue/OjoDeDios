@@ -1,5 +1,7 @@
 import { ELEM, ELEM_PROPS } from '../sim/elements.js';
+import { animManager } from './animationManager.js';
 import { sprites } from './sprites.js';
+import { vfx } from './fx.js';
 
 export class GameRenderer {
   constructor(canvas) {
@@ -76,17 +78,19 @@ export class GameRenderer {
       ctx.fillText(b.name, b.x * ts + 12, b.y * ts - 4);
     }
 
-    // 4. Renderizar NPCs (ordenados por Y para correcta oclusión de profundidad)
+    // 4. Renderizar NPCs con AnimationManager (soporta tanto procedural como SpriteSheets externos)
     const sortedNpcs = [...npcs].sort((a, b) => a.y - b.y);
     for (const npc of sortedNpcs) {
       const isPossessed = (possessedNpc && possessedNpc.id === npc.id);
-      sprites.drawCharacter(
+      const isMoving = Math.abs(npc.vx || 0) > 0.05 || Math.abs(npc.vy || 0) > 0.05;
+      animManager.draw(
         ctx,
         npc.type,
         npc.x,
         npc.y,
         npc.direction,
         npc.frame,
+        isMoving,
         npc.cargo > 0,
         isPossessed
       );
@@ -98,6 +102,9 @@ export class GameRenderer {
         ctx.fillText('!', npc.x + 8, npc.y - 6);
       }
     }
+
+    // 5. Renderizar Efectos Visuales VFX (Vórtice mágico, ondas de choque, chispas)
+    vfx.render(ctx);
 
     // 5. Retícula Divina del Mouse (Solo en Modo Dios)
     if (!possessedNpc && mouseWorldPos) {

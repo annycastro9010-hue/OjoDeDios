@@ -6,6 +6,7 @@ import { NPC } from './entities/npc.js';
 import { PlayerController } from './player/controller.js';
 import { QuestSystem } from './quests/questSystem.js';
 import { sound } from './audio/soundFX.js';
+import { vfx } from './render/fx.js';
 
 // Inicialización de lienzo
 const canvas = document.getElementById('gameCanvas');
@@ -143,6 +144,8 @@ function handlePointerAction() {
   } else if (currentTool === 'lightning') {
     grid.strikeLightning(tileX, tileY);
     sound.playThunder();
+    camera.triggerShake(7, 16);
+    vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
     notify("⚡ ¡El castigo de Dios ha caído!");
   } else if (currentTool === 'rain') {
     triggerRain();
@@ -160,36 +163,48 @@ function handlePointerAction() {
     isMouseDown = false;
   } else if (currentTool === 'possess') {
     // Buscar el NPC más cercano al click
-    const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 20);
+    const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
     if (clickedNpc) {
       enterPossession(clickedNpc);
     }
   }
 }
 
-// Iniciar Posesión (Zoom Inmersivo a Minish Cap)
+// Iniciar Secuencia Mágica de Posesión (Estilo The Minish Cap)
 function enterPossession(npc) {
-  mode = 'possessed';
-  possessedNpc = npc;
-  npc.isPossessed = true;
+  notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.type.toUpperCase()}!`);
 
-  sound.playPossess();
-  camera.setMode('possessed', npc);
-
-  // Generar misión
-  const quest = questSystem.generateQuestFor(npc);
-  questTitle.innerText = quest.title;
-  questDesc.innerText = quest.description;
-  updateQuestUI();
-
-  // Cambiar HUD
+  // Ocultar HUD macro
   topBar.style.display = 'none';
   bottomToolbar.style.display = 'none';
-  possessedHud.style.display = 'block';
-  controlsHelp.style.display = 'block';
-  ascendBtn.style.display = 'none';
 
-  notify(`✨ Has poseído a este mortal (${npc.type.toUpperCase()}). Cumple tu misión.`);
+  // Iniciar vórtice celestial y onda de choque
+  vfx.startPossession(
+    npc.x + 8,
+    npc.y + 8,
+    // onImpact: Momento en que el rayo toca el cuerpo
+    () => {
+      mode = 'possessed';
+      possessedNpc = npc;
+      npc.isPossessed = true;
+      camera.setMode('possessed', npc);
+
+      // Activar HUD inmersivo de Zelda Minish Cap
+      possessedHud.style.display = 'block';
+      controlsHelp.style.display = 'block';
+      ascendBtn.style.display = 'none';
+
+      // Generar misión
+      const quest = questSystem.generateQuestFor(npc);
+      questTitle.innerText = quest.title;
+      questDesc.innerText = quest.description;
+      updateQuestUI();
+    },
+    // onComplete: Secuencia de transición terminada
+    () => {
+      notify(`🎮 Tienes el control total. Cumple el encargo para liberar tu alma.`);
+    }
+  );
 }
 
 // Ascender al Cielo (Volver a Modo Dios)
@@ -275,10 +290,20 @@ function gameLoop() {
     policeAlert = Math.max(0, policeAlert - 2);
   }
 
-  // 4. Actualización de Cámara
+  // 4. Actualización de VFX y Partículas
+  vfx.update(camera);
+
+  // Si el jugador está poseyendo y moviéndose, emitir polvo bajo los pies
+  if (mode === 'possessed' && possessedNpc) {
+    if (Math.random() < 0.2) {
+      vfx.addHolySpark(possessedNpc.x, possessedNpc.y);
+    }
+  }
+
+  // 5. Actualización de Cámara
   camera.update(mode === 'possessed' ? possessedNpc : null);
 
-  // 5. Renderizado
+  // 6. Renderizado
   const worldMouse = camera.screenToWorld(mousePos.x, mousePos.y);
   renderer.render(grid, npcs, camera, possessedNpc, worldMouse, currentTool, brushRadius);
 
