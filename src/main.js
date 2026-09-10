@@ -10,19 +10,11 @@ import { vfx } from './render/fx.js';
 import { MapGenerator } from './world/mapGenerator.js';
 import { Animal } from './entities/animals.js';
 import { social, chronicles } from './social/relations.js';
-
 import { ERAS } from './world/eras.js';
+import { civ } from './world/civilization.js';
 
 // Inicialización de lienzo
 const canvas = document.getElementById('gameCanvas');
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-// Instancias del juego
 const grid = new SimulationGrid(130, 85);
 const camera = new Camera(canvas);
 const renderer = new GameRenderer(canvas);
@@ -33,26 +25,33 @@ const questSystem = new QuestSystem();
 let mode = 'god'; // 'god' o 'possessed'
 let possessedNpc = null;
 let currentTool = 'water';
-let currentEra = ERAS.EIGHTIES; // Era activa por defecto
+let currentEra = ERAS.BIBLICAL; // Comienza en los Albores Bíblicos de la Humanidad
 let brushRadius = 2;
 let isMouseDown = false;
-let mousePos = { x: 0, y: 0 };
+let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 let nextNpcId = 1;
 let nextAnimalId = 1;
 
-// Estadísticas de la isla
-let clandestineCash = 250;
-let policeAlert = 15; // 0 a 100%
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  if (camera && grid) {
+    camera.setMode(mode, possessedNpc, grid.width, grid.height);
+  }
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-// Población inicial de la isla
+// Población y Fauna
 const npcs = [];
-function spawnNpc(type, x, y) {
+function spawnNpc(type, x, y, eraId = currentEra.id) {
   const npc = new NPC(nextNpcId++, type, x, y);
+  // Reconfigurar cerebro con nombres de la era
+  npc.brain = new (npc.brain.constructor)(type, eraId);
   npcs.push(npc);
   return npc;
 }
 
-// Fauna / Animales de la isla
 const animals = [];
 function spawnAnimal(type, x, y) {
   const a = new Animal(nextAnimalId++, type, x, y);
@@ -60,33 +59,18 @@ function spawnAnimal(type, x, y) {
   return a;
 }
 
-// Spawns iniciales en posiciones clave
-const cx = Math.floor(grid.width / 2) * 8;
-const cy = Math.floor(grid.height / 2) * 8;
-spawnNpc('boss', cx - 80, cy - 50); // El Patrón en el almacén
-spawnNpc('cultivator', cx - 20, cy);
-spawnNpc('cultivator', cx + 40, cy - 20);
-spawnNpc('cultivator', cx - 50, cy + 30);
-spawnNpc('child', cx - 30, cy + 10);
-spawnNpc('police', cx + 70, cy + 40);
-spawnNpc('police', cx - 100, cy + 10);
-
-// Animales iniciales
-spawnAnimal('dog', cx - 15, cy + 5);
-spawnAnimal('pig', cx + 30, cy + 25);
-spawnAnimal('croc', cx + 110, cy + 60);
-
-camera.setMode('god', null, grid.width, grid.height);
-
 // UI Elements
 const topBar = document.getElementById('topBar');
 const bottomToolbar = document.getElementById('bottomToolbar');
 const possessedHud = document.getElementById('possessedHud');
 const controlsHelp = document.getElementById('controlsHelp');
 const statPop = document.getElementById('statPop');
-const statCrops = document.getElementById('statCrops');
-const statCash = document.getElementById('statCash');
-const statAlert = document.getElementById('statAlert');
+const statWood = document.getElementById('statWood');
+const statStone = document.getElementById('statStone');
+const statFood = document.getElementById('statFood');
+const statWisdom = document.getElementById('statWisdom');
+const civStage = document.getElementById('civStage');
+const btnOpenEras = document.getElementById('btnOpenEras');
 const questTitle = document.getElementById('questTitle');
 const questDesc = document.getElementById('questDesc');
 const questHarvest = document.getElementById('questHarvest');
@@ -99,7 +83,106 @@ function notify(text) {
   notification.style.opacity = '1';
   setTimeout(() => {
     notification.style.opacity = '0';
-  }, 3200);
+  }, 3400);
+}
+
+// Configuración de Mundo y Civilización por Era
+function setupEraWorld(era) {
+  currentEra = era;
+  btnOpenEras.innerText = `⏳ ${era.name}`;
+  MapGenerator.generate(grid, era.mapPreset);
+  camera.setMode('god', null, grid.width, grid.height);
+
+  npcs.length = 0;
+  animals.length = 0;
+  civ.reset();
+
+  const midX = Math.floor(grid.width / 2) * 8;
+  const midY = Math.floor(grid.height / 2) * 8;
+
+  if (era.id === 'biblical') {
+    // 📖 ADÁN Y EVA (Primeros Padres de la Humanidad)
+    const adam = spawnNpc('cultivator', midX - 23 * 8, midY - 6 * 8, 'biblical');
+    adam.brain.name = "Adán";
+    adam.brain.title = "Patriarca Anciano";
+    adam.brain.wisdom = 95;
+    adam.brain.faith = 100;
+    adam.brain.setThoughtBubble("Recuerdo la gracia del Edén... Cuidaré a la tribu.", 180);
+
+    const eve = spawnNpc('cultivator', midX - 21 * 8, midY - 5 * 8, 'biblical');
+    eve.brain.name = "Eva";
+    eve.brain.title = "Madre de la Humanidad";
+    eve.brain.wisdom = 90;
+    social.blessLove(adam, eve);
+
+    // 🌾 CAÍN Y ABEL
+    const cain = spawnNpc('cultivator', midX - 25 * 8, midY + 12 * 8, 'biblical');
+    cain.brain.name = "Caín";
+    cain.brain.title = "Labrador de la Tierra";
+    cain.brain.setThoughtBubble("Con el sudor de mi frente labraré este suelo.", 150);
+
+    const abel = spawnNpc('fisherman', midX - 10 * 8, midY, 'biblical');
+    abel.brain.name = "Abel";
+    abel.brain.title = "Pastor Fiel";
+    abel.brain.setThoughtBubble("Ofrendaré lo mejor de mi rebaño al Creador.", 150);
+
+    // 🕊️ PROFETA EN EL ALTAR SAGRADO
+    const prophet = spawnNpc('prophet', midX + 18 * 8, midY - 6 * 8, 'biblical');
+    prophet.brain.name = "Profeta Elías";
+    prophet.brain.faith = 100;
+    prophet.brain.title = "Voz de Dios";
+
+    // Niños que corretean y aprenden
+    const c1 = spawnNpc('child', midX - 18 * 8, midY + 3 * 8, 'biblical');
+    c1.brain.name = "Enoc";
+    const c2 = spawnNpc('child', midX - 14 * 8, midY + 8 * 8, 'biblical');
+    c2.brain.name = "Sara";
+
+    // Animales bíblicos
+    spawnAnimal('dog', midX - 12 * 8, midY + 2 * 8);
+    spawnAnimal('pig', midX - 5 * 8, midY + 15 * 8);
+    spawnAnimal('pig', midX + 10 * 8, midY + 10 * 8);
+
+    chronicles.add("📖 ¡GÉNESIS! Adán, Eva, Caín y Abel fundan la civilización junto al Río de la Vida y el Altar Sagrado.", "divine");
+    notify("🕊️ ¡Albores Bíblicos! La humanidad aprende a sembrar, construir y orar.");
+  } else if (era.id === 'seventies') {
+    const bob = spawnNpc('musician', midX + 7 * 8, midY + 3 * 8, 'seventies');
+    bob.brain.name = "Bob Marley";
+    bob.brain.title = "Voz de la Paz";
+    bob.brain.setThoughtBubble("🎶 One Love, One Heart, Let's get together!", 180);
+
+    spawnNpc('healer', midX - 25 * 8, midY - 14 * 8, 'seventies');
+    spawnNpc('hippie', midX - 30 * 8, midY + 4 * 8, 'seventies');
+    spawnNpc('cultivator', midX + 12 * 8, midY + 18 * 8, 'seventies');
+    spawnNpc('child', midX, midY + 10 * 8, 'seventies');
+    spawnAnimal('dog', midX + 2 * 8, midY + 5 * 8);
+
+    chronicles.add("☮️ ¡FESTIVAL DE LA PAZ! Bob Marley y la comuna encienden la fogata de la armonía libre.", "divine");
+    notify("☮️ ¡Años 70! Paz, guitarras, amor libre y comuna ecológica.");
+  } else if (era.id === 'eighties') {
+    const boss = spawnNpc('boss', midX - 15 * 8, midY - 21 * 8, 'eighties');
+    boss.brain.name = "El Patrón";
+    spawnNpc('cultivator', midX - 10 * 8, midY + 15 * 8, 'eighties');
+    spawnNpc('police', midX + 25 * 8, midY + 10 * 8, 'eighties');
+    spawnNpc('child', midX - 5 * 8, midY, 'eighties');
+    spawnAnimal('dog', midX - 8 * 8, midY);
+    spawnAnimal('croc', midX + 30 * 8, midY + 20 * 8);
+
+    chronicles.add("💰 ¡IMPERIO CLANDESTINO! El Patrón reina en su hacienda con piscina y pistas de avioneta.", "divine");
+    notify("💰 ¡Años 80! Cárteles, hacienda de lujo y pistas clandestinas.");
+  } else if (era.id === 'forties') {
+    const cmd = spawnNpc('soldier', midX + 8 * 8, midY + 3 * 8, 'forties');
+    cmd.brain.name = "Comandante Miller";
+    cmd.brain.title = "Jefe del Bastión";
+    spawnNpc('medic', midX - 26 * 8, midY - 5 * 8, 'forties');
+    spawnNpc('soldier', midX - 10 * 8, midY + 2 * 8, 'forties');
+    spawnNpc('cultivator', midX + 15 * 8, midY - 10 * 8, 'forties');
+    spawnNpc('child', midX - 4 * 8, midY - 6 * 8, 'forties');
+    spawnAnimal('dog', midX + 5 * 8, midY + 5 * 8);
+
+    chronicles.add("⚔️ ¡FRENTE DE RESISTENCIA! Las trincheras están cavadas y el hospital militar recibe heridos.", "divine");
+    notify("⚔️ ¡Años 40! Búnker fortificado, trincheras y resistencia civil.");
+  }
 }
 
 // Mind Panel Elements
@@ -123,14 +206,14 @@ function openMindPanel(npc) {
   inspectedNpc = npc;
   updateMindPanelUI();
   mindPanel.style.display = 'block';
-  notify(`🧠 Inspeccionando la mente de ${npc.brain.name}`);
+  notify(`🧠 Inspeccionando a ${npc.brain.name} (${npc.brain.title})`);
 }
 
 function updateMindPanelUI() {
   if (!inspectedNpc || !inspectedNpc.brain) return;
   const b = inspectedNpc.brain;
   mindNpcName.innerText = `${b.name} (${inspectedNpc.type.toUpperCase()})`;
-  mindNpcTitle.innerText = `${b.title} (Nivel ${b.level})`;
+  mindNpcTitle.innerText = `${b.title} • Sabiduría: ${b.wisdom}`;
   mindNpcTrait.innerText = `Personalidad: ${b.trait.name}`;
   barFaith.style.width = `${b.faith}%`;
   barFear.style.width = `${b.fear}%`;
@@ -147,18 +230,19 @@ mindClose.addEventListener('click', () => {
 btnBlessFaith.addEventListener('click', () => {
   if (!inspectedNpc) return;
   inspectedNpc.brain.faith = Math.min(100, inspectedNpc.brain.faith + 25);
-  inspectedNpc.brain.fear = Math.max(0, inspectedNpc.brain.fear - 15);
-  inspectedNpc.brain.setThoughtBubble("🕊️ ¡Siento la gracia y paz del Creador!", 160);
+  inspectedNpc.brain.wisdom = Math.min(100, inspectedNpc.brain.wisdom + 10);
+  civ.addResource('knowledge', 5);
+  inspectedNpc.brain.setThoughtBubble("🕊️ ¡El Creador ha iluminado mi entendimiento!", 160);
   sound.playAscend();
-  vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 25, '#ffd700');
+  vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 30, '#ffd700');
   updateMindPanelUI();
-  notify(`✨ Has infundido fe y calma en ${inspectedNpc.brain.name}`);
+  notify(`✨ Has iluminado la sabiduría de ${inspectedNpc.brain.name}`);
 });
 
 btnScare.addEventListener('click', () => {
   if (!inspectedNpc) return;
   inspectedNpc.brain.fear = Math.min(100, inspectedNpc.brain.fear + 35);
-  inspectedNpc.brain.setThoughtBubble("😱 ¡Qué presencia tan aterradora!", 160);
+  inspectedNpc.brain.setThoughtBubble("😱 ¡Una voz de trueno retumba en mi alma!", 160);
   sound.playAlert();
   camera.triggerShake(4, 8);
   updateMindPanelUI();
@@ -174,24 +258,37 @@ btnPossessFromMind.addEventListener('click', () => {
 });
 
 // Gestión de botones de herramientas
-document.querySelectorAll('.tool-btn').forEach(btn => {
+document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentTool = btn.dataset.tool;
 
     if (currentTool === 'possess') {
-      notify("👁️ Haz click sobre cualquier aldeano o policía para poseer su cuerpo");
+      notify("👁️ Toca o haz click sobre cualquier personaje para encarnar en él");
     } else if (currentTool === 'inspect') {
-      notify("🧠 Haz click sobre cualquier aldeano para leer su mente y sensaciones");
+      notify("🧠 Toca o haz click sobre cualquier aldeano para leer su mente y sabiduría");
+    } else if (currentTool === 'build_house') {
+      notify("🏡 Toca en tierra plana para ordenar levantar una nueva choza o casa");
     }
   });
 });
 
-// Eventos de Mouse
+// Soporte Unificado Mouse y Pantallas Táctiles (Móviles / Tablets / PC)
+function getEventPos(e) {
+  if (e.touches && e.touches.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
 canvas.addEventListener('mousedown', (e) => {
   isMouseDown = true;
-  mousePos = { x: e.clientX, y: e.clientY };
+  mousePos = getEventPos(e);
   handlePointerAction();
 });
 
@@ -200,22 +297,42 @@ window.addEventListener('mouseup', () => {
 });
 
 canvas.addEventListener('mousemove', (e) => {
-  mousePos = { x: e.clientX, y: e.clientY };
+  mousePos = getEventPos(e);
   if (isMouseDown && mode === 'god') {
     handlePointerAction();
   }
 });
 
+// Eventos Táctiles para Móviles
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  isMouseDown = true;
+  mousePos = getEventPos(e);
+  handlePointerAction();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  mousePos = getEventPos(e);
+  if (isMouseDown && mode === 'god') {
+    handlePointerAction();
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+  isMouseDown = false;
+});
+
 // Lluvia divina masiva
 function triggerRain() {
   sound.playWater();
-  notify("🌧️ Has desatado una lluvia sagrada sobre la isla");
+  notify("🌧️ Has derramado bendita lluvia sobre los campos");
   for (let i = 0; i < 250; i++) {
     const rx = Math.floor(Math.random() * grid.width);
     const ry = Math.floor(Math.random() * 8);
     grid.set(rx, ry, ELEM.WATER);
   }
-  // Reacción mental de los aldeanos
+  civ.addResource('food', 5);
   npcs.forEach(n => n.brain.onDivineEvent('rain'));
 }
 
@@ -228,7 +345,6 @@ const chroniclesClose = document.getElementById('chroniclesClose');
 const btnOpenChronicles = document.getElementById('btnOpenChronicles');
 const chroniclesList = document.getElementById('chroniclesList');
 
-// Listener de nuevas noticias / dramas en vivo
 chronicles.onNewChronicle = (entry) => {
   if (!chroniclesList) return;
   const item = document.createElement('div');
@@ -240,13 +356,13 @@ chronicles.onNewChronicle = (entry) => {
   }
 };
 
-// Modal de Mapas
 btnOpenMaps.addEventListener('click', () => {
   mapModal.style.display = 'block';
 });
 mapClose.addEventListener('click', () => {
   mapModal.style.display = 'none';
 });
+
 document.querySelectorAll('#mapModal .map-card').forEach(card => {
   card.addEventListener('click', () => {
     const mapType = card.dataset.map;
@@ -254,27 +370,26 @@ document.querySelectorAll('#mapModal .map-card').forEach(card => {
     mapModal.style.display = 'none';
     camera.setMode('god', null, grid.width, grid.height);
 
-    // Reiniciar población base
     npcs.length = 0;
     animals.length = 0;
+    civ.reset();
+
     const midX = Math.floor(grid.width / 2) * 8;
     const midY = Math.floor(grid.height / 2) * 8;
     spawnNpc('cultivator', midX - 20, midY);
     spawnNpc('cultivator', midX + 20, midY);
     spawnNpc('child', midX - 10, midY + 15);
-    spawnNpc('police', midX + 40, midY - 20);
     spawnAnimal('dog', midX - 5, midY);
 
     const title = card.querySelector('.map-card-title').innerText;
-    chronicles.add(`🌍 ¡GÉNESIS! El mundo ha sido reformado en: ${title}`, 'divine');
+    chronicles.add(`🌍 ¡MUNDO REFORMADO! El Creador ha esculpido: ${title}`, 'divine');
     notify(`🌍 Mundo reformado: ${title}`);
   });
 });
 
-// Modal de Eras Históricas (Bíblica, 70s Bob Marley, 80s Carteles, 40s Guerra)
+// Modal de Eras Históricas
 const eraModal = document.getElementById('eraModal');
 const eraClose = document.getElementById('eraClose');
-const btnOpenEras = document.getElementById('btnOpenEras');
 
 btnOpenEras.addEventListener('click', () => {
   eraModal.style.display = 'block';
@@ -286,59 +401,12 @@ eraClose.addEventListener('click', () => {
 document.querySelectorAll('#eraModal .map-card').forEach(card => {
   card.addEventListener('click', () => {
     const eraKey = card.dataset.era;
-    currentEra = ERAS[eraKey];
-    btnOpenEras.innerText = `⏳ ${currentEra.name}`;
     eraModal.style.display = 'none';
-
-    // Regenerar mundo acorde a la era histórica
-    MapGenerator.generate(grid, currentEra.mapPreset);
-    camera.setMode('god', null, grid.width, grid.height);
-
-    npcs.length = 0;
-    animals.length = 0;
-    const midX = Math.floor(grid.width / 2) * 8;
-    const midY = Math.floor(grid.height / 2) * 8;
-
-    if (currentEra.id === 'biblical') {
-      spawnNpc('prophet', midX - 10, midY);
-      spawnNpc('fisherman', midX + 30, midY);
-      spawnNpc('cultivator', midX - 40, midY + 20);
-      spawnNpc('police', midX + 60, midY); // Centurión
-      spawnNpc('child', midX, midY + 15);
-      spawnAnimal('pig', midX + 20, midY + 20);
-      spawnAnimal('dog', midX - 25, midY);
-    } else if (currentEra.id === 'seventies') {
-      spawnNpc('musician', midX - 10, midY);
-      spawnNpc('hippie', midX + 25, midY);
-      spawnNpc('healer', midX - 35, midY + 20);
-      spawnNpc('cultivator', midX + 50, midY + 20);
-      spawnNpc('child', midX, midY + 15);
-      spawnAnimal('dog', midX - 5, midY);
-    } else if (currentEra.id === 'forties') {
-      spawnNpc('soldier', midX - 20, midY);
-      spawnNpc('soldier', midX + 40, midY);
-      spawnNpc('medic', midX - 10, midY + 15);
-      spawnNpc('cultivator', midX + 10, midY - 20);
-      spawnNpc('child', midX - 30, midY);
-      spawnAnimal('dog', midX + 20, midY);
-    } else {
-      // 80s Carteles
-      spawnNpc('boss', midX - 80, midY - 50);
-      spawnNpc('cultivator', midX - 20, midY);
-      spawnNpc('cultivator', midX + 40, midY - 20);
-      spawnNpc('police', midX + 70, midY + 40);
-      spawnNpc('child', midX - 30, midY + 10);
-      spawnAnimal('dog', midX - 15, midY + 5);
-      spawnAnimal('croc', midX + 110, midY + 60);
-    }
-
+    setupEraWorld(ERAS[eraKey]);
     sound.playAscend();
-    chronicles.add(`⏳ ¡CAMBIO DE ERA! El mundo entra en: ${currentEra.name}. ${currentEra.description}`, 'divine');
-    notify(`⏳ ¡Era iniciada: ${currentEra.name}!`);
   });
 });
 
-// Panel de Crónicas
 btnOpenChronicles.addEventListener('click', () => {
   chroniclesPanel.style.display = chroniclesPanel.style.display === 'flex' ? 'none' : 'flex';
 });
@@ -346,11 +414,10 @@ chroniclesClose.addEventListener('click', () => {
   chroniclesPanel.style.display = 'none';
 });
 
-// Variables para poderes de Cupido y Discordia
 let selectedLover = null;
 let selectedRival = null;
 
-// Acciones según herramienta
+// Acciones según herramienta divina
 function handlePointerAction() {
   if (mode !== 'god') return;
 
@@ -365,6 +432,9 @@ function handlePointerAction() {
   } else if (currentTool === 'seed') {
     grid.paint(tileX, tileY, ELEM.SEED, brushRadius);
     sound.playPlant();
+  } else if (currentTool === 'wood') {
+    grid.paint(tileX, tileY, ELEM.WOOD, brushRadius);
+    civ.addResource('wood', 2);
   } else if (currentTool === 'fire') {
     grid.paint(tileX, tileY, ELEM.FIRE, brushRadius);
     sound.playFire();
@@ -373,44 +443,39 @@ function handlePointerAction() {
     sound.playThunder();
     camera.triggerShake(7, 16);
     vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
-    notify("⚡ ¡El castigo de Dios ha caído!");
+    notify("⚡ ¡El rayo de Dios ha sacudido la tierra!");
     npcs.forEach(n => n.brain.onDivineEvent('lightning'));
   } else if (currentTool === 'rain') {
     triggerRain();
   } else if (currentTool === 'spawn_cultivator') {
-    spawnNpc('cultivator', worldCoords.x, worldCoords.y);
-    notify("👨‍🌾 Nuevo cultivador reclutado");
+    const human = spawnNpc('cultivator', worldCoords.x, worldCoords.y);
+    notify(`👨‍🌾 Ha nacido un nuevo aldeano: ${human.brain.name}`);
     isMouseDown = false;
   } else if (currentTool === 'spawn_child') {
-    spawnNpc('child', worldCoords.x, worldCoords.y);
-    notify("👶 Ha nacido un niño en la aldea");
-    chronicles.add("👶 ¡BENDICIÓN! Un nuevo niño corretea alegremente por la isla.", "birth");
+    const kid = spawnNpc('child', worldCoords.x, worldCoords.y);
+    notify(`👶 ${kid.brain.name} corretea alegremente aprendiendo`);
+    chronicles.add(`👶 ¡BENDICIÓN! El pequeño ${kid.brain.name} corretea por la aldea.`, "birth");
     isMouseDown = false;
   } else if (currentTool === 'spawn_animal') {
-    const types = ['dog', 'pig', 'croc'];
+    const types = ['dog', 'pig'];
     const selected = types[Math.floor(Math.random() * types.length)];
     spawnAnimal(selected, worldCoords.x, worldCoords.y);
-    notify(`🐾 Ha aparecido un animal: ${selected.toUpperCase()}`);
+    notify(`🐾 Animal creado: ${selected.toUpperCase()}`);
     isMouseDown = false;
-  } else if (currentTool === 'spawn_police') {
-    spawnNpc('police', worldCoords.x, worldCoords.y);
-    notify("👮 Patrulla policial desplegada");
-    isMouseDown = false;
-  } else if (currentTool === 'spawn_boss') {
-    spawnNpc('boss', worldCoords.x, worldCoords.y);
-    notify("👑 El Patrón ha llegado");
+  } else if (currentTool === 'build_house') {
+    civ.constructHouse(grid, tileX, tileY);
     isMouseDown = false;
   } else if (currentTool === 'love') {
     const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
     if (clickedNpc) {
       if (!selectedLover) {
         selectedLover = clickedNpc;
-        notify(`💘 Has flechado a ${clickedNpc.brain.name}. Ahora haz click en el segundo aldeano...`);
+        notify(`💘 Has flechado a ${clickedNpc.brain.name}. Selecciona a su pareja...`);
       } else if (selectedLover.id !== clickedNpc.id) {
         social.blessLove(selectedLover, clickedNpc);
         sound.playAscend();
         vfx.addShockwave(clickedNpc.x, clickedNpc.y, 35, '#ec4899');
-        notify(`💖 ¡${selectedLover.brain.name} y ${clickedNpc.brain.name} se han enamorado!`);
+        notify(`💖 ¡${selectedLover.brain.name} y ${clickedNpc.brain.name} se han prometido amor!`);
         selectedLover = null;
       }
       isMouseDown = false;
@@ -420,12 +485,12 @@ function handlePointerAction() {
     if (clickedNpc) {
       if (!selectedRival) {
         selectedRival = clickedNpc;
-        notify(`⚔️ Has marcado a ${clickedNpc.brain.name}. Haz click en su futuro rival...`);
+        notify(`⚔️ Marcado ${clickedNpc.brain.name}. Haz click en su rival...`);
       } else if (selectedRival.id !== clickedNpc.id) {
         social.sowDiscord(selectedRival, clickedNpc);
         sound.playAlert();
         vfx.addShockwave(clickedNpc.x, clickedNpc.y, 35, '#ef4444');
-        notify(`⚡ ¡${selectedRival.brain.name} y ${clickedNpc.brain.name} ahora son enemigos mortales!`);
+        notify(`⚡ ¡${selectedRival.brain.name} y ${clickedNpc.brain.name} son enemigos mortales!`);
         selectedRival = null;
       }
       isMouseDown = false;
@@ -445,48 +510,40 @@ function handlePointerAction() {
 
 // Iniciar Secuencia Mágica de Posesión (Estilo The Minish Cap)
 function enterPossession(npc) {
-  notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.type.toUpperCase()}!`);
+  notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.brain.name}!`);
 
-  // Ocultar HUD macro y panel de mente si estaba abierto
   topBar.style.display = 'none';
   bottomToolbar.style.display = 'none';
   if (mindPanel) mindPanel.style.display = 'none';
   inspectedNpc = null;
 
-  // Reacción de asombro místico en aldeanos vecinos (testigos del milagro)
   npcs.filter(n => n.id !== npc.id && Math.hypot(n.x - npc.x, n.y - npc.y) < 120)
       .forEach(n => n.brain.onDivineEvent('saw_possession'));
 
-  // Iniciar vórtice celestial y onda de choque
   vfx.startPossession(
     npc.x + 8,
     npc.y + 8,
-    // onImpact: Momento en que el rayo toca el cuerpo
     () => {
       mode = 'possessed';
       possessedNpc = npc;
       npc.isPossessed = true;
       camera.setMode('possessed', npc);
 
-      // Activar HUD inmersivo de Zelda Minish Cap
       possessedHud.style.display = 'block';
       controlsHelp.style.display = 'block';
       ascendBtn.style.display = 'none';
 
-      // Generar misión según la era histórica activa
       const quest = questSystem.generateQuestFor(npc, currentEra);
       questTitle.innerText = quest.title;
       questDesc.innerText = quest.description;
       updateQuestUI();
     },
-    // onComplete: Secuencia de transición terminada
     () => {
-      notify(`🎮 Tienes el control total. Cumple el encargo para liberar tu alma.`);
+      notify(`🎮 Tienes el control total de ${npc.brain.name}. Cumple el cometido divino.`);
     }
   );
 }
 
-// Ascender al Cielo (Volver a Modo Dios)
 function exitPossession() {
   if (possessedNpc) {
     possessedNpc.isPossessed = false;
@@ -497,7 +554,6 @@ function exitPossession() {
   camera.setMode('god', null, grid.width, grid.height);
   questSystem.clear();
 
-  // Restaurar HUD
   topBar.style.display = 'flex';
   bottomToolbar.style.display = 'flex';
   possessedHud.style.display = 'none';
@@ -516,7 +572,7 @@ function updateQuestUI() {
 
   if (q.completed) {
     ascendBtn.style.display = 'inline-block';
-    questDesc.innerHTML = `<span style="color:#4ade80">¡MISIÓN COMPLETADA!</span> Pulsa <b>[Q]</b> o haz click abajo para Ascender.`;
+    questDesc.innerHTML = `<span style="color:#4ade80">¡MISIÓN COMPLETADA!</span> Pulsa <b>[Q]</b> para Ascender.`;
   }
 }
 
@@ -528,6 +584,9 @@ function gameLoop() {
   // 1. Simulación Celular (Agua, fuego, plantas)
   grid.step();
 
+  // 1b. Evolución y Construcción Autónoma de la Civilización
+  civ.update(grid, npcs);
+
   // 2. Control del Jugador en Posesión
   if (mode === 'possessed' && possessedNpc) {
     controller.update(
@@ -535,12 +594,14 @@ function gameLoop() {
       grid,
       (actionType, amt) => {
         const completed = questSystem.onAction(actionType, amt);
-        if (actionType === 'deliver') {
-          clandestineCash += amt * 150;
+        if (actionType === 'harvest') {
+          civ.addResource('food', amt);
+        } else if (actionType === 'deliver') {
+          civ.addResource('knowledge', amt * 5);
         }
         updateQuestUI();
         if (completed) {
-          notify("✨ ¡Encargo cumplido! Tu alma ya puede ascender al cielo [Q]");
+          notify("✨ ¡Ofrenda cumplida! Tu alma ya puede ascender al cielo [Q]");
         }
       },
       () => {
@@ -556,11 +617,9 @@ function gameLoop() {
       npcs,
       8,
       (earned) => {
-        clandestineCash += earned;
+        civ.addResource('food', 1);
       },
-      () => {
-        policeAlert = Math.min(100, policeAlert + 15);
-      }
+      () => {}
     );
   }
 
@@ -569,7 +628,7 @@ function gameLoop() {
     animal.update(grid, npcs, animals, 8);
   }
 
-  // Sistema Social Emergente: Romance, Celos, Riñas y Crianza
+  // Sistema Social Emergente: Romance, Niños y Crianza
   social.update(npcs, (babyX, babyY, pA, pB) => {
     const baby = spawnNpc('child', babyX, babyY);
     baby.parentId = pA.id;
@@ -577,42 +636,25 @@ function gameLoop() {
     vfx.addShockwave(babyX, babyY, 25, '#f472b6');
   });
 
-  // Descenso natural de alerta policial con el tiempo
-  if (frameCount % 180 === 0 && policeAlert > 5) {
-    policeAlert = Math.max(0, policeAlert - 2);
-  }
-
-  // 4. Actualización de VFX y Partículas
+  // 4. Actualización de VFX
   vfx.update(camera);
-
-  // Si el jugador está poseyendo y moviéndose, emitir polvo bajo los pies
-  if (mode === 'possessed' && possessedNpc) {
-    if (Math.random() < 0.2) {
-      vfx.addHolySpark(possessedNpc.x, possessedNpc.y);
-    }
-  }
 
   // 5. Actualización de Cámara
   camera.update(mode === 'possessed' ? possessedNpc : null);
 
-  // 6. Renderizado (incluye NPCs, Animales, VFX y retícula)
+  // 6. Renderizado
   const worldMouse = camera.screenToWorld(mousePos.x, mousePos.y);
   renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius);
 
-  // 6. Actualización de Estadísticas cada 30 frames
-  if (frameCount % 30 === 0 && mode === 'god') {
+  // 7. Actualización de Estadísticas cada 25 frames
+  if (frameCount % 25 === 0 && mode === 'god') {
     statPop.innerText = npcs.length;
-    statCash.innerText = `$${clandestineCash}`;
-    statAlert.style.width = `${policeAlert}%`;
+    if (statWood) statWood.innerText = civ.wood;
+    if (statStone) statStone.innerText = civ.stone;
+    if (statFood) statFood.innerText = civ.food;
+    if (statWisdom) statWisdom.innerText = civ.knowledge;
+    if (civStage) civStage.innerText = `🏛️ ${civ.stageName}`;
 
-    // Contar plantas maduras
-    let crops = 0;
-    for (let i = 0; i < grid.grid.length; i++) {
-      if (grid.grid[i] === ELEM.PLANT_BLOOM) crops++;
-    }
-    statCrops.innerText = crops;
-
-    // Actualizar panel de mente en tiempo real si está abierto
     if (inspectedNpc) {
       updateMindPanelUI();
     }
@@ -621,6 +663,8 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Iniciar Loop
+// Iniciar Mundo por defecto en la Era Bíblica
+setupEraWorld(ERAS.BIBLICAL);
+
+// Iniciar GameLoop
 requestAnimationFrame(gameLoop);
-notify("👁️ Bienvenido al Ojo de Dios. ¡Siembra vida, riega agua y desata tu poder!");

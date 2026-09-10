@@ -29,15 +29,16 @@ export class Camera {
     const worldPxH = worldHeight * tileSize;
 
     if (mode === 'god') {
-      // Ajustar escala para ver la isla cómodamente
+      // Ajustar escala para ver la isla cómodamente en cualquier pantalla (móvil vertical, tablet o desktop)
       const scaleX = this.canvas.width / worldPxW;
       const scaleY = this.canvas.height / worldPxH;
-      this.godScale = Math.min(scaleX, scaleY) * 0.95;
-      this.targetScale = Math.max(0.6, Math.min(this.godScale, 1.4));
+      this.godScale = Math.min(scaleX, scaleY) * 0.92;
+      this.targetScale = Math.max(0.25, Math.min(this.godScale, 1.5));
       this.targetX = worldPxW / 2;
       this.targetY = worldPxH / 2;
     } else if (mode === 'possessed' && targetEntity) {
-      this.targetScale = this.possessedScale;
+      const isMobile = this.canvas.width < 600;
+      this.targetScale = isMobile ? 2.4 : this.possessedScale;
       this.targetX = targetEntity.x + 8;
       this.targetY = targetEntity.y + 8;
     }

@@ -62,31 +62,27 @@ export class Animal {
   }
 
   updateDog(allNpcs) {
-    // Si no tiene dueño, adopta al aldeano más cercano
-    if (!this.targetNpc || Math.random() < 0.005) {
-      const humans = allNpcs.filter(n => n.type === 'cultivator' || n.type === 'boss');
+    if (!this.targetNpc || Math.random() < 0.004) {
+      const humans = allNpcs.filter(n => n.type !== 'police');
       if (humans.length > 0) {
         this.targetNpc = humans[Math.floor(Math.random() * humans.length)];
+        this.setBubble("🐾 ¡He encontrado a mi amigo humano!", 80);
       }
     }
 
     if (this.targetNpc) {
       const d = Math.hypot(this.targetNpc.x - this.x, this.targetNpc.y - this.y);
       if (d > 35) {
-        // Seguir a su dueño
         const angle = Math.atan2(this.targetNpc.y - this.y, this.targetNpc.x - this.x);
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
         this.direction = this.vx > 0 ? 'right' : 'left';
-      } else if (d < 18 && Math.random() < 0.02) {
-        this.setBubble("🐕 ¡Guau! (Mueve la colita)", 70);
+      } else if (d < 20 && Math.random() < 0.02) {
+        this.setBubble("🐕 ¡Guau! ❤️ (Aprendiendo trucos)", 75);
+        if (this.targetNpc.brain) {
+          this.targetNpc.brain.energy = Math.min(100, this.targetNpc.brain.energy + 5);
+        }
       }
-    }
-
-    // Ladrar a la policía si está cerca
-    const police = allNpcs.find(n => n.type === 'police' && Math.hypot(n.x - this.x, n.y - this.y) < 45);
-    if (police && Math.random() < 0.04) {
-      this.setBubble("🐕 ¡GRRR! ¡GUAU GUAU!", 90);
     }
   }
 
@@ -97,7 +93,13 @@ export class Animal {
       this.vx = Math.cos(angle) * this.speed;
       this.vy = Math.sin(angle) * this.speed;
       this.direction = this.vx > 0 ? 'right' : 'left';
-      if (Math.random() < 0.3) {
+
+      // Pastar en plantas maduras
+      const tx = Math.floor(this.x / tileSize);
+      const ty = Math.floor(this.y / tileSize);
+      if (grid.get(tx, ty) === 6) { // PLANT_BLOOM
+        this.setBubble("🐖 ¡Oink! (Pastando rico trébol)", 70);
+      } else if (Math.random() < 0.25) {
         this.setBubble("🐖 Oink oink", 60);
       }
     }

@@ -45,15 +45,20 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega (Almacén del Patrón y Muelle) inyectando dinero en la economía insular.
   - **Conos de visión de linterna:** Los policías proyectan un campo de visión angular (FOV). Si un sospechoso o el jugador ingresa al haz de luz con cargamento ilegal, se dispara el estado de persecución con alerta sonora.
 
-### C. Motor de Eras Históricas y Profesiones (`src/world/eras.js` & `src/quests/questSystem.js`)
-- **Gestión Temporal de Épocas:** Permite cambiar la línea de tiempo global del mundo:
-  - Era Bíblica (Año 0), Era de Paz & Reggae (70s), Era de Cárteles (80s), Era Bélica (40s).
-  - Cada era redefine las profesiones disponibles, las metas de posesión y las misiones generadas proceduralmente (fe y perdón, buena vibra musical, contrabando o supervivencia militar).
-- **Física de Biomas Naturales:**
-  - **Hidrodinámica y Ahogamiento:** Las celdas de agua profunda activan un temporizador de ahogamiento en NPCs terrestres sin habilidad de nado, mientras los pescadores o nadadores nadan con animación de brazada.
-  - **Termodinámica del Desierto:** Las arenas desérticas aceleran el gasto de energía y deshidratación, induciendo búsqueda de fuentes de agua.
+### C. Motor de Civilización y Evolución Autónoma (`src/world/civilization.js`)
+- **Economía y Recursos Comunitarios:** Gestión viva de madera (`WOOD`), piedra (`STONE`), comida (`FOOD`) y sabiduría (`KNOWLEDGE`).
+- **Construcción Orgánica Procedural:** Al alcanzar umbrales de recursos, la tribu planifica y erige chozas de madera, casas de mampostería sólida, fogatas comunales y altares sagrados celda a celda.
+- **Árbol de Descubrimientos y Aprendizaje:** Los humanos aprenden agricultura, mampostería, domesticación y teología, evolucionando desde tribu nómada hasta reinos prósperos.
 
-### D. Motor de Animación Desacoplado (`src/render/animationManager.js`)
+### D. Motor de Eras Históricas y Arquitectura Temática (`src/world/eras.js` & `src/world/mapGenerator.js`)
+- **Generadores Arquitectónicos por Época:** 
+  - Albores Bíblicos (Monte del Altar, río de aguas vivas, cabañas de adobe, Adán, Eva, Caín y Abel).
+  - Comuna de los 70s (Escenario de madera de Bob Marley, fogata de la paz y carpas libres).
+  - Imperio Clandestino de los 80s (Mansión con piscina azulejada, pista de aterrizaje y muelles).
+  - Frente Bélico de los 40s (Búnker fortificado, trincheras zigzagueantes y hospital militar).
+- **Adaptabilidad Responsiva y Eventos Táctiles:** Normalización de coordenadas con soporte simultáneo para mouse en PC y toques `touchstart`/`touchmove` en smartphones y tablets.
+
+### E. Motor de Animación Desacoplado (`src/render/animationManager.js`)
 El juego separa estrictamente la **lógica física** de la **representación visual**:
 - **Doble soporte (Procedural + SpriteSheets de artistas):**
   - Si un pixel artist te entrega una hoja de sprites `.png` (hecha en Aseprite, Photoshop, etc.), simplemente la registras con:

@@ -14,7 +14,10 @@ export const ELEM = {
   ROAD: 11,
   BUILDING: 12,
   SAND: 13,
-  LAVA: 14
+  LAVA: 14,
+  WOOD: 15,
+  CAMPFIRE: 16,
+  GOLD: 17
 };
 
 export const ELEM_PROPS = {
@@ -122,6 +125,27 @@ export const ELEM_PROPS = {
     color: '#e11d48',
     isSolid: false,
     isLiquid: true,
+    flammable: false
+  },
+  [ELEM.WOOD]: {
+    name: 'Madera / Tronco',
+    color: '#854d0e',
+    isSolid: true,
+    isLiquid: false,
+    flammable: true
+  },
+  [ELEM.CAMPFIRE]: {
+    name: 'Fogata Comunal',
+    color: '#f97316',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.GOLD]: {
+    name: 'Oro / Mineral Sagrado',
+    color: '#facc15',
+    isSolid: true,
+    isLiquid: false,
     flammable: false
   }
 };

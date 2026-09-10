@@ -18,15 +18,18 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **Spawners:** Genera Campesinos/Jíbaros, Policías de patrulla, Niños/Aldeanitos, Animales (Perros, Cerdos, Caimanes) o al mismísimo Patrón.
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
-* **⌛ Selector de Eras Históricas:** Cambia la época del mundo en cualquier momento:
-  * 📜 **Era Bíblica (Año 0):** Profetas predicando, sanadores bendiciendo y pescadores navegando. Misiones de fe, perdón y milagros.
-  * ✌️ **Era de Paz y Reggae (Años 70 - Estilo Bob Marley):** Músicos tocando guitarras con notas musicales flotantes 🎶, jardineros sembrando hierba de paz y líderes espirituales. Misiones de buena vibra y unión.
-  * 🕶️ **Era de Cárteles y Capos (Años 80 - Estilo Narco):** Jíbaros, sicarios, patrullas con sirenas y capos en mansiones. Misiones clandestinas y contrabando.
-  * 🪖 **Era Bélica (Años 40):** Soldados en trinchera, médicos de combate, espías y comandantes militares con toques de queda y raciones.
-* **🌊 Física de la Naturaleza y Biomas:**
-  * **Agua y Ahogamiento:** Quienes saben nadar o son pescadores nadan libremente; los aldeanos sin habilidad para nadar chapotean y se ahogan si caen en aguas profundas si Dios no los salva.
-  * **Desierto y Sed:** Caminar por arena seca y desiertos deshidrata rápidamente a los personajes y reduce su energía si no encuentran un oasis o río.
-* **🎭 Profesiones y Vocaciones Diversas:** No todos son criminales; el mundo genera campesinos, pescadores, músicos, sanadores, soldados, científicos y profetas según la época.
+* **🪵 Madera y 🏡 Choza:** Coloca madera para los artesanos o levanta los cimientos de un nuevo hogar.
+* **👑 Sistema de Evolución y Civilización Autónoma (Estilo WorldBox):**
+  - **Recolección y Recursos Vivos:** Los aldeanos talan madera (`🪵`), pican piedra (`🪨`), cosechan trigo y pescan (`🍞`) para su comunidad.
+  - **Construcción Autónoma:** Al acumular recursos, los aldeanos eligen terrenos planos y **construyen sus propias chozas, casas de madera o piedra, senderos y altares ceremoniales**.
+  - **Sabiduría y Aprendizaje (`💡`):** Los ancianos y profetas transmiten conocimientos a los niños y adultos; la tribu descubre la agricultura, la mampostería, la domesticación animal y la teología, evolucionando de **Tribu Primitiva** a **Aldea Floreciente** y **Reino Próspero**.
+  - **Domesticación Animal:** Los perros y cerdos aprenden con el trato humano; los perros siguen a sus dueños con afecto (`❤️ ¡Guau!`) y vigilan las fogatas.
+* **⌛ Mapas Arquitectónicos Temáticos y Lore Histórico:**
+  - 📜 **Albores Bíblicos (Tras Caín y Abel):** Adán y Eva en su hogar ancestral, Caín labrando la tierra buscando redención, Abel cuidando rebaños, profetas orando ante el Monte del Altar Sagrado y el Río de la Vida.
+  - ☮️ **Comuna de Paz (Años 70 - Bob Marley):** Gran escenario musical de madera, fogata de la paz y comuna de carpas y huertos libres.
+  - 💰 **Imperio Clandestino (Años 80):** Hacienda del Patrón con piscina privada de azulejos, pista de aterrizaje clandestina y muelles secretos.
+  - ⚔️ **Frente de Resistencia (Años 40):** Búnker de mando fortificado, red de trincheras en zigzag, hospital militar de campaña y partisanos.
+* **📱 Adaptabilidad Total y Pantallas Táctiles:** El juego escala dinámicamente en cualquier pantalla (celulares verticales, tablets o monitores panorámicos 4K), con soporte táctil nativo para jugar con los dedos en móviles.
 
 ### 2. Vida Social, Crianza y Emociones (`src/social/relations.js` & `src/ai/brain.js`)
 * **Familias y Crianza:** Las parejas establecidas pueden tener bebés. Los niños corretean, juegan imitando a los adultos y al cabo del tiempo crecen convirtiéndose en campesinos adultos.

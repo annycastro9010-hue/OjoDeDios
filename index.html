@@ -39,20 +39,23 @@
     /* BARRA SUPERIOR ESTADÍSTICAS */
     .top-bar {
       position: absolute;
-      top: 12px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 18px;
-      background: rgba(10, 14, 26, 0.88);
+      gap: 12px;
+      background: rgba(10, 14, 26, 0.92);
       border: 2px solid #334155;
-      padding: 8px 20px;
+      padding: 6px 14px;
       border-radius: 8px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(4px);
       z-index: 10;
-      font-size: 20px;
+      font-size: 18px;
+      max-width: 95vw;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .title-badge {
@@ -60,13 +63,13 @@
       font-size: 11px;
       color: #ffd700;
       text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
-      margin-right: 8px;
+      margin-right: 4px;
     }
 
     .stat-item {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .stat-val {
@@ -75,8 +78,8 @@
     }
 
     .alert-bar-container {
-      width: 90px;
-      height: 12px;
+      width: 70px;
+      height: 10px;
       background: #1e293b;
       border: 1px solid #475569;
       border-radius: 4px;
@@ -93,18 +96,29 @@
     /* BARRA INFERIOR DE PODERES DIVINOS */
     .bottom-toolbar {
       position: absolute;
-      bottom: 14px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 8px;
-      background: rgba(15, 23, 42, 0.92);
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.94);
       border: 2px solid #475569;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 12px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(6px);
       z-index: 10;
+      max-width: 96vw;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .bottom-toolbar::-webkit-scrollbar {
+      height: 4px;
+    }
+    .bottom-toolbar::-webkit-scrollbar-thumb {
+      background: #38bdf8;
+      border-radius: 2px;
     }
 
     .tool-btn {
@@ -476,6 +490,52 @@
       transition: opacity 0.3s;
       pointer-events: none;
     }
+
+    @media (max-width: 768px) {
+      .top-bar {
+        font-size: 15px;
+        gap: 8px;
+        padding: 4px 8px;
+        top: 6px;
+      }
+      .title-badge {
+        font-size: 9px;
+      }
+      .tool-btn {
+        min-width: 50px;
+        font-size: 15px;
+        padding: 4px 6px;
+      }
+      .mind-panel {
+        width: 90vw;
+        right: 5vw;
+        top: 55px;
+      }
+      .map-grid {
+        grid-template-columns: 1fr;
+      }
+      .map-modal {
+        width: 94vw;
+        max-height: 80vh;
+        padding: 12px;
+      }
+      .chronicles-panel {
+        width: 94vw;
+        left: 3vw;
+        bottom: 75px;
+        height: 220px;
+      }
+      .possessed-hud {
+        top: 8px;
+        left: 8px;
+        font-size: 16px;
+      }
+      .controls-help {
+        bottom: 60px;
+        font-size: 14px;
+        padding: 4px 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -484,24 +544,29 @@
   <!-- Barra Superior en Modo Dios -->
   <div class="top-bar" id="topBar">
     <div class="title-badge">👁️ OJO DE DIOS</div>
-    <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 10px; font-size: 16px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: 1985 (Carteles)</button>
+    <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 10px; font-size: 15px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: Albores Bíblicos</button>
+    <div class="stat-item">
+      <span id="civStage" style="color: #fef08a; font-weight: bold; background: #1e293b; padding: 2px 8px; border-radius: 4px; border: 1px solid #eab308; font-size: 16px;">🏕️ Tribu Primitiva</span>
+    </div>
     <div class="stat-item">
       <span>👥</span>
       <span class="stat-val" id="statPop">0</span>
     </div>
     <div class="stat-item">
-      <span>🌿 Cosecha:</span>
-      <span class="stat-val" id="statCrops">0</span>
+      <span>🪵</span>
+      <span class="stat-val" id="statWood">25</span>
     </div>
     <div class="stat-item">
-      <span>💵 Dinero:</span>
-      <span class="stat-val" id="statCash">$0</span>
+      <span>🪨</span>
+      <span class="stat-val" id="statStone">15</span>
     </div>
     <div class="stat-item">
-      <span>🚨 Alerta:</span>
-      <div class="alert-bar-container">
-        <div class="alert-bar-fill" id="statAlert"></div>
-      </div>
+      <span>🍞</span>
+      <span class="stat-val" id="statFood">30</span>
+    </div>
+    <div class="stat-item">
+      <span>💡</span>
+      <span class="stat-val" id="statWisdom">10</span>
     </div>
   </div>
 
@@ -540,18 +605,18 @@
     <button class="tool-btn active" data-tool="water">💧 Agua</button>
     <button class="tool-btn" data-tool="dirt">🟫 Tierra</button>
     <button class="tool-btn" data-tool="seed">🌿 Semilla</button>
+    <button class="tool-btn" data-tool="wood">🪵 Madera</button>
     <button class="tool-btn" data-tool="fire">🔥 Fuego</button>
     <button class="tool-btn" data-tool="lightning">⚡ Rayo</button>
     <button class="tool-btn" data-tool="rain">🌧️ Lluvia</button>
-    <button class="tool-btn" data-tool="spawn_cultivator">👨‍🌾 Jíbaro</button>
+    <button class="tool-btn" data-tool="spawn_cultivator">👨‍🌾 Aldeano</button>
     <button class="tool-btn" data-tool="spawn_child">👶 Niño</button>
     <button class="tool-btn" data-tool="spawn_animal">🐕 Animal</button>
-    <button class="tool-btn" data-tool="spawn_police">👮 Policía</button>
-    <button class="tool-btn" data-tool="spawn_boss">👑 Patrón</button>
+    <button class="tool-btn" data-tool="build_house">🏡 Choza</button>
     <button class="tool-btn" data-tool="love">💘 Amor</button>
     <button class="tool-btn" data-tool="discord">⚔️ Cizaña</button>
     <button class="tool-btn" data-tool="inspect">🧠 Mente</button>
-    <button class="tool-btn" id="btnOpenChronicles">📜 Chismes</button>
+    <button class="tool-btn" id="btnOpenChronicles">📜 Crónicas</button>
     <button class="tool-btn" id="btnOpenMaps">🗺️ Mapas</button>
     <button class="tool-btn possess-btn" data-tool="possess">👁️ POSEER</button>
   </div>

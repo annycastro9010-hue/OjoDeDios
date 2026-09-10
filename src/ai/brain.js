@@ -1,35 +1,38 @@
-// Sistema de Personalidad, Sensaciones y Mente Autónoma para NPCs
-
-const FIRST_NAMES = [
-  'Juancho', 'Don Chepe', 'Rosita', 'El Flaco', 'Mateo', 'Sargento Morales',
-  'Padre Lucas', 'El Chino', 'La Güera', 'Toño', 'Benjamín', 'Carmen',
-  'El Zurdo', 'Doña Blanca', 'Camilo', 'Esteban', 'Silvia', 'El Zarco'
-];
+const ERA_NAMES = {
+  biblical: ['Adán', 'Eva', 'Caín', 'Abel', 'Enoc', 'Sara', 'Noé', 'Abraham', 'Miriam', 'Elías', 'Mateo', 'Salomón'],
+  seventies: ['Bob', 'Ziggy', 'Rita', 'Damian', 'Janis', 'Jimi', 'Marley', 'Lili', 'Paz', 'Luna', 'Sol', 'Dylan'],
+  eighties: ['Pablo', 'Gonzalo', 'Carlos', 'Don Chepe', 'Jorge', 'Virginia', 'El Flaco', 'Rosita', 'El Zurdo', 'Toño'],
+  forties: ['Sargento Miller', 'Clara', 'Winston', 'Hans', 'Sophie', 'Dmitry', 'Elena', 'Capitán Torres', 'Partisano Lev']
+};
 
 const TRAITS = [
   { id: 'devoto', name: 'Devoto Místico', desc: 'Fascinado por los milagros divinos. Reza ante la lluvia y los rayos.' },
-  { id: 'ambicioso', name: 'Codicioso', desc: 'Obsesionado con el dinero ilícito. Trabaja sin descanso.' },
-  { id: 'cobarde', name: 'Miedoso', desc: 'Entra en pánico fácilmente con el fuego o las sirenas policiales.' },
-  { id: 'holgazán', name: 'Perezoso', desc: 'Le gusta tomar siestas y pasear por los senderos sin apuro.' },
-  { id: 'rebelde', name: 'Insumiso', desc: 'Desafía abiertamente la ley y no respeta a las autoridades.' },
+  { id: 'curioso', name: 'Curioso / Sabio', desc: 'Desea aprender cómo funciona el mundo, investigar y construir.' },
+  { id: 'constructor', name: 'Constructor', desc: 'Le apasiona talar madera, picar piedra y levantar hogares para su clan.' },
+  { id: 'ambicioso', name: 'Próspero', desc: 'Trabaja sin descanso para acumular bienes y hacer crecer el reino.' },
+  { id: 'cobarde', name: 'Cauto', desc: 'Evita peligros, bestias y fuego para proteger a los suyos.' },
   { id: 'piadoso', name: 'Pacífico', desc: 'Evita conflictos y busca la armonía en la comunidad.' }
 ];
 
 export class NPCBrain {
-  constructor(type) {
-    this.name = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+  constructor(type, eraId = 'biblical') {
+    const namesList = ERA_NAMES[eraId] || FIRST_NAMES;
+    this.name = namesList[Math.floor(Math.random() * namesList.length)];
     this.trait = TRAITS[Math.floor(Math.random() * TRAITS.length)];
 
-    // Estado Mental y Emocional (0 a 100)
+    // Estado Mental, Emocional y Cognitivo (0 a 100)
     this.faith = 25 + Math.floor(Math.random() * 30); // Fe en Dios
     this.fear = 10;                                   // Nivel de Pánico
-    this.greed = this.trait.id === 'ambicioso' ? 85 : 35; // Deseo de dinero
-    this.energy = 80 + Math.floor(Math.random() * 20); // Energía física
+    this.greed = this.trait.id === 'ambicioso' ? 85 : 30; // Deseo de prosperidad
+    this.energy = 85 + Math.floor(Math.random() * 15); // Energía física
+    this.wisdom = 10 + Math.floor(Math.random() * 20); // Conocimiento / Aprendizaje
+    this.curiosity = 50 + Math.floor(Math.random() * 50); // Deseo de aprender y explorar
     
     // Evolución y Rango
     this.level = 1;
     this.experience = 0;
     this.deliveredCargos = 0;
+    this.buildingsHelped = 0;
     this.title = this.calculateTitle(type);
 
     // Pensamiento activo en la mente del aldeano
@@ -40,20 +43,23 @@ export class NPCBrain {
   }
 
   calculateTitle(type) {
-    if (type === 'police') {
-      if (this.level >= 3) return "Comandante de Zona";
-      if (this.level >= 2) return "Oficial Veterano";
-      return "Guardia de Patrulla";
-    }
-    if (type === 'boss') {
-      return "El Gran Patrón";
-    }
-    // Cultivador / Aldeano
+    if (this.wisdom >= 80) return "Sabio de la Tribu";
+    if (this.buildingsHelped >= 3) return "Maestro Constructor";
     if (this.faith >= 85) return "Profeta Iluminado";
-    if (this.level >= 4) return "Lugarteniente del Cártel";
-    if (this.level >= 3) return "Contrabandista Experto";
-    if (this.level >= 2) return "Cultivador Ágil";
-    return "Peón Rural";
+
+    if (type === 'prophet') return "Profeta Sagrado";
+    if (type === 'fisherman') return this.level >= 2 ? "Patrón del Río" : "Pescador";
+    if (type === 'musician') return this.level >= 2 ? "Maestro de Melodías" : "Músico";
+    if (type === 'healer') return "Sanador Botánico";
+    if (type === 'soldier') return this.level >= 2 ? "Capitán de Guardia" : "Centinela";
+    if (type === 'police') return this.level >= 2 ? "Comandante" : "Guardia";
+    if (type === 'boss') return "Líder de la Dinastía";
+
+    // Aldeano / Constructor
+    if (this.level >= 4) return "Patriarca del Clan";
+    if (this.level >= 3) return "Constructor Diestro";
+    if (this.level >= 2) return "Agricultor Próspero";
+    return "Aldeano";
   }
 
   // Muestra un bocadillo de pensamiento sobre su cabeza
@@ -143,22 +149,39 @@ export class NPCBrain {
       return;
     }
 
-    if (this.faith >= 70 && Math.random() < 0.3) {
-      this.setThoughtBubble("🙏 Dios Todopoderoso, guía mis pasos", 100);
+    if (this.curiosity >= 70 && Math.random() < 0.4) {
+      const thoughts = [
+        "💡 Si apilamos madera y arcilla haremos casas seguras.",
+        "🐾 ¡Los cachorros aprenden rápido si los alimentamos!",
+        "🌾 Si sembramos junto al agua el trigo brotará el doble.",
+        "✨ Debe haber un Creador detrás de toda esta naturaleza...",
+        "🪵 Necesitamos cortar más madera para la siguiente choza."
+      ];
+      this.setThoughtBubble(thoughts[Math.floor(Math.random() * thoughts.length)], 110);
       return;
     }
 
-    if (this.trait.id === 'holgazán' && Math.random() < 0.4) {
-      this.setThoughtBubble("😴 Qué ganas de una siesta bajo un árbol", 100);
+    if (this.trait.id === 'constructor' && Math.random() < 0.5) {
+      this.setThoughtBubble("🔨 Buscando un buen terreno plano para construir", 110);
+      return;
+    }
+
+    if (this.faith >= 70 && Math.random() < 0.3) {
+      this.setThoughtBubble("🙏 Que el Gran Creador bendiga a nuestro pueblo", 100);
+      return;
+    }
+
+    if (this.trait.id === 'piadoso' && Math.random() < 0.4) {
+      this.setThoughtBubble("🕊️ Qué bendición ver a nuestra comunidad prosperar", 100);
       return;
     }
 
     const randomThoughts = [
-      "El clima en la isla está tranquilo hoy.",
-      "Espero que no se incendie el cañal.",
-      "El Patrón paga puntual si no te pillan.",
-      "Dicen que desde el cielo alguien nos observa..."
+      "El fuego de la fogata mantiene calientes a los niños.",
+      "Espero que tengamos buena pesca hoy.",
+      "La piedra del monte es dura y servirá para los cimientos.",
+      "Aprendiendo cada día a dominar la tierra..."
     ];
-    this.setThoughtBubble(randomThoughts[Math.floor(Math.random() * randomThoughts.length)], 80);
+    this.setThoughtBubble(randomThoughts[Math.floor(Math.random() * randomThoughts.length)], 90);
   }
 }

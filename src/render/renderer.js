@@ -51,11 +51,31 @@ export class GameRenderer {
           ctx.fillRect(px, py, ts, ts);
           ctx.fillStyle = '#f59e0b';
           ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
-        } else if (elem === ELEM.BUILDING) {
-          ctx.fillStyle = '#3e2723';
+        } else if (elem === ELEM.CAMPFIRE) {
+          // Fogata comunal con leños y brasas crepitantes
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(px + 1, py + 4, ts - 2, 3);
+          const flameColor = Math.random() > 0.4 ? '#f97316' : '#facc15';
+          ctx.fillStyle = flameColor;
+          ctx.fillRect(px + 2, py + 1, ts - 4, ts - 3);
+        } else if (elem === ELEM.WOOD) {
+          // Troncos de madera
+          ctx.fillStyle = '#854d0e';
           ctx.fillRect(px, py, ts, ts);
-          ctx.fillStyle = '#271915';
-          ctx.strokeRect(px, py, ts, ts);
+          ctx.fillStyle = '#a16207';
+          ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+        } else if (elem === ELEM.GOLD) {
+          // Bloque de oro / reliquia sagrada
+          ctx.fillStyle = '#facc15';
+          ctx.fillRect(px, py, ts, ts);
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+        } else if (elem === ELEM.BUILDING) {
+          // Muro de casa / techo
+          ctx.fillStyle = '#573319';
+          ctx.fillRect(px, py, ts, ts);
+          ctx.fillStyle = '#854d0e';
+          ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
         } else {
           ctx.fillStyle = ELEM_PROPS[elem]?.color || '#fff';
           ctx.fillRect(px, py, ts, ts);
