@@ -330,6 +330,24 @@ export class GameRenderer {
         ctx.fillText('!', npc.x + 8, npc.y - 6);
       }
 
+      // 👑 Distintivo de Líder de la Civilización
+      if (npc.brain && npc.brain.isLeader) {
+        ctx.save();
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('👑', npc.x + 8, npc.y - 4);
+        ctx.restore();
+      }
+
+      // ⚠️ Alerta de Inanición Crítica
+      if (npc.brain && npc.brain.needs && npc.brain.needs.health < 35) {
+        ctx.save();
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚠️', npc.x + 8, npc.y - (npc.brain.isLeader ? 14 : 6));
+        ctx.restore();
+      }
+
       // 💭 Bocadillo de pensamiento emergente sobre la cabeza del aldeano
       if (npc.brain && npc.brain.bubbleText) {
         ctx.save();

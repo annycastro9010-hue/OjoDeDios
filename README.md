@@ -20,11 +20,17 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
 * **🪵 Madera y 🏡 Choza:** Coloca madera para los artesanos o levanta los cimientos de un nuevo hogar.
-* **👑 Sistema de Evolución y Civilización Autónoma (Estilo WorldBox):**
-  - **Recolección y Recursos Vivos:** Los aldeanos talan madera (`🪵`), pican piedra (`🪨`), cosechan trigo y pescan (`🍞`) para su comunidad.
-  - **Construcción Autónoma:** Al acumular recursos, los aldeanos eligen terrenos planos y **construyen sus propias chozas, casas de madera o piedra, senderos y altares ceremoniales**.
-  - **Sabiduría y Aprendizaje (`💡`):** Los ancianos y profetas transmiten conocimientos a los niños y adultos; la tribu descubre la agricultura, la mampostería, la domesticación animal y la teología, evolucionando de **Tribu Primitiva** a **Aldea Floreciente** y **Reino Próspero**.
-  - **Domesticación Animal:** Los perros y cerdos aprenden con el trato humano; los perros siguen a sus dueños con afecto (`❤️ ¡Guau!`) y vigilan las fogatas.
+* **🍗 Supervivencia Humana y Necesidades Biológicas:**
+  - **Hambre y Salud:** Cada habitante experimenta hambre progresiva (`hunger`). Cuando tienen necesidad, consumen raciones de las reservas comunales de la aldea (`🍞`).
+  - **Riesgo de Hambruna e Inanición:** Si se agotan los alimentos comunales, la población pierde salud y sufre descontento.
+  - **Milagro del Maná:** Desde el panel de inspección mental, el Dios puede alimentar milagrosamente a cualquier aldeano hambriento.
+* **💡 Árbol Tecnológico de la Humanidad (10 Invenciones):**
+  - Los sabios y ciudadanos curiosos investigan el entorno de forma emergente: **Dominio del Fuego**, **Herramientas Líticas**, **Agricultura Primitiva**, **Graneros Comunales**, **Medicina Botánica**, **Canales de Irrigación**, **Mampostería Sólida**, **Código de Leyes**, **Templo Sagrado** y **Empalizadas Defensivas**.
+* **👑 Formas de Gobierno, Elección de Líderes y Leyes del Estado (`🏛️ Leyes`):**
+  - **4 Regímenes Políticos:** *Consejo Tribal de Ancianos*, *Teocracia Sagrada*, *Monarquía Feudal* y *República Democrática de Ciudadanos Libres*.
+  - **Elección Popular de Líderes:** La civilización elige orgánicamente a su líder supremo según la cultura dominante (el más sabio, el más devoto o el más votado), quien lleva una corona dorada (`👑`) sobre su cabeza.
+  - **Decretos y Políticas Activas:** Proclama o deroga leyes como *Racionamiento de Alimentos* en hambrunas, *Tributo de Obras Públicas* (+recursos), *Culto Sagrado* (+fe y ciencia) y *Guardia y Orden Cívico* (-crímenes).
+  - **Estabilidad Social y Revueltas:** Si la población sufre hambruna o mal gobierno prolongado, la felicidad se desploma y el pueblo derroca al líder en una revuelta popular.
 * **⌛ Mapas Arquitectónicos Temáticos y Lore Histórico:**
   - 🇨🇴 **Realidad Macondo (Selva, Retenes y Cuadrante - 2026):** Trochas de barro, río serpenteante con canoas, cambuche guerrillero con sancocho en la selva, retenes clandestinos, patrullas del cuadrante, tiendas con billar y mototaxis suicidas.
   - 📜 **Albores Bíblicos (Tras Caín y Abel):** Adán y Eva en su hogar ancestral, Caín labrando la tierra buscando redención, Abel cuidando rebaños, profetas orando ante el Monte del Altar Sagrado y el Río de la Vida.

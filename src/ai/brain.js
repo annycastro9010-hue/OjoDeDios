@@ -1,3 +1,5 @@
+import { civ } from '../world/civilization.js';
+
 const ERA_NAMES = {
   biblical: ['Adán', 'Eva', 'Caín', 'Abel', 'Enoc', 'Sara', 'Noé', 'Abraham', 'Miriam', 'Elías', 'Mateo', 'Salomón'],
   seventies: ['Bob', 'Ziggy', 'Rita', 'Damian', 'Janis', 'Jimi', 'Marley', 'Lili', 'Paz', 'Luna', 'Sol', 'Dylan'],
@@ -38,6 +40,15 @@ export class NPCBrain {
     this.deliveredCargos = 0;
     this.buildingsHelped = 0;
     this.title = this.calculateTitle(type);
+
+    // Necesidades biológicas de supervivencia
+    this.needs = {
+      hunger: 10 + Math.floor(Math.random() * 20), // 0 a 100
+      health: 100,                                 // 0 a 100
+      thirst: 0                                    // 0 a 100
+    };
+    this.satisfaction = 80;                        // Satisfacción con gobierno y vida (0 a 100)
+    this.isLeader = false;
 
     // Pensamiento activo en la mente del aldeano
     this.currentThought = "Viendo qué hacer hoy...";
@@ -127,7 +138,7 @@ export class NPCBrain {
     }
   }
 
-  // Bucle de actualización mental (llamado cada frame)
+  // Bucle de actualización mental y biológica (llamado cada frame)
   update(npc, nearbyDanger, isRaining) {
     // Contador de bocadillo de pensamiento
     if (this.bubbleTimer > 0) {
@@ -146,6 +157,37 @@ export class NPCBrain {
     // Regulación de emociones con el tiempo
     if (this.fear > 5) this.fear -= 0.05;
     if (this.energy < 100 && npc.state === 'wandering') this.energy += 0.03;
+
+    // --- SUPERVIVENCIA BIOLÓGICA ---
+    // Aumento gradual del hambre (el racionamiento ralentiza el consumo de energía)
+    const hungerRate = (civ && civ.activePolicies.rationing) ? 0.014 : 0.022;
+    this.needs.hunger = Math.min(100, this.needs.hunger + hungerRate);
+
+    // Alimentación: cuando el hambre supera 55, consume del inventario comunal
+    if (this.needs.hunger > 55 && civ) {
+      if (civ.consumeFood(1)) {
+        this.needs.hunger = Math.max(0, this.needs.hunger - 50);
+        this.needs.health = Math.min(100, this.needs.health + 10);
+        this.satisfaction = Math.min(100, this.satisfaction + 5);
+        if (Math.random() < 0.005) {
+          this.setThoughtBubble("🍞 Mmm, buen sustento del almacén comunal.", 80);
+        }
+      } else {
+        // Escasez comunal
+        this.satisfaction = Math.max(0, this.satisfaction - 0.04);
+        if (this.needs.hunger >= 90) {
+          this.needs.health = Math.max(0, this.needs.health - 0.05);
+          if (Math.random() < 0.008) {
+            this.setThoughtBubble("💀 ¡Hambruna! No hay nada que comer...", 90);
+          }
+        }
+      }
+    }
+
+    // Medicina botánica: si la civilización descubrió herbalism, se recupera salud si no está famélico
+    if (civ && civ.discoveries.herbalism && this.needs.health < 90 && this.needs.hunger < 60) {
+      this.needs.health = Math.min(100, this.needs.health + 0.04);
+    }
   }
 
   // Generador de pensamientos según personalidad y situación
@@ -277,11 +319,55 @@ export class NPCBrain {
       return;
     }
 
+    // Pensamientos de Líder de Gobierno
+    if (this.isLeader && Math.random() < 0.6) {
+      const leaderThoughts = [
+        "👑 Guiar a esta civilización hacia la prosperidad es mi deber sagrado.",
+        "📜 Las leyes justas mantendrán la paz entre las familias.",
+        "🏛️ Debemos almacenar más recursos para las futuras generaciones.",
+        "👑 Escucharé las peticiones del pueblo en la asamblea.",
+        "🌾 Si protegemos los cultivos, nadie pasará hambre."
+      ];
+      this.setThoughtBubble(leaderThoughts[Math.floor(Math.random() * leaderThoughts.length)], 130);
+      return;
+    }
+
+    // Pensamientos de Hambre y Supervivencia
+    if (this.needs.hunger > 70) {
+      const hungryThoughts = [
+        "🥖 Se me pegan las tripas al espinazo... necesito comida.",
+        "🌾 Ojalá los recolectores traigan pronto fruta madura.",
+        "🥣 ¿Quedará algo de sopa en el almacén comunal?",
+        "😵 Me tiemblan las piernas de la debilidad..."
+      ];
+      this.setThoughtBubble(hungryThoughts[Math.floor(Math.random() * hungryThoughts.length)], 110);
+      return;
+    }
+
+    // Malestar Político y Social si hay hambruna o disturbios
+    if (civ && civ.unrest > 50 && Math.random() < 0.5) {
+      const protestThoughts = [
+        "😠 ¡El pueblo no aguanta más hambre ni abandono!",
+        "📢 ¡Exigimos pan y justicia para las familias!",
+        "⚠️ Si el líder no resuelve la crisis, marcharemos.",
+        "🔥 Hay murmullos de rebelión en las esquinas..."
+      ];
+      this.setThoughtBubble(protestThoughts[Math.floor(Math.random() * protestThoughts.length)], 120);
+      return;
+    }
+
+    // Pensamiento sobre Racionamiento activo
+    if (civ && civ.activePolicies.rationing && Math.random() < 0.3) {
+      this.setThoughtBubble("🥣 Apretarse el cinturón con las raciones de comida...", 100);
+      return;
+    }
+
     const randomThoughts = [
       "El fuego de la fogata mantiene calientes a los niños.",
       "Espero que tengamos buena pesca hoy.",
       "La piedra del monte es dura y servirá para los cimientos.",
-      "Aprendiendo cada día a dominar la tierra..."
+      "Aprendiendo cada día a dominar la tierra...",
+      "Cuidar a la comunidad es asegurar nuestro mañana."
     ];
     this.setThoughtBubble(randomThoughts[Math.floor(Math.random() * randomThoughts.length)], 90);
   }

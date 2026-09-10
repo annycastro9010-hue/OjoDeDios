@@ -491,6 +491,98 @@
       pointer-events: none;
     }
 
+    /* MODAL DE GOBIERNO, LEYES Y CIENCIA */
+    .gov-modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 620px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.96);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+      border-radius: 14px;
+      padding: 18px;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      display: none;
+    }
+    .gov-modal::-webkit-scrollbar {
+      width: 6px;
+    }
+    .gov-modal::-webkit-scrollbar-thumb {
+      background: #38bdf8;
+      border-radius: 3px;
+    }
+    .gov-section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #38bdf8;
+      margin: 14px 0 8px 0;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 4px;
+    }
+    .gov-info-card {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .policy-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+    }
+    .policy-btn {
+      padding: 4px 10px;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #94a3b8;
+      transition: all 0.15s;
+    }
+    .policy-btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+    }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .tech-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .tech-card.unlocked {
+      border-color: #10b981;
+      background: rgba(6, 78, 59, 0.25);
+    }
+    .tech-card.locked {
+      opacity: 0.6;
+    }
+
     @media (max-width: 768px) {
       .top-bar {
         font-size: 15px;
@@ -518,6 +610,14 @@
         width: 94vw;
         max-height: 80vh;
         padding: 12px;
+      }
+      .gov-modal {
+        width: 95vw;
+        max-height: 85vh;
+        padding: 10px;
+      }
+      .tech-grid {
+        grid-template-columns: 1fr;
       }
       .chronicles-panel {
         width: 94vw;
@@ -653,8 +753,13 @@
   <div class="top-bar" id="topBar">
     <div class="title-badge">👁️ OJO DE DIOS</div>
     <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 10px; font-size: 15px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: Albores Bíblicos</button>
+    <button class="tool-btn" id="btnOpenGov" style="min-width: unset; padding: 4px 10px; font-size: 15px; border-color: #38bdf8; background: #0c4a6e; color: #bae6fd;">👑 <span id="govBarTitle">Gobierno</span></button>
     <div class="stat-item">
       <span id="civStage" style="color: #fef08a; font-weight: bold; background: #1e293b; padding: 2px 8px; border-radius: 4px; border: 1px solid #eab308; font-size: 16px;">🏕️ Tribu Primitiva</span>
+    </div>
+    <div class="stat-item" title="Felicidad Comunal">
+      <span>😊</span>
+      <span class="stat-val" id="statHappy" style="color: #4ade80;">85%</span>
     </div>
     <div class="stat-item">
       <span>👥</span>
@@ -662,15 +767,15 @@
     </div>
     <div class="stat-item">
       <span>🪵</span>
-      <span class="stat-val" id="statWood">25</span>
+      <span class="stat-val" id="statWood">30</span>
     </div>
     <div class="stat-item">
       <span>🪨</span>
-      <span class="stat-val" id="statStone">15</span>
+      <span class="stat-val" id="statStone">20</span>
     </div>
     <div class="stat-item">
       <span>🍞</span>
-      <span class="stat-val" id="statFood">30</span>
+      <span class="stat-val" id="statFood">40</span>
     </div>
     <div class="stat-item">
       <span>💡</span>
@@ -732,8 +837,35 @@
     <button class="tool-btn" data-tool="discord">⚔️ Cizaña</button>
     <button class="tool-btn" data-tool="inspect">🧠 Mente</button>
     <button class="tool-btn" id="btnOpenChronicles">📜 Crónicas</button>
+    <button class="tool-btn" id="btnToolbarGov" style="border-color: #38bdf8; color: #7dd3fc;">🏛️ Leyes</button>
     <button class="tool-btn" id="btnOpenMaps">🗺️ Mapas</button>
     <button class="tool-btn possess-btn" data-tool="possess">👁️ POSEER</button>
+  </div>
+
+  <!-- Modal de Gobierno, Leyes y Ciencia -->
+  <div class="gov-modal" id="govModal">
+    <div class="modal-header">
+      <div class="modal-title">🏛️ GOBIERNO, CIENCIA Y LEYES</div>
+      <span class="mind-close" id="govClose">✖</span>
+    </div>
+
+    <div class="gov-info-card">
+      <div>
+        <div style="font-size: 20px; color: #facc15; font-weight: bold;" id="govModalType">Consejo Tribal de Ancianos</div>
+        <div style="font-size: 16px; color: #94a3b8;" id="govModalLeader">Líder: Adán (Patriarca)</div>
+        <div style="font-size: 15px; color: #38bdf8; margin-top: 4px;">
+          Felicidad: <b id="govModalHappy" style="color: #4ade80;">85%</b> &nbsp;|&nbsp; 
+          Descontento: <b id="govModalUnrest" style="color: #f87171;">10%</b>
+        </div>
+      </div>
+      <button class="tool-btn" id="btnGovElect" style="border-color: #facc15; background: #713f12; color: #fef08a; font-size: 15px; padding: 4px 8px;">🗳️ Elecciones</button>
+    </div>
+
+    <div class="gov-section-title">📜 DECRETOS Y POLÍTICAS PÚBLICAS</div>
+    <div id="govPoliciesList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+
+    <div class="gov-section-title">💡 ÁRBOL CIENTÍFICO Y TECNOLOGÍAS</div>
+    <div class="tech-grid" id="govTechGrid"></div>
   </div>
 
   <!-- Modal Selector de Mapas -->
@@ -794,12 +926,20 @@
       <div class="mind-stat-bar"><div class="mind-stat-fill fill-faith" id="barFaith" style="width: 50%;"></div></div>
     </div>
     <div class="mind-stat-row">
-      <span>😨 Pánico / Miedo:</span>
-      <div class="mind-stat-bar"><div class="mind-stat-fill fill-fear" id="barFear" style="width: 15%;"></div></div>
+      <span>🥖 Hambre:</span>
+      <div class="mind-stat-bar"><div class="mind-stat-fill" id="barHunger" style="width: 20%; background: #f97316;"></div></div>
     </div>
     <div class="mind-stat-row">
-      <span>💰 Codicia / Plata:</span>
-      <div class="mind-stat-bar"><div class="mind-stat-fill fill-greed" id="barGreed" style="width: 40%;"></div></div>
+      <span>❤️ Salud:</span>
+      <div class="mind-stat-bar"><div class="mind-stat-fill" id="barHealth" style="width: 100%; background: #ef4444;"></div></div>
+    </div>
+    <div class="mind-stat-row">
+      <span>🤝 Lealtad:</span>
+      <div class="mind-stat-bar"><div class="mind-stat-fill" id="barSatisfaction" style="width: 80%; background: #38bdf8;"></div></div>
+    </div>
+    <div class="mind-stat-row">
+      <span>😨 Pánico / Miedo:</span>
+      <div class="mind-stat-bar"><div class="mind-stat-fill fill-fear" id="barFear" style="width: 15%;"></div></div>
     </div>
     <div class="mind-stat-row">
       <span>⚡ Energía:</span>
@@ -813,6 +953,7 @@
 
     <div class="mind-actions">
       <button class="mind-action-btn" id="btnBlessFaith">✨ Dar Fe</button>
+      <button class="mind-action-btn" id="btnFeedNpc" style="color: #fdba74; border-color: #ea580c;">🍞 Alimentar</button>
       <button class="mind-action-btn" id="btnScare">😱 Asustar</button>
       <button class="mind-action-btn" id="btnPossessFromMind" style="color: #facc15; border-color: #ca8a04;">👁️ Poseer</button>
     </div>

@@ -71,6 +71,19 @@ const statFood = document.getElementById('statFood');
 const statWisdom = document.getElementById('statWisdom');
 const civStage = document.getElementById('civStage');
 const btnOpenEras = document.getElementById('btnOpenEras');
+const btnOpenGov = document.getElementById('btnOpenGov');
+const btnToolbarGov = document.getElementById('btnToolbarGov');
+const govModal = document.getElementById('govModal');
+const govClose = document.getElementById('govClose');
+const govModalType = document.getElementById('govModalType');
+const govModalLeader = document.getElementById('govModalLeader');
+const govModalHappy = document.getElementById('govModalHappy');
+const govModalUnrest = document.getElementById('govModalUnrest');
+const btnGovElect = document.getElementById('btnGovElect');
+const govPoliciesList = document.getElementById('govPoliciesList');
+const govTechGrid = document.getElementById('govTechGrid');
+const govBarTitle = document.getElementById('govBarTitle');
+const statHappy = document.getElementById('statHappy');
 const questTitle = document.getElementById('questTitle');
 const questDesc = document.getElementById('questDesc');
 const questHarvest = document.getElementById('questHarvest');
@@ -240,6 +253,9 @@ function setupEraWorld(era) {
     chronicles.add("🇨🇴 ¡REALIDAD MACONDO! El cuadrante patrulla la trocha, la guerrilla hierve el sancocho y Doña Gloria vigila.", "divine");
     notify("🇨🇴 ¡Realidad Macondo! Selva, retenes, cuadrantes, mototaxis y aguacates.");
   }
+
+  // Elegir orgánicamente el líder de la civilización para la era
+  civ.electLeader(npcs);
 }
 
 // Mind Panel Elements
@@ -249,11 +265,14 @@ const mindClose = document.getElementById('mindClose');
 const mindNpcTitle = document.getElementById('mindNpcTitle');
 const mindNpcTrait = document.getElementById('mindNpcTrait');
 const barFaith = document.getElementById('barFaith');
+const barHunger = document.getElementById('barHunger');
+const barHealth = document.getElementById('barHealth');
+const barSatisfaction = document.getElementById('barSatisfaction');
 const barFear = document.getElementById('barFear');
-const barGreed = document.getElementById('barGreed');
 const barEnergy = document.getElementById('barEnergy');
 const mindThoughtText = document.getElementById('mindThoughtText');
 const btnBlessFaith = document.getElementById('btnBlessFaith');
+const btnFeedNpc = document.getElementById('btnFeedNpc');
 const btnScare = document.getElementById('btnScare');
 const btnPossessFromMind = document.getElementById('btnPossessFromMind');
 
@@ -270,12 +289,14 @@ function updateMindPanelUI() {
   if (!inspectedNpc || !inspectedNpc.brain) return;
   const b = inspectedNpc.brain;
   mindNpcName.innerText = `${b.name} (${inspectedNpc.type.toUpperCase()})`;
-  mindNpcTitle.innerText = `${b.title} • Sabiduría: ${b.wisdom}`;
+  mindNpcTitle.innerText = `${b.title} • Sabiduría: ${Math.round(b.wisdom)}`;
   mindNpcTrait.innerText = `Personalidad: ${b.trait.name}`;
-  barFaith.style.width = `${b.faith}%`;
-  barFear.style.width = `${b.fear}%`;
-  barGreed.style.width = `${b.greed}%`;
-  barEnergy.style.width = `${b.energy}%`;
+  if (barFaith) barFaith.style.width = `${Math.min(100, Math.round(b.faith))}%`;
+  if (barHunger && b.needs) barHunger.style.width = `${Math.min(100, Math.round(b.needs.hunger))}%`;
+  if (barHealth && b.needs) barHealth.style.width = `${Math.min(100, Math.round(b.needs.health))}%`;
+  if (barSatisfaction) barSatisfaction.style.width = `${Math.min(100, Math.round(b.satisfaction || 80))}%`;
+  if (barFear) barFear.style.width = `${Math.min(100, Math.round(b.fear))}%`;
+  if (barEnergy) barEnergy.style.width = `${Math.min(100, Math.round(b.energy))}%`;
   mindThoughtText.innerText = `"${b.currentThought}"`;
 }
 
@@ -296,6 +317,23 @@ btnBlessFaith.addEventListener('click', () => {
   notify(`✨ Has iluminado la sabiduría de ${inspectedNpc.brain.name}`);
 });
 
+if (btnFeedNpc) {
+  btnFeedNpc.addEventListener('click', () => {
+    if (!inspectedNpc || !inspectedNpc.brain) return;
+    const b = inspectedNpc.brain;
+    if (b.needs) {
+      b.needs.hunger = 0;
+      b.needs.health = 100;
+    }
+    b.satisfaction = 100;
+    b.setThoughtBubble("🍞 ¡Maná del Cielo! ¡El Creador ha saciado mi hambre!", 180);
+    sound.playAscend();
+    vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 25, '#f59e0b');
+    updateMindPanelUI();
+    notify(`🍞 Has saciado el hambre de ${b.name} con maná celestial`);
+  });
+}
+
 btnScare.addEventListener('click', () => {
   if (!inspectedNpc) return;
   inspectedNpc.brain.fear = Math.min(100, inspectedNpc.brain.fear + 35);
@@ -313,6 +351,80 @@ btnPossessFromMind.addEventListener('click', () => {
   inspectedNpc = null;
   enterPossession(target);
 });
+
+// --- SISTEMA Y MODAL DE GOBIERNO, CIENCIA Y LEYES ---
+function openGovModal() {
+  renderGovModalUI();
+  if (govModal) govModal.style.display = 'block';
+}
+
+function renderGovModalUI() {
+  if (!govModal) return;
+  if (govModalType) govModalType.innerText = civ.governmentName;
+  if (govModalLeader) govModalLeader.innerText = `Líder Supremo: ${civ.leaderName || 'Ninguno'}`;
+  if (govModalHappy) govModalHappy.innerText = `${Math.round(civ.happiness)}%`;
+  if (govModalUnrest) govModalUnrest.innerText = `${Math.round(civ.unrest)}%`;
+
+  // Renderizar Políticas
+  if (govPoliciesList) {
+    govPoliciesList.innerHTML = '';
+    const policies = civ.getPolicies();
+    for (const pol of policies) {
+      const item = document.createElement('div');
+      item.className = 'policy-item';
+      item.innerHTML = `
+        <div>
+          <div style="font-size: 18px; color: #f8fafc; font-weight: bold;">${pol.icon} ${pol.name}</div>
+          <div style="font-size: 14px; color: #94a3b8;">${pol.desc}</div>
+          <div style="font-size: 12px; color: #38bdf8;">Requisito: ${pol.req}</div>
+        </div>
+        <button class="policy-btn ${pol.active ? 'active' : ''}" data-policy="${pol.id}">
+          ${pol.active ? '✅ ACTIVO' : '⭕ DEROGADO'}
+        </button>
+      `;
+      item.querySelector('.policy-btn').addEventListener('click', () => {
+        civ.togglePolicy(pol.id);
+        renderGovModalUI();
+      });
+      govPoliciesList.appendChild(item);
+    }
+  }
+
+  // Renderizar Árbol de Conocimiento
+  if (govTechGrid) {
+    govTechGrid.innerHTML = '';
+    const techs = civ.getTechTree();
+    for (const t of techs) {
+      const card = document.createElement('div');
+      card.className = `tech-card ${t.unlocked ? 'unlocked' : 'locked'}`;
+      card.innerHTML = `
+        <div style="font-size: 24px;">${t.icon}</div>
+        <div style="flex: 1;">
+          <div style="font-size: 16px; font-weight: bold; color: ${t.unlocked ? '#34d399' : '#e2e8f0'};">
+            ${t.name} ${t.unlocked ? '✓' : '🔒'}
+          </div>
+          <div style="font-size: 13px; color: #94a3b8;">${t.desc}</div>
+          <div style="font-size: 12px; color: ${t.unlocked ? '#a7f3d0' : '#f59e0b'};">
+            ${t.unlocked ? '¡Descubierto!' : `Requiere: ${t.req}`}
+          </div>
+        </div>
+      `;
+      govTechGrid.appendChild(card);
+    }
+  }
+}
+
+if (btnOpenGov) btnOpenGov.addEventListener('click', openGovModal);
+if (btnToolbarGov) btnToolbarGov.addEventListener('click', openGovModal);
+if (govClose) govClose.addEventListener('click', () => { govModal.style.display = 'none'; });
+if (btnGovElect) {
+  btnGovElect.addEventListener('click', () => {
+    civ.electLeader(npcs);
+    sound.playAscend();
+    renderGovModalUI();
+    notify(`👑 Se convocó asamblea popular y se proclamó a ${civ.leaderName}`);
+  });
+}
 
 // Gestión de botones de herramientas
 document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
@@ -757,9 +869,13 @@ function gameLoop() {
     statPop.innerText = npcs.length;
     if (statWood) statWood.innerText = civ.wood;
     if (statStone) statStone.innerText = civ.stone;
-    if (statFood) statFood.innerText = civ.food;
-    if (statWisdom) statWisdom.innerText = civ.knowledge;
+    if (statFood) statFood.innerText = Math.round(civ.food);
+    if (statWisdom) statWisdom.innerText = Math.round(civ.knowledge);
     if (civStage) civStage.innerText = `🏛️ ${civ.stageName}`;
+    if (statHappy) statHappy.innerText = `${Math.round(civ.happiness)}%`;
+    if (govBarTitle) {
+      govBarTitle.innerText = civ.leaderName ? `${civ.leaderName.split(' ')[0]} (${civ.governmentName.split(' ')[0]})` : civ.governmentName.split(' ')[0];
+    }
 
     if (inspectedNpc) {
       updateMindPanelUI();

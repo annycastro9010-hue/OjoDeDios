@@ -59,10 +59,15 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
     - `alcalde`: Saluda a las masas y reparte tamales por votos.
   - **Habilidades Activas en Modo Posesión:** El controlador mapea la tecla `ESPACIO` / botón de acción para ejecutar la habilidad única del personaje encarnado.
 
-### C. Motor de Civilización y Evolución Autónoma (`src/world/civilization.js`)
-- **Economía y Recursos Comunitarios:** Gestión viva de madera (`WOOD`), piedra (`STONE`), comida (`FOOD`) y sabiduría (`KNOWLEDGE`).
-- **Construcción Orgánica Procedural:** Al alcanzar umbrales de recursos, la tribu planifica y erige chozas de madera, casas de mampostería sólida, fogatas comunales y altares sagrados celda a celda.
-- **Árbol de Descubrimientos y Aprendizaje:** Los humanos aprenden agricultura, mampostería, domesticación y teología, evolucionando desde tribu nómada hasta reinos prósperos.
+### C. Motor de Civilización, Supervivencia y Gobierno (`src/world/civilization.js` & `src/ai/brain.js`)
+- **Supervivencia Biológica Individual:** Cada NPC gestiona indicadores en tiempo real de hambre (`hunger`), salud (`health`), sed y moral. Cuando el hambre aprieta, consumen raciones del almacén comunal; ante hambrunas prolongadas, sufren inanición.
+- **Economía y Graneros Comunales:** Gestión activa de madera (`WOOD`), piedra (`STONE`), comida (`FOOD`) y sabiduría (`KNOWLEDGE`). Se erigen Graneros Centrales para conservar cosechas.
+- **Árbol de Descubrimientos Científicos (10 Tecnologías):** Dominio del Fuego, Herramientas Líticas, Agricultura Primitiva, Graneros Comunales, Medicina Botánica, Canales de Irrigación, Mampostería Sólida, Código de Leyes, Templo Sagrado y Empalizadas Defensivas.
+- **Sistema Político y Elección Orgánica de Líderes:**
+  - 4 Formas de Gobierno vivas: *Consejo Tribal de Ancianos*, *Teocracia Sagrada*, *Monarquía y Corona Real* y *República de Ciudadanos Libres*.
+  - Elección popular del Líder (representado con corona dorada 👑 sobre su sprite).
+  - Decretos y Leyes activas: Racionamiento de Alimentos en crisis, Tributo de Obras Públicas, Culto Sagrado y Guardia Cívica.
+  - Dinámica de Estabilidad Social: Descontento popular y revueltas ciudadanas si hay escasez o tiranía.
 
 ### D. Motor de Eras Históricas y Arquitectura Temática (`src/world/eras.js` & `src/world/mapGenerator.js`)
 - **Generadores Arquitectónicos por Época:** 
