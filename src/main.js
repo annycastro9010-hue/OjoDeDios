@@ -11,6 +11,8 @@ import { MapGenerator } from './world/mapGenerator.js';
 import { Animal } from './entities/animals.js';
 import { social, chronicles } from './social/relations.js';
 
+import { ERAS } from './world/eras.js';
+
 // Inicialización de lienzo
 const canvas = document.getElementById('gameCanvas');
 function resizeCanvas() {
@@ -31,6 +33,7 @@ const questSystem = new QuestSystem();
 let mode = 'god'; // 'god' o 'possessed'
 let possessedNpc = null;
 let currentTool = 'water';
+let currentEra = ERAS.EIGHTIES; // Era activa por defecto
 let brushRadius = 2;
 let isMouseDown = false;
 let mousePos = { x: 0, y: 0 };
@@ -244,7 +247,7 @@ btnOpenMaps.addEventListener('click', () => {
 mapClose.addEventListener('click', () => {
   mapModal.style.display = 'none';
 });
-document.querySelectorAll('.map-card').forEach(card => {
+document.querySelectorAll('#mapModal .map-card').forEach(card => {
   card.addEventListener('click', () => {
     const mapType = card.dataset.map;
     MapGenerator.generate(grid, mapType);
@@ -265,6 +268,73 @@ document.querySelectorAll('.map-card').forEach(card => {
     const title = card.querySelector('.map-card-title').innerText;
     chronicles.add(`🌍 ¡GÉNESIS! El mundo ha sido reformado en: ${title}`, 'divine');
     notify(`🌍 Mundo reformado: ${title}`);
+  });
+});
+
+// Modal de Eras Históricas (Bíblica, 70s Bob Marley, 80s Carteles, 40s Guerra)
+const eraModal = document.getElementById('eraModal');
+const eraClose = document.getElementById('eraClose');
+const btnOpenEras = document.getElementById('btnOpenEras');
+
+btnOpenEras.addEventListener('click', () => {
+  eraModal.style.display = 'block';
+});
+eraClose.addEventListener('click', () => {
+  eraModal.style.display = 'none';
+});
+
+document.querySelectorAll('#eraModal .map-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const eraKey = card.dataset.era;
+    currentEra = ERAS[eraKey];
+    btnOpenEras.innerText = `⏳ ${currentEra.name}`;
+    eraModal.style.display = 'none';
+
+    // Regenerar mundo acorde a la era histórica
+    MapGenerator.generate(grid, currentEra.mapPreset);
+    camera.setMode('god', null, grid.width, grid.height);
+
+    npcs.length = 0;
+    animals.length = 0;
+    const midX = Math.floor(grid.width / 2) * 8;
+    const midY = Math.floor(grid.height / 2) * 8;
+
+    if (currentEra.id === 'biblical') {
+      spawnNpc('prophet', midX - 10, midY);
+      spawnNpc('fisherman', midX + 30, midY);
+      spawnNpc('cultivator', midX - 40, midY + 20);
+      spawnNpc('police', midX + 60, midY); // Centurión
+      spawnNpc('child', midX, midY + 15);
+      spawnAnimal('pig', midX + 20, midY + 20);
+      spawnAnimal('dog', midX - 25, midY);
+    } else if (currentEra.id === 'seventies') {
+      spawnNpc('musician', midX - 10, midY);
+      spawnNpc('hippie', midX + 25, midY);
+      spawnNpc('healer', midX - 35, midY + 20);
+      spawnNpc('cultivator', midX + 50, midY + 20);
+      spawnNpc('child', midX, midY + 15);
+      spawnAnimal('dog', midX - 5, midY);
+    } else if (currentEra.id === 'forties') {
+      spawnNpc('soldier', midX - 20, midY);
+      spawnNpc('soldier', midX + 40, midY);
+      spawnNpc('medic', midX - 10, midY + 15);
+      spawnNpc('cultivator', midX + 10, midY - 20);
+      spawnNpc('child', midX - 30, midY);
+      spawnAnimal('dog', midX + 20, midY);
+    } else {
+      // 80s Carteles
+      spawnNpc('boss', midX - 80, midY - 50);
+      spawnNpc('cultivator', midX - 20, midY);
+      spawnNpc('cultivator', midX + 40, midY - 20);
+      spawnNpc('police', midX + 70, midY + 40);
+      spawnNpc('child', midX - 30, midY + 10);
+      spawnAnimal('dog', midX - 15, midY + 5);
+      spawnAnimal('croc', midX + 110, midY + 60);
+    }
+
+    sound.playAscend();
+    chronicles.add(`⏳ ¡CAMBIO DE ERA! El mundo entra en: ${currentEra.name}. ${currentEra.description}`, 'divine');
+    notify(`⏳ ¡Era iniciada: ${currentEra.name}!`);
   });
 });
 
@@ -403,8 +473,8 @@ function enterPossession(npc) {
       controlsHelp.style.display = 'block';
       ascendBtn.style.display = 'none';
 
-      // Generar misión
-      const quest = questSystem.generateQuestFor(npc);
+      // Generar misión según la era histórica activa
+      const quest = questSystem.generateQuestFor(npc, currentEra);
       questTitle.innerText = quest.title;
       questDesc.innerText = quest.description;
       updateQuestUI();

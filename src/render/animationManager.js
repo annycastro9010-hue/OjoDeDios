@@ -282,13 +282,59 @@ export class AnimationManager {
   }
 
   getCharacterPalette(type) {
-    if (type === 'police') {
+    if (type === 'prophet') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#ffffff', // Túnica sagrada blanca
+        pants: '#38bdf8', // Manto celestial
+        shoes: '#78350f', // Sandalias
+        hat: '#fef08a',
+        hatBand: '#eab308'
+      };
+    } else if (type === 'musician' || type === 'hippie') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#f59e0b', // Ropa tie-dye colorida estilo Bob Marley
+        pants: '#10b981', // Pantalones verdes
+        shoes: '#78350f',
+        hat: '#ef4444',   // Gorro rastafari rojo/amarillo/verde
+        hatBand: '#facc15'
+      };
+    } else if (type === 'fisherman') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#0284c7', // Azul marino
+        pants: '#334155',
+        shoes: '#1e293b',
+        hat: '#f1f5f9',   // Gorro marinero
+        hatBand: '#0284c7'
+      };
+    } else if (type === 'soldier') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#4b5563', // Uniforme militar de los 40s
+        pants: '#374151',
+        shoes: '#111827',
+        hat: '#4b5563',   // Casco de acero
+        hatBand: '#1f2937'
+      };
+    } else if (type === 'healer' || type === 'medic') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#f8fafc', // Bata blanca
+        pants: '#0284c7',
+        shoes: '#334155',
+        hat: '#ef4444',   // Cruz roja / boina médica
+        hatBand: '#ffffff'
+      };
+    } else if (type === 'police') {
       return {
         skin: '#f5cda5',
         shirt: '#1e3a8a',
         pants: '#0f172a',
         shoes: '#020617',
-        hat: '#1e3a8a'
+        hat: '#1e3a8a',
+        hatBand: '#facc15'
       };
     } else if (type === 'boss') {
       return {
@@ -296,10 +342,20 @@ export class AnimationManager {
         shirt: '#991b1b',
         pants: '#f8fafc',
         shoes: '#450a0a',
-        hat: '#18181b'
+        hat: '#18181b',
+        hatBand: '#facc15'
+      };
+    } else if (type === 'child') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#fb923c', // Naranja infantil
+        pants: '#38bdf8',
+        shoes: '#0284c7',
+        hat: '#facc15',
+        hatBand: '#ea580c'
       };
     }
-    // Cultivator default
+    // Cultivador / Campesino default
     return {
       skin: '#f5cda5',
       shirt: '#f1f5f9',

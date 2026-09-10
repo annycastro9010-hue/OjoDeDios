@@ -484,6 +484,7 @@
   <!-- Barra Superior en Modo Dios -->
   <div class="top-bar" id="topBar">
     <div class="title-badge">👁️ OJO DE DIOS</div>
+    <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 10px; font-size: 16px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: 1985 (Carteles)</button>
     <div class="stat-item">
       <span>👥</span>
       <span class="stat-val" id="statPop">0</span>
@@ -500,6 +501,36 @@
       <span>🚨 Alerta:</span>
       <div class="alert-bar-container">
         <div class="alert-bar-fill" id="statAlert"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Selector de Eras Históricas -->
+  <div class="map-modal" id="eraModal">
+    <div class="modal-header">
+      <div class="modal-title">⏳ SELECCIONAR ERA HISTÓRICA</div>
+      <span class="mind-close" id="eraClose">✖</span>
+    </div>
+    <div class="map-grid">
+      <div class="map-card" data-era="BIBLICAL">
+        <div class="map-card-icon">🕊️</div>
+        <div class="map-card-title">Antigüedad Bíblica</div>
+        <div class="map-card-desc">Año 33. Profetas, pescadores, túnicas, desiertos y milagros sobre las aguas.</div>
+      </div>
+      <div class="map-card" data-era="SEVENTIES">
+        <div class="map-card-icon">☮️</div>
+        <div class="map-card-title">Años 70 (Bob Marley)</div>
+        <div class="map-card-desc">1976. Paz, amor libre, música reggae, hippies y flores curativas.</div>
+      </div>
+      <div class="map-card" data-era="EIGHTIES">
+        <div class="map-card-icon">💰</div>
+        <div class="map-card-title">Años 80 (Carteles)</div>
+        <div class="map-card-desc">1985. Pistas clandestinas, capos del narcotráfico, fajos de dólares y agentes de la DEA.</div>
+      </div>
+      <div class="map-card" data-era="FORTIES">
+        <div class="map-card-icon">⚔️</div>
+        <div class="map-card-title">Años 40 (Tiempos de Guerra)</div>
+        <div class="map-card-desc">1944. Soldados con cascos, partisanos de la resistencia civil, fábricas y alertas.</div>
       </div>
     </div>
   </div>

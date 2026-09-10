@@ -12,13 +12,15 @@ export const ELEM = {
   ASH: 9,
   STONE: 10,
   ROAD: 11,
-  BUILDING: 12
+  BUILDING: 12,
+  SAND: 13,
+  LAVA: 14
 };
 
 export const ELEM_PROPS = {
   [ELEM.EMPTY]: {
     name: 'Aire',
-    color: '#0a0f1d', // Color de fondo espacial / oceánico profundo
+    color: '#0a0f1d',
     isSolid: false,
     isLiquid: false,
     flammable: false
@@ -102,10 +104,24 @@ export const ELEM_PROPS = {
     flammable: false
   },
   [ELEM.BUILDING]: {
-    name: 'Almacén Secreto',
+    name: 'Estructura / Casa',
     color: '#473c35',
     isSolid: true,
     isLiquid: false,
+    flammable: false
+  },
+  [ELEM.SAND]: {
+    name: 'Arena de Desierto',
+    color: '#d4b16a',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.LAVA]: {
+    name: 'Magma / Lava',
+    color: '#e11d48',
+    isSolid: false,
+    isLiquid: true,
     flammable: false
   }
 };

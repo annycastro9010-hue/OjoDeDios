@@ -35,7 +35,11 @@ export class NPC {
     this.rivalId = null;
     this.hasChild = false;
     this.parentId = null;
-    this.age = 0;
+    // Habilidades físicas naturales y biomas
+    this.canSwim = (type === 'fisherman' || type === 'prophet' || type === 'musician' || Math.random() < 0.35);
+    this.isSwimming = false;
+    this.drowningTimer = 0;
+    this.thirst = 0;
 
     if (type === 'child') {
       this.speed = 1.0;
@@ -48,7 +52,7 @@ export class NPC {
     if (this.isPossessed) return;
 
     // Actualización de mente y pensamientos autónomos
-    const nearbyPolice = allNpcs.find(n => n.type === 'police' && n.id !== this.id && this.distTo(n) < 60);
+    const nearbyPolice = allNpcs.find(n => (n.type === 'police' || n.type === 'soldier') && n.id !== this.id && this.distTo(n) < 60);
     this.brain.update(this, !!nearbyPolice, false);
 
     this.animTimer++;
@@ -57,14 +61,75 @@ export class NPC {
       this.frame = (this.frame + 1) % 4;
     }
 
+    // Detección física del bioma del suelo
+    const curTileX = Math.floor((this.x + 8) / tileSize);
+    const curTileY = Math.floor((this.y + 8) / tileSize);
+    const groundElem = grid.get(curTileX, curTileY);
+
+    // 1. Agua y Ahogamiento Natural
+    if (groundElem === ELEM.WATER) {
+      if (this.type === 'prophet') {
+        if (Math.random() < 0.015) {
+          this.brain.setThoughtBubble("✨ Caminando sobre las aguas...", 80);
+        }
+      } else if (this.canSwim) {
+        this.isSwimming = true;
+        this.speed = 0.55;
+        if (Math.random() < 0.01) {
+          this.brain.setThoughtBubble("🏊 Nadando fresquito...", 60);
+        }
+      } else {
+        // No sabe nadar: chapotea y se ahoga
+        this.drowningTimer++;
+        this.vx *= 0.3;
+        this.vy *= 0.3;
+        if (this.drowningTimer % 35 === 0) {
+          sound.playWater();
+          this.brain.fear = 100;
+          this.brain.setThoughtBubble("🌊 ¡SOCORRO! ¡No sé nadar, me ahogo!", 80);
+        }
+        if (this.drowningTimer > 220) {
+          // Rescate de emergencia arrastrado a la orilla
+          this.x += (Math.random() - 0.5) * 40;
+          this.y += (Math.random() - 0.5) * 40;
+          this.drowningTimer = 0;
+          this.brain.setThoughtBubble("😵 ¡Casi me ahogo! Gracias al cielo...", 120);
+        }
+      }
+    } else {
+      this.isSwimming = false;
+      this.drowningTimer = 0;
+      this.speed = (this.type === 'police' || this.type === 'soldier') ? 1.1 : 0.85;
+    }
+
+    // 2. Arena de Desierto y Sed
+    if (groundElem === ELEM.SAND) {
+      this.thirst += 0.06;
+      if (this.thirst > 50 && Math.random() < 0.02) {
+        this.brain.setThoughtBubble("🏜️ ¡Qué calor de desierto, me muero de sed!", 90);
+      }
+    } else {
+      if (this.thirst > 0) this.thirst -= 0.04;
+    }
+
+    // Comportamientos según profesión histórica
     if (this.type === 'cultivator') {
       this.updateCultivator(grid, allNpcs, tileSize, onClandestineSale);
-    } else if (this.type === 'police') {
+    } else if (this.type === 'police' || this.type === 'soldier') {
       this.updatePolice(grid, allNpcs, tileSize, onPoliceAlert);
     } else if (this.type === 'boss') {
       this.updateBoss(grid, allNpcs, tileSize);
     } else if (this.type === 'child') {
       this.updateChild(allNpcs);
+    } else if (this.type === 'musician' || this.type === 'hippie') {
+      this.updateMusician(allNpcs);
+    } else if (this.type === 'fisherman') {
+      this.updateFisherman(grid, tileSize);
+    } else if (this.type === 'prophet') {
+      this.updateProphet(allNpcs);
+    } else {
+      // Civil / trabajador común
+      this.updateCivilian();
     }
 
     // Aplicar movimiento
@@ -321,6 +386,89 @@ export class NPC {
       if (Math.random() < 0.35) {
         this.brain.setThoughtBubble(childThoughts[Math.floor(Math.random() * childThoughts.length)], 90);
       }
+    }
+  }
+
+  updateMusician(allNpcs) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 90 + Math.floor(Math.random() * 90);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.8);
+      this.vy = Math.sin(angle) * (this.speed * 0.8);
+      this.updateDirection();
+
+      // Música pacifista estilo Bob Marley que calma a los aldeanos
+      const lyrics = [
+        "🎶 Don't worry about a thing...",
+        "🎶 One love, one heart, let's get together...",
+        "🎶 Vibra positiva para la isla...",
+        "🎶 La música cura las penas del alma..."
+      ];
+      this.brain.setThoughtBubble(lyrics[Math.floor(Math.random() * lyrics.length)], 110);
+
+      // Calmar y dar energía a gente cercana
+      allNpcs.filter(n => n.id !== this.id && this.distTo(n) < 70).forEach(n => {
+        n.brain.fear = Math.max(0, n.brain.fear - 15);
+        n.brain.energy = Math.min(100, n.brain.energy + 8);
+      });
+    }
+  }
+
+  updateFisherman(grid, tileSize) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 110 + Math.floor(Math.random() * 90);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.7);
+      this.vy = Math.sin(angle) * (this.speed * 0.7);
+      this.updateDirection();
+
+      const fishermanThoughts = [
+        "🎣 Buscando buena pesca en la orilla...",
+        "🐟 Hoy el cardumen está abundante.",
+        "🌊 El mar da de comer a los hombres de fe.",
+        "🧺 Llevaré pescado fresco al pueblo."
+      ];
+      if (Math.random() < 0.4) {
+        this.brain.setThoughtBubble(fishermanThoughts[Math.floor(Math.random() * fishermanThoughts.length)], 100);
+      }
+    }
+  }
+
+  updateProphet(allNpcs) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 120 + Math.floor(Math.random() * 80);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.6);
+      this.vy = Math.sin(angle) * (this.speed * 0.6);
+      this.updateDirection();
+
+      const preachings = [
+        "🕊️ La paz sea con todos vosotros.",
+        "✨ Bienaventurados los pacificadores.",
+        "🙏 No temáis a las tempestades.",
+        "🌾 El amor es más fuerte que cualquier rencor."
+      ];
+      this.brain.setThoughtBubble(preachings[Math.floor(Math.random() * preachings.length)], 120);
+
+      // Aumentar fe de testigos cercanos
+      allNpcs.filter(n => n.id !== this.id && this.distTo(n) < 75).forEach(n => {
+        n.brain.faith = Math.min(100, n.brain.faith + 10);
+        n.brain.fear = Math.max(0, n.brain.fear - 10);
+      });
+    }
+  }
+
+  updateCivilian() {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 100 + Math.floor(Math.random() * 80);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.75);
+      this.vy = Math.sin(angle) * (this.speed * 0.75);
+      this.updateDirection();
     }
   }
 

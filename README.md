@@ -18,14 +18,15 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **Spawners:** Genera Campesinos/Jíbaros, Policías de patrulla, Niños/Aldeanitos, Animales (Perros, Cerdos, Caimanes) o al mismísimo Patrón.
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
-* **🧠 Mente (Inspección Psicológica):** Haz click en este botón y selecciona a cualquier aldeano para ver su nombre, personalidad, barras de Fe, Miedo, Codicia, Energía y su pensamiento íntimo en vivo. ¡Puedes infundirle fe o aterrorizarlo con un botón!
-* **📜 Chismes / Crónicas en Vivo:** Abre el periódico de la isla con el registro histórico de romances, traiciones, peleas callejeras y nacimientos.
-* **🗺️ Mapas del Mundo:** Elige entre 4 mundos distintos:
-  * 🌌 **Génesis Primordial:** Océano infinito vacío. Eres Dios en el inicio de los tiempos y moldeas la tierra desde cero.
-  * 🏞️ **El Valle Sagrado:** Río caudaloso, puentes de madera, casonas y taberna.
-  * 🌋 **Tierras de Azufre:** Volcán activo, cráteres de fuego, ceniza y riscos oscuros.
-  * 🏝️ **Isla Clandestina:** Archipiélago con muelles secretos y almacenes del cártel.
-* **👁️ POSEER:** Haz click en este botón y luego selecciona a cualquier personaje para entrar en su cuerpo.
+* **⌛ Selector de Eras Históricas:** Cambia la época del mundo en cualquier momento:
+  * 📜 **Era Bíblica (Año 0):** Profetas predicando, sanadores bendiciendo y pescadores navegando. Misiones de fe, perdón y milagros.
+  * ✌️ **Era de Paz y Reggae (Años 70 - Estilo Bob Marley):** Músicos tocando guitarras con notas musicales flotantes 🎶, jardineros sembrando hierba de paz y líderes espirituales. Misiones de buena vibra y unión.
+  * 🕶️ **Era de Cárteles y Capos (Años 80 - Estilo Narco):** Jíbaros, sicarios, patrullas con sirenas y capos en mansiones. Misiones clandestinas y contrabando.
+  * 🪖 **Era Bélica (Años 40):** Soldados en trinchera, médicos de combate, espías y comandantes militares con toques de queda y raciones.
+* **🌊 Física de la Naturaleza y Biomas:**
+  * **Agua y Ahogamiento:** Quienes saben nadar o son pescadores nadan libremente; los aldeanos sin habilidad para nadar chapotean y se ahogan si caen en aguas profundas si Dios no los salva.
+  * **Desierto y Sed:** Caminar por arena seca y desiertos deshidrata rápidamente a los personajes y reduce su energía si no encuentran un oasis o río.
+* **🎭 Profesiones y Vocaciones Diversas:** No todos son criminales; el mundo genera campesinos, pescadores, músicos, sanadores, soldados, científicos y profetas según la época.
 
 ### 2. Vida Social, Crianza y Emociones (`src/social/relations.js` & `src/ai/brain.js`)
 * **Familias y Crianza:** Las parejas establecidas pueden tener bebés. Los niños corretean, juegan imitando a los adultos y al cabo del tiempo crecen convirtiéndose en campesinos adultos.

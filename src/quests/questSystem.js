@@ -5,8 +5,41 @@ export class QuestSystem {
     this.activeQuest = null;
   }
 
-  generateQuestFor(npc) {
-    if (npc.type === 'cultivator') {
+  generateQuestFor(npc, era = null) {
+    if (era && era.id === 'biblical') {
+      this.activeQuest = {
+        title: "MILAGRO EN LA COSTA",
+        description: "Camina con fe. Cosecha 2 raciones de grano o pescado y llévalas a la casona para alimentar a los hambrientos.",
+        harvestGoal: 2,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 200,
+        completed: false
+      };
+    } else if (era && era.id === 'seventies') {
+      this.activeQuest = {
+        title: "VIBRA DE PAZ & AMOR",
+        description: "Lleva 2 flores de hierba aromática al centro de la aldea y toca una melodía para disolver las tensiones.",
+        harvestGoal: 2,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 150,
+        completed: false
+      };
+    } else if (era && era.id === 'forties') {
+      this.activeQuest = {
+        title: "SUMINISTROS DE RESISTENCIA",
+        description: "Recolecta 2 paquetes de vendajes y provisiones para llevarlos al refugio subterráneo esquivando a las patrullas.",
+        harvestGoal: 2,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 250,
+        completed: false
+      };
+    } else if (npc.type === 'cultivator' || npc.type === 'smuggler') {
       this.activeQuest = {
         title: "OPERACIÓN: COSECHA NOCTURNA",
         description: "Cosecha 2 fardos de hierba madura y llévalos a salvo al Almacén del Patrón. ¡Esquiva las linternas policiales!",
@@ -17,10 +50,10 @@ export class QuestSystem {
         rewardCash: 300,
         completed: false
       };
-    } else if (npc.type === 'police') {
+    } else if (npc.type === 'police' || npc.type === 'soldier') {
       this.activeQuest = {
         title: "PATRULLA DE CONTROL",
-        description: "Estás dentro de la ley. Patrulla la isla y confisca cargamentos ilegales de 1 sospechoso para purificar la zona.",
+        description: "Estás dentro de la ley. Patrulla la zona y confisca cargamentos de 1 sospechoso para mantener el orden.",
         harvestGoal: 0,
         harvestCurrent: 0,
         deliverGoal: 1,
@@ -30,8 +63,8 @@ export class QuestSystem {
       };
     } else {
       this.activeQuest = {
-        title: "EL OJO DEL PATRÓN",
-        description: "Supervisa la hacienda. Visita el Muelle de Salida para comprobar las rutas de escape.",
+        title: "EL ENCARGO DEL PATRÓN",
+        description: "Supervisa los negocios. Entrega 1 cargamento en el muelle clandestino.",
         harvestGoal: 0,
         harvestCurrent: 0,
         deliverGoal: 1,

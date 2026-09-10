@@ -45,7 +45,15 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega (Almacén del Patrón y Muelle) inyectando dinero en la economía insular.
   - **Conos de visión de linterna:** Los policías proyectan un campo de visión angular (FOV). Si un sospechoso o el jugador ingresa al haz de luz con cargamento ilegal, se dispara el estado de persecución con alerta sonora.
 
-### C. Motor de Animación Desacoplado (`src/render/animationManager.js`)
+### C. Motor de Eras Históricas y Profesiones (`src/world/eras.js` & `src/quests/questSystem.js`)
+- **Gestión Temporal de Épocas:** Permite cambiar la línea de tiempo global del mundo:
+  - Era Bíblica (Año 0), Era de Paz & Reggae (70s), Era de Cárteles (80s), Era Bélica (40s).
+  - Cada era redefine las profesiones disponibles, las metas de posesión y las misiones generadas proceduralmente (fe y perdón, buena vibra musical, contrabando o supervivencia militar).
+- **Física de Biomas Naturales:**
+  - **Hidrodinámica y Ahogamiento:** Las celdas de agua profunda activan un temporizador de ahogamiento en NPCs terrestres sin habilidad de nado, mientras los pescadores o nadadores nadan con animación de brazada.
+  - **Termodinámica del Desierto:** Las arenas desérticas aceleran el gasto de energía y deshidratación, induciendo búsqueda de fuentes de agua.
+
+### D. Motor de Animación Desacoplado (`src/render/animationManager.js`)
 El juego separa estrictamente la **lógica física** de la **representación visual**:
 - **Doble soporte (Procedural + SpriteSheets de artistas):**
   - Si un pixel artist te entrega una hoja de sprites `.png` (hecha en Aseprite, Photoshop, etc.), simplemente la registras con:
@@ -57,7 +65,7 @@ El juego separa estrictamente la **lógica física** de la **representación vis
       walk_right: [12, 13, 14, 15]
     });
     ```
-  - Si no hay imagen externa, el motor usa su generador nativo de alta fidelidad estilo **The Minish Cap** con ciclo completo de marcha en 4 direcciones, balanceo de brazos opuesto a las piernas, inclinación de cabeza al pisar y sombra elíptica de suelo.
+  - Si no hay imagen externa, el motor usa su generador nativo de alta fidelidad estilo **The Minish Cap** con ciclo completo de marcha en 4 direcciones, balanceo de brazos opuesto a las piernas, inclinación de cabeza al pisar, notas musicales flotantes para artistas y sombra elíptica de suelo.
 
 ### D. Secuencia Mágica de Posesión y VFX (`src/render/fx.js`)
 - Inspirado en la reducción mágica de Link en *The Minish Cap*:
