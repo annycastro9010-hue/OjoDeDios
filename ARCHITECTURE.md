@@ -69,13 +69,13 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - Decretos y Leyes activas: Racionamiento de Alimentos en crisis, Tributo de Obras Públicas, Culto Sagrado y Guardia Cívica.
   - Dinámica de Estabilidad Social: Descontento popular y revueltas ciudadanas si hay escasez o tiranía.
 
-### D. Motor de Eras Históricas y Arquitectura Temática (`src/world/eras.js` & `src/world/mapGenerator.js`)
-- **Generadores Arquitectónicos por Época:** 
-  - Realidad Macondo (Selva húmeda, trochas de barro, río serpenteante con canoas, cambuches guerrilleros, tiendas con billar y puesto del cuadrante).
-  - Albores Bíblicos (Monte del Altar, río de aguas vivas, cabañas de adobe, Adán, Eva, Caín y Abel).
-  - Comuna de los 70s (Escenario de madera de Bob Marley, fogata de la paz y carpas libres).
-  - Imperio Clandestino de los 80s (Mansión con piscina azulejada, pista de aterrizaje y muelles).
-  - Frente Bélico de los 40s (Búnker fortificado, trincheras zigzagueantes y hospital militar).
+### D. Motor de Eras Históricas, Escenografía y Decorados Vivos (`src/world/eras.js`, `src/world/mapGenerator.js` & `src/render/renderer.js`)
+- **Renderizado Procedural Temático por Era (`renderEraLandmarks`):**
+  - **Comuna 70s (Woodstock / Jamaica):** Suelo de pradera verde vibrante poblada de flores psicodélicas procedimentales, escenario de concierto de madera de cedro con columnas dobles de altavoces/amplificadores, gran bandera Rasta (rojo, amarillo, verde), pedestal cromado con micrófono dorado, notas musicales flotantes (`♪ ♫`), tipis y carpas hippies con el símbolo de la paz (`☮`), y fogata comunitaria rodeada de flores. Bob Marley posicionado en el centro exacto del escenario frente al micrófono.
+  - **Realidad Macondo 2026:** Selva espesa, trochas de barro rojizo con huellas, río caudaloso navegable con canoas de madera, cambuche guerrillero con toldo camuflado y paila gigante de sancocho, retén de barricada y llantas en la trocha, y tienda comunitaria con mesa de billar verde profesional y canastas de cerveza.
+  - **Albores Bíblicos:** Pradera fértil y dunas doradas, río sagrado de las aguas vivas con puentes rústicos, altar de piedra escalonada con el Arca de la Alianza dorada y humo de incienso ascendente, y cabañas de arcilla.
+  - **Imperio Clandestino de los 80s:** Mansión de estilo hacienda con tejados de terracota, piscina azulejada de agua azul con sombrilla de playa y tumbonas, pista de aterrizaje clandestina de asfalto con señalización amarilla, y hangar con avioneta bimotor de contrabando con hélices en rotación continua.
+  - **Frente Bélico de los 40s:** Búnker de hormigón armado, trincheras con parapetos de sacos de arena y alambradas de púas cruzadas, y hospital militar de campaña con carpa y emblema de la Cruz Roja.
 - **Adaptabilidad Responsiva y Eventos Táctiles:** Normalización de coordenadas con soporte simultáneo para mouse en PC y toques `touchstart`/`touchmove` en smartphones y tablets.
 
 ### E. Motor de Animación Desacoplado (`src/render/animationManager.js`)
