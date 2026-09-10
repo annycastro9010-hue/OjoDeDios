@@ -156,6 +156,67 @@ export class SimulationGrid {
     }
   }
 
+  // 🌋 Cataclismo Tectónico: Terremoto con apertura de fallas abisales y derrumbes
+  triggerEarthquake(cx, cy, numFaults = 3) {
+    const crackedTiles = [];
+    const mainBranches = numFaults || 3;
+
+    for (let b = 0; b < mainBranches; b++) {
+      let curX = cx;
+      let curY = cy;
+      const baseAngle = (b / mainBranches) * Math.PI * 2 + (Math.random() - 0.5) * 0.7;
+      const length = 20 + Math.floor(Math.random() * 25);
+
+      for (let step = 0; step < length; step++) {
+        // Avance con desviación irregular / zig-zag sísmico
+        const wobble = (Math.random() - 0.5) * 1.4;
+        const angle = baseAngle + wobble;
+        curX += Math.cos(angle) * 1.2;
+        curY += Math.sin(angle) * 1.2;
+
+        const tx = Math.floor(curX);
+        const ty = Math.floor(curY);
+
+        if (tx <= 2 || tx >= this.width - 3 || ty <= 2 || ty >= this.height - 3) break;
+
+        // Romper celda central y aledañas
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const rx = tx + dx;
+            const ry = ty + dy;
+            if (rx < 1 || rx >= this.width - 1 || ry < 1 || ry >= this.height - 1) continue;
+
+            const existing = this.get(rx, ry);
+            if (existing === ELEM.EMPTY || existing === ELEM.CHASM) continue;
+
+            // Si es un edificio o madera, colapsa en escombros
+            if (existing === ELEM.BUILDING || existing === ELEM.WOOD || existing === ELEM.STONE) {
+              this.set(rx, ry, ELEM.RUBBLE);
+              crackedTiles.push({ x: rx, y: ry, type: 'rubble' });
+              if (Math.random() < 0.4 && ry > 1) {
+                this.set(rx, ry - 1, ELEM.SMOKE, 20); // Polvareda
+              }
+            } else if (existing === ELEM.WATER) {
+              // El agua penetra la grieta
+              if (Math.random() < 0.3) this.set(rx, ry, ELEM.CHASM);
+            } else {
+              // Tierra, caminos o cultivos se abren en abismo tectónico
+              if (dx === 0 && dy === 0) {
+                this.set(rx, ry, ELEM.CHASM);
+                crackedTiles.push({ x: rx, y: ry, type: 'chasm' });
+              } else if (Math.random() < 0.4) {
+                this.set(rx, ry, ELEM.RUBBLE);
+                crackedTiles.push({ x: rx, y: ry, type: 'rubble' });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return crackedTiles;
+  }
+
   // Actualización de física celular (60 FPS)
   step() {
     this.updated.fill(0);

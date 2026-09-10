@@ -14,8 +14,9 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **🌿 Semilla:** Siémbrala en tierra fértil; al recibir agua brotará hierba clandestina madura.
 * **🔥 Fuego:** Incendia cultivos y madera, generando humo y cenizas.
 * **⚡ Rayo:** Castigo celestial instantáneo que detona el área.
+* **🌋 Terremoto (Cataclismo Geológico):** Sacude violentamente la pantalla, raja la tierra abriendo fallas abisales (`CHASM`), colapsa estructuras en escombros (`RUBBLE`) y desata el pánico colectivo en toda la isla.
 * **🌧️ Lluvia:** Desata un diluvio que riega toda la isla.
-* **Spawners:** Genera Campesinos/Jíbaros, Policías de patrulla, Niños/Aldeanitos, Animales (Perros, Cerdos, Caimanes) o al mismísimo Patrón.
+* **Spawners:** Genera Aldeanos, Niños, Animales o **Personajes de la Realidad** (Policía de Cuadrante, Guerrillero, Mototaxista, Vendedor, Doña Gloria o el Alcalde).
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
 * **🪵 Madera y 🏡 Choza:** Coloca madera para los artesanos o levanta los cimientos de un nuevo hogar.
@@ -25,6 +26,7 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
   - **Sabiduría y Aprendizaje (`💡`):** Los ancianos y profetas transmiten conocimientos a los niños y adultos; la tribu descubre la agricultura, la mampostería, la domesticación animal y la teología, evolucionando de **Tribu Primitiva** a **Aldea Floreciente** y **Reino Próspero**.
   - **Domesticación Animal:** Los perros y cerdos aprenden con el trato humano; los perros siguen a sus dueños con afecto (`❤️ ¡Guau!`) y vigilan las fogatas.
 * **⌛ Mapas Arquitectónicos Temáticos y Lore Histórico:**
+  - 🇨🇴 **Realidad Macondo (Selva, Retenes y Cuadrante - 2026):** Trochas de barro, río serpenteante con canoas, cambuche guerrillero con sancocho en la selva, retenes clandestinos, patrullas del cuadrante, tiendas con billar y mototaxis suicidas.
   - 📜 **Albores Bíblicos (Tras Caín y Abel):** Adán y Eva en su hogar ancestral, Caín labrando la tierra buscando redención, Abel cuidando rebaños, profetas orando ante el Monte del Altar Sagrado y el Río de la Vida.
   - ☮️ **Comuna de Paz (Años 70 - Bob Marley):** Gran escenario musical de madera, fogata de la paz y comuna de carpas y huertos libres.
   - 💰 **Imperio Clandestino (Años 80):** Hacienda del Patrón con piscina privada de azulejos, pista de aterrizaje clandestina y muelles secretos.
@@ -40,11 +42,16 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 ### 3. Modo Inmersivo (Zelda: The Minish Cap)
 La cámara hace un zoom cinemático continuo desde el cielo hasta situarse detrás de tu personaje con vista cenital pixel-art:
 * **WASD / Flechas:** Moverse por el mundo.
-* **ESPACIO / Tecla E:** Interactuar:
-  * Cosechar plantas maduras si tienes espacio en tu inventario.
-  * Entregar el cargamento en el **Almacén del Patrón** o en el **Muelle de Salida**.
+* **ESPACIO / Tecla E:** Interactuar y **Habilidad Especial Activa según el Rol**:
+  * **👮‍♂️ Policía de Cuadrante:** *¡Pedir pa' la gaseosa!* Requisa a mototaxis o sospechosos, cobra la mordida con campanillas de dinero y confisca mercancía.
+  * **🛵 Mototaxista Suicida:** *¡Pique Trochero!* Acelerón supersónico con estela de humo y rugido de motor 2 tiempos.
+  * **📢 Vendedor Ambulante:** *¡Megáfono a Todo Volumen!* Lanza el pregón de aguacates aturdiendo a las patrullas y atrayendo compradores.
+  * **🪖 Guerrillero del Monte:** *¡Olla Comunitaria!* Prende la fogata comunitaria con sancocho trifásico para el pueblo.
+  * **👵 Doña Gloria (Vecina):** *¡Escobazo Limpio!* Pega escobazos y espanta a los malandrines del vecindario.
+  * **🎩 Alcalde en Campaña:** *¡Tamal por Voto!* Lanza tamales calientes para calmar a las masas y ganar seguidores.
+  * **👨‍🌾 Aldeano / Cultivador:** Cosechar plantas maduras y entregar cargamentos en almacenes o muelles.
 * **Esquivar la Patrulla Policial:** Los policías patrullan con conos de luz y linternas. Si te ven con cargamento, sonará la alarma y te perseguirán.
-* **Q / ESC / Botón "Ascender":** Al completar tu mini-misión de escape, tu alma se purifica con luz celestial y regresas al cielo como Dios omnipotente.
+* **Q / ESC / Botón "Ascender":** Al cumplir la misión o desear salir, tu alma se purifica con luz celestial y regresas al trono divino.
 
 ---
 

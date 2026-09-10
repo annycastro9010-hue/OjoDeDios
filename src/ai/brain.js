@@ -2,7 +2,8 @@ const ERA_NAMES = {
   biblical: ['Adán', 'Eva', 'Caín', 'Abel', 'Enoc', 'Sara', 'Noé', 'Abraham', 'Miriam', 'Elías', 'Mateo', 'Salomón'],
   seventies: ['Bob', 'Ziggy', 'Rita', 'Damian', 'Janis', 'Jimi', 'Marley', 'Lili', 'Paz', 'Luna', 'Sol', 'Dylan'],
   eighties: ['Pablo', 'Gonzalo', 'Carlos', 'Don Chepe', 'Jorge', 'Virginia', 'El Flaco', 'Rosita', 'El Zurdo', 'Toño'],
-  forties: ['Sargento Miller', 'Clara', 'Winston', 'Hans', 'Sophie', 'Dmitry', 'Elena', 'Capitán Torres', 'Partisano Lev']
+  forties: ['Sargento Miller', 'Clara', 'Winston', 'Hans', 'Sophie', 'Dmitry', 'Elena', 'Capitán Torres', 'Partisano Lev'],
+  colombia: ['El Brayan', 'Don Mario', 'Doña Gloria', 'Patrullero Gómez', 'Comandante Tiro-Loco', 'Doctor Promesas', 'Yesid', 'Yurani', 'El Chévere', 'Mi Cabo', 'Don Chepe', 'Kevin', 'Albeiro', 'La Mona']
 };
 
 const TRAITS = [
@@ -11,7 +12,10 @@ const TRAITS = [
   { id: 'constructor', name: 'Constructor', desc: 'Le apasiona talar madera, picar piedra y levantar hogares para su clan.' },
   { id: 'ambicioso', name: 'Próspero', desc: 'Trabaja sin descanso para acumular bienes y hacer crecer el reino.' },
   { id: 'cobarde', name: 'Cauto', desc: 'Evita peligros, bestias y fuego para proteger a los suyos.' },
-  { id: 'piadoso', name: 'Pacífico', desc: 'Evita conflictos y busca la armonía en la comunidad.' }
+  { id: 'piadoso', name: 'Pacífico', desc: 'Evita conflictos y busca la armonía en la comunidad.' },
+  { id: 'rebusque', name: 'Del Rebusque', desc: 'Le busca la comba al palo para ganarse el diario honradamente.' },
+  { id: 'bochinchero', name: 'Bochinchero', desc: 'Se sabe todos los chismes y secretos del vecindario.' },
+  { id: 'rebelde', name: 'Rebelde Trochero', desc: 'No le copia a los retenes ni a los comparendos.' }
 ];
 
 export class NPCBrain {
@@ -53,6 +57,12 @@ export class NPCBrain {
     if (type === 'healer') return "Sanador Botánico";
     if (type === 'soldier') return this.level >= 2 ? "Capitán de Guardia" : "Centinela";
     if (type === 'police') return this.level >= 2 ? "Comandante" : "Guardia";
+    if (type === 'police_cuadrante') return this.level >= 2 ? "Comandante de Cuadrante" : "Patrullero Pal Fresco";
+    if (type === 'guerrillero') return this.level >= 2 ? "Comandante del Monte" : "Miliciano Trochero";
+    if (type === 'mototaxista') return this.level >= 2 ? "Rey del Pique Callejero" : "El Brayan de la 125";
+    if (type === 'vendedor') return this.level >= 2 ? "Empresario del Aguacate" : "Pregonero de Mazamorra";
+    if (type === 'vecina_chismosa') return this.level >= 2 ? "Fiscal del Barrio" : "Doña Gloria la Chismosa";
+    if (type === 'alcalde') return this.level >= 2 ? "Doctor Reelecto" : "Doctor Promesas";
     if (type === 'boss') return "Líder de la Dinastía";
 
     // Aldeano / Constructor
@@ -87,7 +97,19 @@ export class NPCBrain {
 
   // Reacción ante eventos divinos y del entorno
   onDivineEvent(eventType, intensity = 1) {
-    if (eventType === 'lightning') {
+    if (eventType === 'earthquake') {
+      this.fear = 100;
+      this.faith = Math.min(100, this.faith + 30);
+      const quakes = [
+        "😱 ¡LA VIRGEN SANTÍSIMA! ¡SE CAE EL RANCHO!",
+        "🚨 ¡UN TERREMOTO! ¡AGÁRRENSE DEL POSTE!",
+        "📺 ¡SALVEN EL TELEVISOR Y LA NEVERA!",
+        "🥑 ¡MIS AGUACATES NOOOO!",
+        "💥 ¡SE RAJÓ EL PISO, CORRAN PA' LA TROCHA!",
+        "🙏 ¡DIOS MÍO APIÁDATE DE NUESTRO BARRIO!"
+      ];
+      this.setThoughtBubble(quakes[Math.floor(Math.random() * quakes.length)], 160);
+    } else if (eventType === 'lightning') {
       this.fear = Math.min(100, this.fear + 35);
       this.faith = Math.min(100, this.faith + 20);
       if (this.trait.id === 'devoto') {
@@ -146,6 +168,85 @@ export class NPCBrain {
       } else {
         this.setThoughtBubble("📦 Llevando el fardo al almacén...", 90);
       }
+      return;
+    }
+
+    // Pensamientos por roles memificables y de la realidad
+    if (npc.type === 'police_cuadrante') {
+      const tomboThoughts = [
+        "👮 Páreme esa motico ahí a la derecha...",
+        "👮 ¿Tiene el SOAT y la tecno al día mi rey?",
+        "👮 ¿No tiene pa' la gaseosa y lo dejo sano?",
+        "👮 Colabóreme y lo colaboro jefe...",
+        "👮 Mi Cabo, reporte sin novedad en la trocha.",
+        "👮 Esto le da pa' comparendo e inmovilización."
+      ];
+      this.setThoughtBubble(tomboThoughts[Math.floor(Math.random() * tomboThoughts.length)], 120);
+      return;
+    }
+
+    if (npc.type === 'guerrillero') {
+      const guerrillaThoughts = [
+        "🪖 ¿Quién fue el flojo que no lavó la paila del sancocho?",
+        "🪖 Silencio compañeros, que viene avioneta en el cielo.",
+        "🪖 Retén en la trocha, paren los camiones de yuca.",
+        "🪖 La bota izquierda me quedó en el pie derecho...",
+        "🪖 Monte, fusil y radio de pilas compañero.",
+        "🪖 Echenle más plátano a la olla comunitaria."
+      ];
+      this.setThoughtBubble(guerrillaThoughts[Math.floor(Math.random() * guerrillaThoughts.length)], 120);
+      return;
+    }
+
+    if (npc.type === 'mototaxista') {
+      const brayanThoughts = [
+        "🛵 ¡Súbase compadre que voy sin frenos!",
+        "🛵 ¡Por la trocha lo llevo en 2 minutos volando!",
+        "🛵 ¡Dios es mi copiloto pero el Diablo va atrás!",
+        "🛵 ¡Pilas con el retén de la policía!",
+        "🛵 ¡Voy a picar la DT 125 en esta recta!",
+        "🛵 ¡Echele 5 mil de corriente a la nave!"
+      ];
+      this.setThoughtBubble(brayanThoughts[Math.floor(Math.random() * brayanThoughts.length)], 120);
+      return;
+    }
+
+    if (npc.type === 'vendedor') {
+      const vendorThoughts = [
+        "📢 ¡A mil y a dos mil el aguacate maduro!",
+        "📢 ¡Llegó la mazamorra con leche y panela!",
+        "📢 ¡Compro neveras viejas, baterías y chatarra!",
+        "📢 ¡Aguacate mantequilla pa'l almuerzo!",
+        "📢 ¡El que no prevea no come sancocho!",
+        "📢 ¡Rebuscándome la papa honradamente!"
+      ];
+      this.setThoughtBubble(vendorThoughts[Math.floor(Math.random() * vendorThoughts.length)], 120);
+      return;
+    }
+
+    if (npc.type === 'vecina_chismosa') {
+      const chismeThoughts = [
+        "👵 ¡Mírele los tatuajes al muchacho nuevo!",
+        "👵 ¡Yo vi cuando bajaron esa caja a las 3 AM!",
+        "👵 ¡Esa vecina no trabaja y tiene moto nueva!",
+        "👵 ¡A mí no me echan cuentos en este barrio!",
+        "👵 ¡Voy a llamar al cuadrante ya mismito!",
+        "👵 ¡Barrer la acera me sirve pa' vigilar la cuadra!"
+      ];
+      this.setThoughtBubble(chismeThoughts[Math.floor(Math.random() * chismeThoughts.length)], 120);
+      return;
+    }
+
+    if (npc.type === 'alcalde') {
+      const alcaldeThoughts = [
+        "🎩 ¡Prometo pavimentar la trocha (el año entrante)! ",
+        "🎩 ¡Un tamal caliente por cada voto compatriotas!",
+        "🎩 ¡Los recursos están bien invertidos... jeje!",
+        "🎩 ¡Saludo para la foto con la comunidad!",
+        "🎩 ¡Inauguramos el puente aunque le falten tablas!",
+        "🎩 ¡El progreso llegó a nuestro ilustre municipio!"
+      ];
+      this.setThoughtBubble(alcaldeThoughts[Math.floor(Math.random() * alcaldeThoughts.length)], 120);
       return;
     }
 

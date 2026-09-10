@@ -6,7 +6,84 @@ export class QuestSystem {
   }
 
   generateQuestFor(npc, era = null) {
-    if (era && era.id === 'biblical') {
+    if (npc.type === 'police_cuadrante') {
+      this.activeQuest = {
+        title: "OPERACIÓN: PA' LA GASEOSA",
+        description: "Usa [ESPACIO] junto a un mototaxista o sospechoso para pedirle pal fresco y llenar el bolsillo.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 200,
+        completed: false
+      };
+    } else if (npc.type === 'mototaxista') {
+      this.activeQuest = {
+        title: "PIQUE SUICIDA EN LA TROCHA",
+        description: "Usa [ESPACIO] para meter turbo-pique y levantar la DT 125 dejando una estela de humo.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 150,
+        completed: false
+      };
+    } else if (npc.type === 'vendedor') {
+      this.activeQuest = {
+        title: "EL PREGÓN DE LOS AGUACATES",
+        description: "Usa [ESPACIO] para sonar tu megáfono a todo volumen y atraer a los compradores hambrientos.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 180,
+        completed: false
+      };
+    } else if (npc.type === 'guerrillero') {
+      this.activeQuest = {
+        title: "SANCOCHO EN LA SELVA",
+        description: "Usa [ESPACIO] para encender la olla comunitaria y alimentar a los compañeros del monte.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 1,
+        deliverCurrent: 0,
+        rewardCash: 250,
+        completed: false
+      };
+    } else if (npc.type === 'vecina_chismosa') {
+      this.activeQuest = {
+        title: "VIGILANCIA VECINAL Y ESCOBAZO",
+        description: "Usa [ESPACIO] para darle un escobazo a los sospechosos y poner orden en el vecindario.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 120,
+        completed: false
+      };
+    } else if (npc.type === 'alcalde') {
+      this.activeQuest = {
+        title: "CAMPAÑA: TAMAL POR VOTO",
+        description: "Usa [ESPACIO] para lanzar tamales calientes al pueblo y ganarte su apoyo incondicional.",
+        harvestGoal: 0,
+        harvestCurrent: 0,
+        deliverGoal: 2,
+        deliverCurrent: 0,
+        rewardCash: 300,
+        completed: false
+      };
+    } else if (era && era.id === 'colombia') {
+      this.activeQuest = {
+        title: "EL REBUSQUE DIARIO",
+        description: "Sobrevive a los retenes, esquiva al cuadrante y entrega víveres en la tienda comunitaria.",
+        harvestGoal: 1,
+        harvestCurrent: 0,
+        deliverGoal: 1,
+        deliverCurrent: 0,
+        rewardCash: 200,
+        completed: false
+      };
+    } else if (era && era.id === 'biblical') {
       this.activeQuest = {
         title: "MILAGRO EN LA COSTA",
         description: "Camina con fe. Cosecha 2 raciones de grano o pescado y llévalas a la casona para alimentar a los hambrientos.",
@@ -84,7 +161,15 @@ export class QuestSystem {
         this.activeQuest.harvestGoal,
         this.activeQuest.harvestCurrent + amount
       );
-    } else if (actionType === 'deliver') {
+    } else if (
+      actionType === 'deliver' ||
+      actionType === 'bribe' ||
+      actionType === 'wheelie' ||
+      actionType === 'sell' ||
+      actionType === 'sancocho' ||
+      actionType === 'gossip' ||
+      actionType === 'tamal'
+    ) {
       this.activeQuest.deliverCurrent = Math.min(
         this.activeQuest.deliverGoal,
         this.activeQuest.deliverCurrent + amount

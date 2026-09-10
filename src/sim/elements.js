@@ -17,7 +17,9 @@ export const ELEM = {
   LAVA: 14,
   WOOD: 15,
   CAMPFIRE: 16,
-  GOLD: 17
+  GOLD: 17,
+  CHASM: 18,
+  RUBBLE: 19
 };
 
 export const ELEM_PROPS = {
@@ -144,6 +146,20 @@ export const ELEM_PROPS = {
   [ELEM.GOLD]: {
     name: 'Oro / Mineral Sagrado',
     color: '#facc15',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.CHASM]: {
+    name: 'Grieta Tectónica / Falla',
+    color: '#05070d',
+    isSolid: false,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.RUBBLE]: {
+    name: 'Escombros / Derrumbe',
+    color: '#71717a',
     isSolid: true,
     isLiquid: false,
     flammable: false

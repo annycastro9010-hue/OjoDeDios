@@ -224,6 +224,139 @@ class SoundSystem {
       osc.stop(this.ctx.currentTime + 0.04);
     } catch (e) { }
   }
+
+  // 🌋 Estruendo Sísmico / Terremoto (Rumble subterráneo)
+  playEarthquake() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const duration = 1.6;
+      const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * duration, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < buffer.length; i++) {
+        const env = Math.sin((i / buffer.length) * Math.PI);
+        data[i] = (Math.random() * 2 - 1) * env * 0.9;
+      }
+      const node = this.ctx.createBufferSource();
+      node.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(140, this.ctx.currentTime);
+      filter.frequency.linearRampToValueAtTime(50, this.ctx.currentTime + duration);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+      node.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      node.start();
+    } catch (e) { }
+  }
+
+  // 👮‍♂️ Silbato de Tránsito / Pito Policial
+  playWhistle() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      // Trino agudo y vibrante
+      osc.frequency.setValueAtTime(2400, this.ctx.currentTime);
+      osc.frequency.setValueAtTime(2200, this.ctx.currentTime + 0.07);
+      osc.frequency.setValueAtTime(2500, this.ctx.currentTime + 0.14);
+      osc.frequency.setValueAtTime(2100, this.ctx.currentTime + 0.22);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.32);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.32);
+    } catch (e) { }
+  }
+
+  // 🛵 Moto 2 Tiempos (El Brayan picando en la trocha)
+  playMotorbike() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, this.ctx.currentTime + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.38);
+      gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.4);
+    } catch (e) { }
+  }
+
+  // 💰 Caja Registradora / Monedas (Pa' la gaseosa del tombo)
+  playCash() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const freqs = [1046, 1318, 1568, 2093]; // Campanillas agudas
+      freqs.forEach((f, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, this.ctx.currentTime + i * 0.05);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime + i * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.05 + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(this.ctx.currentTime + i * 0.05);
+        osc.stop(this.ctx.currentTime + i * 0.05 + 0.25);
+      });
+    } catch (e) { }
+  }
+
+  // 📢 Megáfono de Aguacates / Mazamorra
+  playMegaphone() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(650, this.ctx.currentTime);
+      osc.frequency.setValueAtTime(820, this.ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(650, this.ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.35);
+    } catch (e) { }
+  }
+
+  // 🧹 Escobazo / Golpe cómico de Doña Gloria
+  playSlap() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.12);
+    } catch (e) { }
+  }
 }
 
 export const sound = new SoundSystem();

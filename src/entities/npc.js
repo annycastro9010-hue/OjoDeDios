@@ -44,6 +44,24 @@ export class NPC {
     if (type === 'child') {
       this.speed = 1.0;
       this.brain.title = "Niño de la Aldea";
+    } else if (type === 'mototaxista') {
+      this.speed = 1.45;
+      this.brain.title = "El Brayan de la 125";
+    } else if (type === 'police_cuadrante') {
+      this.speed = 1.15;
+      this.brain.title = "Patrullero del Cuadrante";
+    } else if (type === 'guerrillero') {
+      this.speed = 0.95;
+      this.brain.title = "Miliciano de la Selva";
+    } else if (type === 'vendedor') {
+      this.speed = 0.8;
+      this.brain.title = "Don Mario el de los Aguacates";
+    } else if (type === 'vecina_chismosa') {
+      this.speed = 0.9;
+      this.brain.title = "Doña Gloria la Vecina";
+    } else if (type === 'alcalde') {
+      this.speed = 0.75;
+      this.brain.title = "Doctor Promesas (Alcalde)";
     }
   }
 
@@ -127,6 +145,18 @@ export class NPC {
       this.updateFisherman(grid, tileSize);
     } else if (this.type === 'prophet') {
       this.updateProphet(allNpcs);
+    } else if (this.type === 'police_cuadrante') {
+      this.updatePoliceCuadrante(grid, allNpcs, tileSize);
+    } else if (this.type === 'guerrillero') {
+      this.updateGuerrillero(grid, allNpcs, tileSize);
+    } else if (this.type === 'mototaxista') {
+      this.updateMototaxista(grid, allNpcs, tileSize);
+    } else if (this.type === 'vendedor') {
+      this.updateVendedor(grid, allNpcs, tileSize);
+    } else if (this.type === 'vecina_chismosa') {
+      this.updateVecinaChismosa(allNpcs);
+    } else if (this.type === 'alcalde') {
+      this.updateAlcalde(allNpcs);
     } else {
       // Civil / trabajador común
       this.updateCivilian();
@@ -469,6 +499,174 @@ export class NPC {
       this.vx = Math.cos(angle) * (this.speed * 0.75);
       this.vy = Math.sin(angle) * (this.speed * 0.75);
       this.updateDirection();
+    }
+  }
+
+  // 👮‍♂️ 1. POLICÍA DE CUADRANTE / TRÁNSITO
+  updatePoliceCuadrante(grid, allNpcs, tileSize) {
+    this.stateTimer--;
+
+    // Buscar mototaxis o gente con cargamento para "pedir pa la gaseosa"
+    const target = allNpcs.find(n => n.id !== this.id && (n.type === 'mototaxista' || n.cargo > 0) && this.distTo(n) < 70);
+    if (target) {
+      const d = this.distTo(target);
+      if (d > 20) {
+        const angle = Math.atan2(target.y - this.y, target.x - this.x);
+        this.vx = Math.cos(angle) * (this.speed * 1.25);
+        this.vy = Math.sin(angle) * (this.speed * 1.25);
+        this.updateDirection();
+      } else {
+        // En rango de retén / requisar
+        if (Math.random() < 0.04) {
+          sound.playWhistle();
+          sound.playCash();
+          this.brain.setThoughtBubble("👮 ¡Páreme ahí! Deje pa' la gaseosa y siga sano.", 140);
+          target.brain.setThoughtBubble("💸 ¡Ya me tocó darle pal fresco al cuadrante!", 120);
+          if (target.cargo > 0) target.cargo = Math.max(0, target.cargo - 1);
+        }
+      }
+      return;
+    }
+
+    // Patrulla por los senderos
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 90 + Math.floor(Math.random() * 80);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.8);
+      this.vy = Math.sin(angle) * (this.speed * 0.8);
+      this.updateDirection();
+    }
+  }
+
+  // 🪖 2. GUERRILLERO DE LA SELVA
+  updateGuerrillero(grid, allNpcs, tileSize) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 110 + Math.floor(Math.random() * 90);
+      // Se mantiene rondando la selva o el retén
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.8);
+      this.vy = Math.sin(angle) * (this.speed * 0.8);
+      this.updateDirection();
+
+      // Si hay campesinos cerca, los llama a comer o les habla de la revolución
+      const nearbyPeasant = allNpcs.find(n => n.id !== this.id && n.type === 'cultivator' && this.distTo(n) < 60);
+      if (nearbyPeasant && Math.random() < 0.3) {
+        this.brain.setThoughtBubble("🪖 ¡Compañero, acérquese a la olla por su plato de sancocho!", 140);
+      }
+    }
+  }
+
+  // 🛵 3. MOTOTAXISTA SUICIDA
+  updateMototaxista(grid, allNpcs, tileSize) {
+    this.stateTimer--;
+
+    // Si ve a la policía del cuadrante cerca, mete turbo y huye
+    const cop = allNpcs.find(n => (n.type === 'police' || n.type === 'police_cuadrante') && this.distTo(n) < 65);
+    if (cop) {
+      const angle = Math.atan2(this.y - cop.y, this.x - cop.x);
+      this.vx = Math.cos(angle) * (this.speed * 1.5);
+      this.vy = Math.sin(angle) * (this.speed * 1.5);
+      this.updateDirection();
+      if (Math.random() < 0.05) {
+        sound.playMotorbike();
+        this.brain.setThoughtBubble("🛵 ¡Fuga que me quitan la moto!", 90);
+      }
+      return;
+    }
+
+    // Piques y recorridos rápidos por la trocha
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 45 + Math.floor(Math.random() * 55);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * this.speed;
+      this.vy = Math.sin(angle) * this.speed;
+      this.updateDirection();
+
+      if (Math.random() < 0.25) {
+        sound.playMotorbike();
+      }
+    }
+  }
+
+  // 📢 4. VENDEDOR AMBULANTE DE AGUACATES / MAZAMORRA
+  updateVendedor(grid, allNpcs, tileSize) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 90 + Math.floor(Math.random() * 90);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.7);
+      this.vy = Math.sin(angle) * (this.speed * 0.7);
+      this.updateDirection();
+
+      // Cada cierto tiempo suena el pregón con megáfono
+      if (Math.random() < 0.35) {
+        sound.playMegaphone();
+        const yells = [
+          "📢 ¡Llegaron los aguacates maduritos!",
+          "📢 ¡Mazamorra fresca con dulce de guayaba!",
+          "📢 ¡A dos mil el paquete de plátano!"
+        ];
+        this.brain.setThoughtBubble(yells[Math.floor(Math.random() * yells.length)], 130);
+
+        // Los vecinos cercanos sienten apetito o van hacia él
+        allNpcs.filter(n => n.id !== this.id && this.distTo(n) < 50).forEach(n => {
+          n.brain.energy = Math.min(100, n.brain.energy + 5);
+        });
+      }
+    }
+  }
+
+  // 👵 5. DOÑA GLORIA (LA VECINA CHISMOSA)
+  updateVecinaChismosa(allNpcs) {
+    this.stateTimer--;
+
+    // Seguir a los sospechosos o mototaxis para fijarse en todo
+    const suspect = allNpcs.find(n => n.id !== this.id && (n.cargo > 0 || n.type === 'mototaxista') && this.distTo(n) < 70);
+    if (suspect && Math.random() < 0.6) {
+      const angle = Math.atan2(suspect.y - this.y, suspect.x - this.x);
+      this.vx = Math.cos(angle) * (this.speed * 0.9);
+      this.vy = Math.sin(angle) * (this.speed * 0.9);
+      this.updateDirection();
+      if (Math.random() < 0.03) {
+        sound.playSlap();
+        this.brain.setThoughtBubble("👵 ¡Miren a ese vago con cara de malandrín!", 130);
+      }
+      return;
+    }
+
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 90 + Math.floor(Math.random() * 80);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.7);
+      this.vy = Math.sin(angle) * (this.speed * 0.7);
+      this.updateDirection();
+    }
+  }
+
+  // 🎩 6. DOCTOR PROMESAS (EL ALCALDE)
+  updateAlcalde(allNpcs) {
+    this.stateTimer--;
+    if (this.stateTimer <= 0) {
+      this.stateTimer = 110 + Math.floor(Math.random() * 90);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * (this.speed * 0.6);
+      this.vy = Math.sin(angle) * (this.speed * 0.6);
+      this.updateDirection();
+
+      // Saluda y reparte promesas
+      const speeches = [
+        "🎩 ¡Compatriotas, el puente se inaugurará en mi periodo!",
+        "🎩 ¡Un tamal caliente para cada familia del municipio!",
+        "🎩 ¡La platica está rindiendo gracias a mi gestión!",
+        "🎩 ¡Sonrían para la foto de campaña!"
+      ];
+      this.brain.setThoughtBubble(speeches[Math.floor(Math.random() * speeches.length)], 130);
+
+      // Los aldeanos cercanos lo aplauden o se alegran
+      allNpcs.filter(n => n.id !== this.id && this.distTo(n) < 60).forEach(n => {
+        n.brain.fear = Math.max(0, n.brain.fear - 10);
+      });
     }
   }
 

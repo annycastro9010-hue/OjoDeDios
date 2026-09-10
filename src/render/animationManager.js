@@ -304,6 +304,86 @@ export class AnimationManager {
         ctx.fillRect(5, 3 + bob, 2, 1);
         ctx.fillRect(9, 3 + bob, 2, 1);
       }
+    } else if (type === 'police_cuadrante') {
+      // Gorra verde con visera negra y detalle reflectivo fluorescente
+      ctx.fillStyle = colors.hat;
+      ctx.fillRect(4, 0 + bob, 8, 3);
+      ctx.fillStyle = '#111827'; // Visera
+      if (view === 'down') {
+        ctx.fillRect(4, 3 + bob, 8, 1);
+        ctx.fillStyle = '#84cc16'; // Franja reflectiva
+        ctx.fillRect(4, 2 + bob, 8, 1);
+      } else if (view === 'side') {
+        ctx.fillRect(7, 3 + bob, 4, 1);
+      }
+    } else if (type === 'guerrillero') {
+      // Boina / cachucha militar y pañoleta roja al cuello
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(4, 0 + bob, 8, 3);
+      if (view === 'down') {
+        ctx.fillStyle = '#dc2626'; // Pañoleta roja
+        ctx.fillRect(6, 6 + bob, 4, 2);
+        ctx.fillRect(7, 8 + bob, 2, 2);
+      } else if (view === 'side') {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(8, 6 + bob, 3, 2);
+      }
+    } else if (type === 'mototaxista') {
+      // Casco de moto deportivo con visera
+      ctx.fillStyle = colors.hat;
+      ctx.fillRect(3, -1 + bob, 10, 4);
+      ctx.fillStyle = '#0f172a'; // Visera oscura
+      if (view === 'down') {
+        ctx.fillRect(5, 2 + bob, 6, 2);
+        ctx.fillStyle = '#ffffff'; // Rayas deportivas
+        ctx.fillRect(7, -1 + bob, 2, 4);
+      } else if (view === 'side') {
+        ctx.fillRect(8, 2 + bob, 4, 2);
+      }
+    } else if (type === 'vendedor') {
+      // Gorra campesina y megáfono
+      ctx.fillStyle = colors.hat;
+      ctx.fillRect(3, 0 + bob, 10, 3);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(4, 2 + bob, 8, 1);
+      if (view === 'down') {
+        // Megáfono rojo en la mano
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(1, 7 + bob, 2, 3);
+        ctx.fillStyle = '#f8fafc'; // Bocina
+        ctx.fillRect(0, 6 + bob, 2, 5);
+      } else if (view === 'side') {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(12, 7 + bob, 3, 2);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(14, 6 + bob, 2, 4);
+      }
+    } else if (type === 'vecina_chismosa') {
+      // Rulos de colores en la cabeza y escoba
+      ctx.fillStyle = '#ec4899'; // Rulos rosas y morados
+      ctx.fillRect(3, 0 + bob, 3, 3);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(6, -1 + bob, 4, 3);
+      ctx.fillStyle = '#ec4899';
+      ctx.fillRect(10, 0 + bob, 3, 3);
+      // Escoba de barrer
+      ctx.fillStyle = '#b45309'; // Palo
+      ctx.fillRect(13, 3 + bob, 1, 10);
+      ctx.fillStyle = '#eab308'; // Paja de la escoba
+      ctx.fillRect(12, 11 + bob, 3, 4);
+    } else if (type === 'alcalde') {
+      // Pelo negro engominado y banda presidencial tricolor
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(4, 1 + bob, 8, 3);
+      if (view === 'down') {
+        // Banda presidencial: Amarillo, Azul, Rojo
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(5, 6 + bob, 2, 2);
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(7, 7 + bob, 2, 2);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(9, 8 + bob, 2, 2);
+      }
     } else {
       // Sombrero campesino de paja tejido estilo Minish Cap
       ctx.fillStyle = colors.hat;
@@ -414,6 +494,72 @@ export class AnimationManager {
         hat: '#facc15',
         hatBand: '#ea580c',
         outline: '#1c1917'
+      };
+    } else if (type === 'police_cuadrante') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#84cc16', // Chaleco reflectivo fluorescente
+        pants: '#14532d', // Pantalón verde oscuro policial
+        shoes: '#022c22',
+        belt: '#1e293b',
+        hat: '#15803d',
+        hatBand: '#84cc16',
+        outline: '#064e3b'
+      };
+    } else if (type === 'guerrillero') {
+      return {
+        skin: '#d4a373',
+        shirt: '#3f6212', // Camuflado verde selva
+        pants: '#365314',
+        shoes: '#0f172a', // Botas pantaneras de caucho
+        belt: '#dc2626', // Pañoleta roja
+        hat: '#1e293b',  // Boina / gorra
+        hatBand: '#dc2626',
+        outline: '#1a2e05'
+      };
+    } else if (type === 'mototaxista') {
+      return {
+        skin: '#d4a373',
+        shirt: '#0284c7', // Camiseta esqueleto
+        pants: '#1e293b',
+        shoes: '#ef4444', // Tenis deportivos
+        belt: '#38bdf8',
+        hat: '#ef4444',   // Casco de moto
+        hatBand: '#ffffff',
+        outline: '#0f172a'
+      };
+    } else if (type === 'vendedor') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#f8fafc', // Delantal de trabajo
+        pants: '#78350f',
+        shoes: '#451a03',
+        belt: '#0284c7',
+        hat: '#ca8a04',   // Gorra campesina
+        hatBand: '#78350f',
+        outline: '#292524'
+      };
+    } else if (type === 'vecina_chismosa') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#f472b6', // Bata floreada rosa
+        pants: '#fbcfe8',
+        shoes: '#db2777', // Pantuflas
+        belt: '#ec4899',
+        hat: '#f43f5e',   // Rulos en el pelo
+        hatBand: '#a855f7',
+        outline: '#831843'
+      };
+    } else if (type === 'alcalde') {
+      return {
+        skin: '#f5cda5',
+        shirt: '#ffffff', // Guayabera blanca impecable
+        pants: '#cbd5e1',
+        shoes: '#78350f',
+        belt: '#facc15',  // Banda presidencial
+        hat: '#0f172a',   // Pelo engominado
+        hatBand: '#facc15',
+        outline: '#1e293b'
       };
     }
 

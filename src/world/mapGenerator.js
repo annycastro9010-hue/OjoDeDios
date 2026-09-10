@@ -19,6 +19,8 @@ export class MapGenerator {
       this.generateEighties(grid, w, h, cx, cy);
     } else if (type === 'forties' || type === 'volcano') {
       this.generateForties(grid, w, h, cx, cy);
+    } else if (type === 'colombia') {
+      this.generateColombia(grid, w, h, cx, cy);
     } else if (type === 'genesis') {
       this.generateGenesis(grid, w, h, cx, cy);
     } else {
@@ -292,5 +294,98 @@ export class MapGenerator {
     grid.set(cx, cy - 1, ELEM.CAMPFIRE);
     grid.set(cx, cy + 1, ELEM.PLANT_BLOOM);
     grid.buildingLocations.push({ x: cx, y: cy, name: "Monolito Primordial" });
+  }
+
+  // 6. 🇨🇴 REALIDAD MACONDO: Selva húmeda, trochas de barro, retenes clandestinos y cuadrante
+  static generateColombia(grid, w, h, cx, cy) {
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
+
+    // Relieve montañoso selvático
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (x - cx) / radiusX;
+        const dy = (y - cy) / radiusY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const noise = Math.sin(x * 0.22) * 0.08 + Math.cos(y * 0.26) * 0.08;
+
+        if (dist + noise < 0.45) {
+          // Selva espesa con vegetación, árboles y platanales
+          grid.set(x, y, ELEM.FERTILE_DIRT);
+          if (Math.random() < 0.14) grid.set(x, y, ELEM.PLANT_BLOOM);
+          if (Math.random() < 0.06) grid.set(x, y, ELEM.WOOD);
+        } else if (dist + noise < 0.75) {
+          // Llanura de pastizales y barro
+          grid.set(x, y, ELEM.DIRT);
+          if (Math.random() < 0.04) grid.set(x, y, ELEM.WOOD);
+        } else {
+          // Río caudaloso circundante y ciénagas
+          grid.set(x, y, ELEM.WATER);
+        }
+      }
+    }
+
+    // Gran Río Sinuoso (tipo Magdalena / Atrato) que cruza el mapa
+    for (let y = 0; y < h; y++) {
+      const riverX = cx + Math.floor(Math.sin(y * 0.1) * 16 - 12);
+      for (let rx = riverX - 3; rx <= riverX + 3; rx++) {
+        if (rx >= 0 && rx < w) {
+          grid.set(rx, y, ELEM.WATER);
+        }
+      }
+      grid.set(riverX - 4, y, ELEM.FERTILE_DIRT);
+      grid.set(riverX + 4, y, ELEM.FERTILE_DIRT);
+    }
+
+    // Trocha Principal de Barro y Mula (conecta el pueblo con la selva)
+    for (let x = cx - 35; x <= cx + 35; x++) {
+      const ty = cy + Math.floor(Math.sin(x * 0.08) * 6);
+      grid.set(x, ty, ELEM.ROAD);
+      grid.set(x, ty + 1, ELEM.ROAD);
+      if (Math.random() < 0.15) grid.set(x, ty + 1, ELEM.DIRT); // Barro en la trocha
+    }
+
+    // Puente de troncos improvisado sobre el río
+    const bridgeY = cy + 2;
+    for (let bx = cx - 20; bx <= cx - 5; bx++) {
+      grid.set(bx, bridgeY, ELEM.ROAD);
+      grid.set(bx, bridgeY + 1, ELEM.ROAD);
+    }
+
+    // 🪖 1. Cambuche Guerrillero en el Monte (Olla del sancocho y cambuche)
+    const campX = cx + 22;
+    const campY = cy - 14;
+    grid.createBuilding(campX, campY, 8, 6);
+    grid.set(campX + 3, campY + 2, ELEM.CAMPFIRE); // La olla comunitaria
+    grid.set(campX + 4, campY + 2, ELEM.WOOD);
+    grid.buildingLocations.push({ x: campX + 4, y: campY + 2, name: "Campamento del Monte" });
+
+    // 🛑 2. Retén Clandestino en la Trocha (barricada de troncos)
+    const retenX = cx + 8;
+    const retenY = cy + Math.floor(Math.sin(retenX * 0.08) * 6);
+    grid.set(retenX, retenY - 2, ELEM.WOOD);
+    grid.set(retenX, retenY + 3, ELEM.WOOD);
+    grid.buildingLocations.push({ x: retenX, y: retenY, name: "Retén en la Trocha" });
+
+    // 👮‍♂️ 3. Puesto de Policía del Cuadrante y Alcaldía
+    const townX = cx - 28;
+    const townY = cy - 12;
+    grid.createBuilding(townX, townY, 9, 6);
+    grid.buildingLocations.push({ x: townX + 4, y: townY + 3, name: "Puesto del Cuadrante" });
+
+    // 🏪 4. Tienda de Doña Gloria y Billar
+    const storeX = cx - 26;
+    const storeY = cy + 8;
+    grid.createBuilding(storeX, storeY, 8, 6);
+    grid.buildingLocations.push({ x: storeX + 4, y: storeY + 3, name: "Tienda y Billar" });
+
+    // 🛶 5. Muelle de Canoas en el Río
+    const dockX = cx - 8;
+    const dockY = cy + 18;
+    for (let dy = 0; dy < 3; dy++) {
+      grid.set(dockX + dy, dockY, ELEM.WOOD);
+      grid.set(dockX + dy, dockY + 1, ELEM.ROAD);
+    }
+    grid.buildingLocations.push({ x: dockX + 1, y: dockY, name: "Muelle de Canoas" });
   }
 }

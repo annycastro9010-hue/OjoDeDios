@@ -76,6 +76,23 @@ export class GameRenderer {
           ctx.fillRect(px, py, ts, ts);
           ctx.fillStyle = '#854d0e';
           ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+        } else if (elem === ELEM.CHASM) {
+          // Grieta Tectónica profunda del terremoto
+          ctx.fillStyle = '#020617'; // Abismo negro
+          ctx.fillRect(px, py, ts, ts);
+          ctx.fillStyle = '#1e1b4b'; // Profundidad
+          ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+          if (Math.random() < 0.2) {
+            ctx.fillStyle = '#b91c1c'; // Fuego/resplandor en el fondo de la falla
+            ctx.fillRect(px + 2, py + 2, 2, 2);
+          }
+        } else if (elem === ELEM.RUBBLE) {
+          // Escombros y piedras de derrumbe
+          ctx.fillStyle = '#374151';
+          ctx.fillRect(px, py, ts, ts);
+          ctx.fillStyle = '#9ca3af';
+          ctx.fillRect(px + 1, py + 1, 3, 3);
+          ctx.fillRect(px + 4, py + 3, 3, 3);
         } else {
           ctx.fillStyle = ELEM_PROPS[elem]?.color || '#fff';
           ctx.fillRect(px, py, ts, ts);
@@ -83,9 +100,9 @@ export class GameRenderer {
       }
     }
 
-    // 2. Renderizar Conos de Visión de Policías
+    // 2. Renderizar Conos de Visión de Policías y Patrullas
     for (const npc of npcs) {
-      if (npc.type === 'police') {
+      if (npc.type === 'police' || npc.type === 'police_cuadrante') {
         sprites.drawVisionCone(ctx, npc.x, npc.y, npc.direction);
       }
     }

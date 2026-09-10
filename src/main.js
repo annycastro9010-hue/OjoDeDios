@@ -186,6 +186,45 @@ function setupEraWorld(era) {
 
     chronicles.add("⚔️ ¡FRENTE DE RESISTENCIA! Las trincheras están cavadas y el hospital militar recibe heridos.", "divine");
     notify("⚔️ ¡Años 40! Búnker fortificado, trincheras y resistencia civil.");
+  } else if (era.id === 'colombia') {
+    // 🇨🇴 REALIDAD MACONDO: Retén, Cuadrante, Mototaxis, Doña Gloria y Aguacates
+    const tombo = spawnNpc('police_cuadrante', midX - 24 * 8, midY - 10 * 8, 'colombia');
+    tombo.brain.name = "Patrullero Gómez";
+    tombo.brain.title = "Agente del Cuadrante";
+    tombo.brain.setThoughtBubble("Páreme esa moto ahí mi rey... ¿Tiene el SOAT?", 180);
+
+    const guerr = spawnNpc('guerrillero', midX + 26 * 8, midY - 12 * 8, 'colombia');
+    guerr.brain.name = "Comandante Tiro-Loco";
+    guerr.brain.title = "Líder del Monte";
+    guerr.brain.setThoughtBubble("¿Quién no lavó la paila del sancocho?", 180);
+
+    const brayan = spawnNpc('mototaxista', midX + 4 * 8, midY + 2 * 8, 'colombia');
+    brayan.brain.name = "El Brayan";
+    brayan.brain.title = "Piloto de Trocha";
+    brayan.brain.setThoughtBubble("¡Súbase compadre que voy sin frenos!", 180);
+
+    const mario = spawnNpc('vendedor', midX - 22 * 8, midY + 10 * 8, 'colombia');
+    mario.brain.name = "Don Mario";
+    mario.brain.title = "Pregonero de Aguacates";
+    mario.brain.setThoughtBubble("¡A mil y a dos mil el aguacate maduro!", 180);
+
+    const gloria = spawnNpc('vecina_chismosa', midX - 26 * 8, midY + 6 * 8, 'colombia');
+    gloria.brain.name = "Doña Gloria";
+    gloria.brain.title = "Ojo de Águila del Barrio";
+    gloria.brain.setThoughtBubble("¡Mírele los tatuajes al vecino nuevo!", 180);
+
+    const alcalde = spawnNpc('alcalde', midX - 27 * 8, midY - 14 * 8, 'colombia');
+    alcalde.brain.name = "Doctor Promesas";
+    alcalde.brain.title = "Alcalde en Campaña";
+    alcalde.brain.setThoughtBubble("¡Un tamal caliente por cada voto compatriotas!", 180);
+
+    // Campesinos y niños
+    spawnNpc('cultivator', midX + 10 * 8, midY + 12 * 8, 'colombia');
+    spawnNpc('child', midX - 12 * 8, midY + 4 * 8, 'colombia');
+    spawnAnimal('dog', midX - 20 * 8, midY + 8 * 8);
+
+    chronicles.add("🇨🇴 ¡REALIDAD MACONDO! El cuadrante patrulla la trocha, la guerrilla hierve el sancocho y Doña Gloria vigila.", "divine");
+    notify("🇨🇴 ¡Realidad Macondo! Selva, retenes, cuadrantes, mototaxis y aguacates.");
   }
 }
 
@@ -274,6 +313,10 @@ document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
       notify("🧠 Toca o haz click sobre cualquier aldeano para leer su mente y sabiduría");
     } else if (currentTool === 'build_house') {
       notify("🏡 Toca en tierra plana para ordenar levantar una nueva choza o casa");
+    } else if (currentTool === 'earthquake') {
+      notify("🌋 Toca el suelo para desatar un sismo tectónico y rajar la tierra");
+    } else if (currentTool === 'spawn_meme') {
+      notify("🇨🇴 Toca para spawnear un personaje memificable de la realidad");
     }
   });
 });
@@ -449,6 +492,23 @@ function handlePointerAction() {
     vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
     notify("⚡ ¡El rayo de Dios ha sacudido la tierra!");
     npcs.forEach(n => n.brain.onDivineEvent('lightning'));
+  } else if (currentTool === 'earthquake') {
+    grid.triggerEarthquake(tileX, tileY, 3);
+    sound.playEarthquake();
+    camera.triggerShake(14, 42);
+    vfx.addShockwave(worldCoords.x, worldCoords.y, 65, '#ea580c');
+    notify("🌋 ¡TERREMOTO TECTÓNICO! Se abren fallas abisales y las casas tambalean");
+    chronicles.add("🌋 ¡TERREMOTO GRADO 8.5! Grietas tectónicas parten la tierra y cunde el pánico.", "divine");
+    npcs.forEach(n => n.brain.onDivineEvent('earthquake'));
+    isMouseDown = false;
+  } else if (currentTool === 'spawn_meme') {
+    const memeTypes = ['police_cuadrante', 'guerrillero', 'mototaxista', 'vendedor', 'vecina_chismosa', 'alcalde'];
+    const chosen = memeTypes[Math.floor(Math.random() * memeTypes.length)];
+    const p = spawnNpc(chosen, worldCoords.x, worldCoords.y, 'colombia');
+    sound.playAscend();
+    notify(`🇨🇴 ¡Apareció ${p.brain.name} (${p.brain.title})!`);
+    chronicles.add(`🇨🇴 ¡NUEVO PERSONAJE! Ha llegado al pueblo: ${p.brain.name} (${p.brain.title}).`, "birth");
+    isMouseDown = false;
   } else if (currentTool === 'rain') {
     triggerRain();
   } else if (currentTool === 'spawn_cultivator') {
@@ -548,9 +608,19 @@ function enterPossession(npc) {
       questTitle.innerText = quest.title;
       questDesc.innerText = quest.description;
       updateQuestUI();
+
+      let abilityTip = "Cosechar o Entregar";
+      if (npc.type === 'police_cuadrante') abilityTip = "👮 ¡Pedir pa' la gaseosa a los sospechosos!";
+      else if (npc.type === 'mototaxista') abilityTip = "🛵 ¡Turbo pique callejero a fondo!";
+      else if (npc.type === 'vendedor') abilityTip = "📢 ¡Megáfono de aguacates a todo volumen!";
+      else if (npc.type === 'guerrillero') abilityTip = "🪖 ¡Olla comunitaria de sancocho!";
+      else if (npc.type === 'vecina_chismosa') abilityTip = "👵 ¡Escobazo limpio a los malandrines!";
+      else if (npc.type === 'alcalde') abilityTip = "🎩 ¡Lanzar tamales por votos!";
+
+      controlsHelp.innerHTML = `<b>[WASD / Flechas]</b> Moverse &nbsp;|&nbsp; <b>[ESPACIO / E]</b> <span style="color:#facc15">${abilityTip}</span> &nbsp;|&nbsp; <b>[Q / ESC]</b> Ascender`;
     },
     () => {
-      notify(`🎮 Tienes el control total de ${npc.brain.name}. Cumple el cometido divino.`);
+      notify(`🎮 Encarnaste en ${npc.brain.name} (${npc.brain.title}). ¡Usa [ESPACIO] para tu habilidad!`);
     }
   );
 }
@@ -614,15 +684,21 @@ function gameLoop() {
           civ.addResource('food', amt);
         } else if (actionType === 'deliver') {
           civ.addResource('knowledge', amt * 5);
+        } else if (actionType === 'tamal' || actionType === 'sancocho') {
+          civ.addResource('food', 2);
+        } else if (actionType === 'bribe') {
+          civ.addResource('knowledge', 10);
         }
         updateQuestUI();
         if (completed) {
-          notify("✨ ¡Ofrenda cumplida! Tu alma ya puede ascender al cielo [Q]");
+          notify("✨ ¡Misión completada! Tu alma ya puede ascender al cielo [Q]");
         }
       },
       () => {
         exitPossession();
-      }
+      },
+      8,
+      npcs
     );
   }
 

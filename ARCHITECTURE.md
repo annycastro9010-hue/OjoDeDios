@@ -33,17 +33,27 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
 
 ### A. Simulación Celular Reactiva (`src/sim/`)
 - **`elements.js`:** Registra cada elemento con sus banderas (`isSolid`, `isLiquid`, `flammable`, densidad y paleta de color).
+  - Incluye `ELEM.CHASM` (fallas abisales que parten el suelo) y `ELEM.RUBBLE` (escombros generados por colapso estructural).
 - **`grid.js`:** Utiliza `Uint8Array` contiguos en memoria para representar el mapa.
   - **Física de fluidos:** El agua cae por gravedad y se dispersa diagonal y horizontalmente.
   - **Física de absorción:** Cuando el agua toca tierra, la fertiliza (`FERTILE_DIRT`).
   - **Botánica:** Las semillas germinan al contacto con humedad y crecen en dos fases: brote tierno y flor madura cosechable (`PLANT_BLOOM`).
   - **Combustión:** El fuego se propaga a vegetación vecina, consume combustible, emite humo ascendente y deja ceniza.
+  - **Física de Fractura Tectónica (`triggerEarthquake`):** Traza grietas fractales en tiempo real desde un epicentro, desgarrando celdas de tierra en abismos, demoliendo estructuras de madera/muros en escombros y levantando polvaredas.
 
 ### B. Sistema de NPCs y Vida Autónoma (`src/entities/`)
 - Cada NPC cuenta con:
   - **Inventario dinámico (`cargo`):** Puede llevar paquetes recolectados.
-  - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega (Almacén del Patrón y Muelle) inyectando dinero en la economía insular.
-  - **Conos de visión de linterna:** Los policías proyectan un campo de visión angular (FOV). Si un sospechoso o el jugador ingresa al haz de luz con cargamento ilegal, se dispara el estado de persecución con alerta sonora.
+  - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega inyectando recursos a la comunidad.
+  - **Conos de visión de linterna:** Policías y patrulleros de cuadrante proyectan campos de visión angular (FOV) que persiguen o detienen a sospechosos.
+  - **Roles Memificables de la Realidad:**
+    - `police_cuadrante`: Patrulla la trocha, cobra "pa' la gaseosa" e inmoviliza infractores.
+    - `guerrillero`: Habita campamentos en la selva, cuida el sancocho comunal y monta retenes.
+    - `mototaxista`: Piloto suicida que hace piques y huye a toda velocidad del cuadrante.
+    - `vendedor`: Pregona con megáfono vendiendo aguacates y mazamorra.
+    - `vecina_chismosa`: Vigila el vecindario y espanta sospechosos a escobazos.
+    - `alcalde`: Saluda a las masas y reparte tamales por votos.
+  - **Habilidades Activas en Modo Posesión:** El controlador mapea la tecla `ESPACIO` / botón de acción para ejecutar la habilidad única del personaje encarnado.
 
 ### C. Motor de Civilización y Evolución Autónoma (`src/world/civilization.js`)
 - **Economía y Recursos Comunitarios:** Gestión viva de madera (`WOOD`), piedra (`STONE`), comida (`FOOD`) y sabiduría (`KNOWLEDGE`).
@@ -52,6 +62,7 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
 
 ### D. Motor de Eras Históricas y Arquitectura Temática (`src/world/eras.js` & `src/world/mapGenerator.js`)
 - **Generadores Arquitectónicos por Época:** 
+  - Realidad Macondo (Selva húmeda, trochas de barro, río serpenteante con canoas, cambuches guerrilleros, tiendas con billar y puesto del cuadrante).
   - Albores Bíblicos (Monte del Altar, río de aguas vivas, cabañas de adobe, Adán, Eva, Caín y Abel).
   - Comuna de los 70s (Escenario de madera de Bob Marley, fogata de la paz y carpas libres).
   - Imperio Clandestino de los 80s (Mansión con piscina azulejada, pista de aterrizaje y muelles).

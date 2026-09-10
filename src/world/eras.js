@@ -48,5 +48,17 @@ export const ERAS = {
     questDesc: 'Transporta 2 botiquines médicos al búnker fortificado a través de la línea de trincheras.',
     mapPreset: 'forties',
     themeColor: '#94a3b8'
+  },
+  COLOMBIA: {
+    id: 'colombia',
+    name: 'Realidad Macondo (Selva, Retenes y Cuadrante)',
+    year: '2026',
+    icon: '🇨🇴',
+    description: 'Trochas de barro, retenes guerrilleros, patrullas de policía pidiendo pa la gaseosa, mototaxistas suicidas y vendedores de aguacates.',
+    roles: ['police_cuadrante', 'guerrillero', 'mototaxista', 'vendedor', 'vecina_chismosa', 'alcalde', 'cultivator', 'child'],
+    questTitle: 'EL REBUSQUE NACIONAL',
+    questDesc: 'Sobrevive a la trocha y a los retenes, esquiva los comparendos y entrega los víveres en la tienda comunitaria.',
+    mapPreset: 'colombia',
+    themeColor: '#facc15'
   }
 };
