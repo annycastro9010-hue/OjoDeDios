@@ -1,6 +1,7 @@
 import { ELEM } from '../sim/elements.js';
 import { sound } from '../audio/soundFX.js';
 import { NPCBrain } from '../ai/brain.js';
+import { vfx } from '../render/fx.js';
 
 export class NPC {
   constructor(id, type, x, y) {
@@ -87,22 +88,46 @@ export class NPC {
     // 1. Agua y Ahogamiento Natural
     if (groundElem === ELEM.WATER) {
       if (this.type === 'prophet') {
+        this.isSwimming = false;
+        if (Math.random() < 0.12) {
+          vfx.addHolySpark(this.x + 8, this.y + 12);
+          vfx.addWaterRipple(this.x, this.y, 11);
+        }
         if (Math.random() < 0.015) {
           this.brain.setThoughtBubble("✨ Caminando sobre las aguas...", 80);
+        }
+      } else if (this.type === 'mototaxista') {
+        // La moto en el agua se frena y echa humo
+        this.isSwimming = false;
+        this.vx *= 0.2;
+        this.vy *= 0.2;
+        if (Math.random() < 0.08) {
+          vfx.addWaterSplash(this.x + 8, this.y, 3);
+          grid.set(curTileX, Math.max(0, curTileY - 1), ELEM.SMOKE, 15);
+          this.brain.setThoughtBubble("🛵 ¡Fuuu! ¡Se me inundó el carburador!", 80);
         }
       } else if (this.canSwim) {
         this.isSwimming = true;
         this.speed = 0.55;
+        if (Math.random() < 0.08 && (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1)) {
+          vfx.addWaterSplash(this.x + 8, this.y, 2);
+          vfx.addWaterRipple(this.x, this.y, 12);
+        }
         if (Math.random() < 0.01) {
           this.brain.setThoughtBubble("🏊 Nadando fresquito...", 60);
         }
       } else {
-        // No sabe nadar: chapotea y se ahoga
+        // No sabe nadar: chapotea desesperadamente
+        this.isSwimming = false;
         this.drowningTimer++;
-        this.vx *= 0.3;
-        this.vy *= 0.3;
+        this.vx *= 0.25;
+        this.vy *= 0.25;
+        if (Math.random() < 0.2) {
+          vfx.addWaterSplash(this.x + 8, this.y, 4);
+          vfx.addWaterRipple(this.x, this.y, 11);
+        }
         if (this.drowningTimer % 35 === 0) {
-          sound.playWater();
+          sound.playWaterSplash();
           this.brain.fear = 100;
           this.brain.setThoughtBubble("🌊 ¡SOCORRO! ¡No sé nadar, me ahogo!", 80);
         }
@@ -118,6 +143,18 @@ export class NPC {
       this.isSwimming = false;
       this.drowningTimer = 0;
       this.speed = (this.type === 'police' || this.type === 'soldier') ? 1.1 : 0.85;
+
+      // Peligros ígneos: Fuego y Lava
+      if (groundElem === ELEM.FIRE || groundElem === ELEM.LAVA) {
+        vfx.addFireEmber(this.x + 8, this.y + 12, 3);
+        this.brain.fear = 100;
+        if (Math.random() < 0.08) {
+          sound.playBurn();
+          this.brain.setThoughtBubble("🔥 ¡AY DIOS MÍO, FUEGO! ¡QUEMA!", 70);
+        }
+        this.vx += (Math.random() - 0.5) * 1.5;
+        this.vy += (Math.random() - 0.5) * 1.5;
+      }
     }
 
     // 2. Arena de Desierto y Sed
@@ -128,6 +165,16 @@ export class NPC {
       }
     } else {
       if (this.thirst > 0) this.thirst -= 0.04;
+    }
+
+    // Si no sabe nadar y está deambulando, evitar meterse al agua
+    if (!this.canSwim && this.type !== 'prophet' && groundElem !== ELEM.WATER) {
+      const aheadX = Math.floor((this.x + 8 + this.vx * 12) / tileSize);
+      const aheadY = Math.floor((this.y + 13 + this.vy * 12) / tileSize);
+      if (grid.get(aheadX, aheadY) === ELEM.WATER) {
+        this.vx = -this.vx * 0.8;
+        this.vy = -this.vy * 0.8;
+      }
     }
 
     // Comportamientos según profesión histórica
@@ -162,9 +209,25 @@ export class NPC {
       this.updateCivilian();
     }
 
-    // Aplicar movimiento
-    this.x += this.vx;
-    this.y += this.vy;
+    // 🧱 Aplicar movimiento con colisión de obstáculos sólidos y abismos
+    const isSolid = (px, py) => {
+      const tx = Math.floor(px / tileSize);
+      const ty = Math.floor(py / tileSize);
+      const el = grid.get(tx, ty);
+      return el === ELEM.BUILDING || el === ELEM.STONE || el === ELEM.RUBBLE || el === ELEM.CHASM;
+    };
+
+    if (!isSolid(this.x + this.vx + 8, this.y + 13)) {
+      this.x += this.vx;
+    } else {
+      this.vx = -this.vx * 0.5;
+    }
+
+    if (!isSolid(this.x + 8, this.y + this.vy + 13)) {
+      this.y += this.vy;
+    } else {
+      this.vy = -this.vy * 0.5;
+    }
 
     // Límites de la isla
     const maxPxX = (grid.width - 2) * tileSize;

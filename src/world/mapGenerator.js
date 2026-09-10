@@ -117,56 +117,64 @@ export class MapGenerator {
     }
   }
 
-  // 2. ☮️ AÑOS 70: Comuna de Paz, Gran Escenario de Bob Marley y Huertos Libres
+  // 2. ☮️ AÑOS 70: Comuna de Paz, Gran Escenario de Bob Marley y Festival de Woodstock
   static generateSeventies(grid, w, h, cx, cy) {
     const radiusX = Math.floor(w * 0.44);
     const radiusY = Math.floor(h * 0.40);
 
+    // Pradera vibrante de festival, flores psicodélicas y arboledas
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const dx = (x - cx) / radiusX;
         const dy = (y - cy) / radiusY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const wobble = Math.sin(x * 0.2) * 0.08 + Math.cos(y * 0.2) * 0.08;
+        const wobble = Math.sin(x * 0.18) * 0.08 + Math.cos(y * 0.18) * 0.08;
 
-        if (dist + wobble < 0.45) {
+        if (dist + wobble < 0.65) {
+          // Todo el interior del festival es césped fértil y flores vivas (¡nada de tierra seca!)
           grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.15) grid.set(x, y, ELEM.PLANT_BLOOM);
-        } else if (dist + wobble < 0.72) {
-          grid.set(x, y, ELEM.DIRT);
-          if (Math.random() < 0.04) grid.set(x, y, ELEM.WOOD);
+          if (Math.random() < 0.22) grid.set(x, y, ELEM.PLANT_BLOOM);
+        } else if (dist + wobble < 0.74) {
+          // Borde con bosquecillos y palmeras/árboles de festival
+          grid.set(x, y, ELEM.FERTILE_DIRT);
+          if (Math.random() < 0.28) {
+            grid.set(x, y, ELEM.WOOD);
+          } else if (Math.random() < 0.3) {
+            grid.set(x, y, ELEM.PLANT_BLOOM);
+          }
         } else {
           grid.set(x, y, ELEM.WATER);
         }
       }
     }
 
-    // Lago de Meditación y Paz en el este
+    // Lago de Meditación y Paz en el este con orilla florida
     for (let dy = -7; dy <= 7; dy++) {
       for (let dx = -7; dx <= 7; dx++) {
-        if (dx * dx + dy * dy < 45) {
-          grid.set(cx + 28 + dx, cy + 8 + dy, ELEM.WATER);
+        if (dx * dx + dy * dy < 42) {
+          grid.set(cx + 26 + dx, cy + 6 + dy, ELEM.WATER);
         }
       }
     }
-    grid.buildingLocations.push({ x: cx + 28, y: cy + 8, name: "Lago de Meditación" });
+    grid.buildingLocations.push({ x: cx + 26, y: cy + 6, name: "Lago de Meditación" });
 
-    // 🎸 Gran Escenario Musical de Madera en el Centro
-    const stageX = cx - 6;
-    const stageY = cy - 8;
-    for (let sy = 0; sy < 7; sy++) {
-      for (let sx = 0; sx < 14; sx++) {
-        grid.set(stageX + sx, stageY + sy, ELEM.ROAD); // Madera del escenario
+    // 🎸 Gran Escenario Musical de Madera en el Centro (Tarima de concierto)
+    const stageX = cx - 8;
+    const stageY = cy - 10;
+    for (let sy = 0; sy < 8; sy++) {
+      for (let sx = 0; sx < 16; sx++) {
+        grid.set(stageX + sx, stageY + sy, ELEM.ROAD); // Madera pulida del escenario
       }
     }
+    // Bordes y antorchas del escenario
     grid.set(stageX + 1, stageY + 1, ELEM.CAMPFIRE);
-    grid.set(stageX + 12, stageY + 1, ELEM.CAMPFIRE);
-    grid.buildingLocations.push({ x: stageX + 7, y: stageY + 3, name: "Escenario de Bob Marley" });
+    grid.set(stageX + 14, stageY + 1, ELEM.CAMPFIRE);
+    grid.buildingLocations.push({ x: stageX + 8, y: stageY + 4, name: "Escenario de Bob Marley" });
 
     // 🏕️ Círculo de Cabañas y Carpas de la Comuna
     const tents = [
-      { x: cx - 25, y: cy - 14, name: "Carpa Sanadora" },
-      { x: cx - 30, y: cy + 4, name: "Comuna de Paz" },
+      { x: cx - 26, y: cy - 15, name: "Carpa Sanadora" },
+      { x: cx - 30, y: cy + 2, name: "Comuna de Paz" },
       { x: cx - 18, y: cy + 16, name: "Taller de Guitarras" },
       { x: cx + 12, y: cy + 18, name: "Huerto Ecológico" }
     ];
@@ -176,8 +184,21 @@ export class MapGenerator {
       grid.buildingLocations.push({ x: t.x + 2, y: t.y + 2, name: t.name });
     });
 
-    // Gran Fogata Comunitaria central
+    // Senderos de madera que conectan el escenario con las carpas y el lago
+    for (let x = cx - 28; x <= cx + 20; x++) {
+      grid.set(x, cy + 2, ELEM.ROAD);
+    }
+    for (let y = cy - 8; y <= cy + 18; y++) {
+      grid.set(cx, y, ELEM.ROAD);
+    }
+
+    // Gran Fogata Comunitaria central de la Paz rodeada de flores
     grid.set(cx, cy + 6, ELEM.CAMPFIRE);
+    for (let fAngle = 0; fAngle < 8; fAngle++) {
+      const fx = cx + Math.round(Math.cos(fAngle * Math.PI / 4) * 2);
+      const fy = cy + 6 + Math.round(Math.sin(fAngle * Math.PI / 4) * 2);
+      grid.set(fx, fy, ELEM.PLANT_BLOOM);
+    }
     grid.buildingLocations.push({ x: cx, y: cy + 6, name: "Fogata de la Paz" });
   }
 

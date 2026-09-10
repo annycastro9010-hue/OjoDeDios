@@ -35,11 +35,15 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
 - **`elements.js`:** Registra cada elemento con sus banderas (`isSolid`, `isLiquid`, `flammable`, densidad y paleta de color).
   - Incluye `ELEM.CHASM` (fallas abisales que parten el suelo) y `ELEM.RUBBLE` (escombros generados por colapso estructural).
 - **`grid.js`:** Utiliza `Uint8Array` contiguos en memoria para representar el mapa.
-  - **Física de fluidos:** El agua cae por gravedad y se dispersa diagonal y horizontalmente.
+  - **Física de fluidos y agua real:** El agua cae por gravedad, busca equilibrio lateral e interactúa con otros biomas.
+  - **Química de Lava y Agua:** El contacto entre agua y magma provoca petrificación instantánea en roca volcánica (`STONE`/`RUBBLE`) y emite nubes de vapor/humo (`SMOKE`) con siseo térmico.
+  - **Física Granular de Arena (`SAND`):** Cae por gravedad en el aire, se hunde en el agua desplazando el fluido hacia arriba y se desliza en diagonales formando taludes naturales.
   - **Física de absorción:** Cuando el agua toca tierra, la fertiliza (`FERTILE_DIRT`).
   - **Botánica:** Las semillas germinan al contacto con humedad y crecen en dos fases: brote tierno y flor madura cosechable (`PLANT_BLOOM`).
-  - **Combustión:** El fuego se propaga a vegetación vecina, consume combustible, emite humo ascendente y deja ceniza.
+  - **Combustión Realista:** El fuego consume vegetación, semillas y troncos de madera (`WOOD`), produciendo brasas duraderas, humo ascendente y cenizas (`ASH`), y se extingue al tocar agua.
   - **Física de Fractura Tectónica (`triggerEarthquake`):** Traza grietas fractales en tiempo real desde un epicentro, desgarrando celdas de tierra en abismos, demoliendo estructuras de madera/muros en escombros y levantando polvaredas.
+  - **Colisiones de Obstáculos Sólidos:** Los muros (`BUILDING`), peñascos (`STONE`), escombros y abismos bloquean el paso físico de personajes y fauna mediante deslizamiento de eje.
+
 
 ### B. Sistema de NPCs y Vida Autónoma (`src/entities/`)
 - Cada NPC cuenta con:

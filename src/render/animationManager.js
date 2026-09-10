@@ -22,15 +22,39 @@ export class AnimationManager {
     this.sheets.set(type, sheetData);
   }
 
-  draw(ctx, type, x, y, direction = 'down', frame = 0, isMoving = false, hasCargo = false, isPossessed = false) {
+  draw(ctx, type, x, y, direction = 'down', frame = 0, isMoving = false, hasCargo = false, isPossessed = false, isSwimming = false, inWater = false) {
     const sheet = this.sheets.get(type);
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.floor(x), Math.floor(y));
 
-    // 1. Sombra elíptica translúcida bajo los pies (Minish Cap grounding)
-    this.drawGroundShadow(ctx, 8, 14);
+    // 1. Sombra bajo los pies o estela de agua / milagro divino
+    if (inWater) {
+      if (type === 'prophet') {
+        // ✨ Aureola milagrosa sobre el agua
+        ctx.save();
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(8, 14, 8, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        // Onda acuática elíptica alrededor del cuerpo sumergido
+        ctx.save();
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(8, 12, 7, 3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else {
+      this.drawGroundShadow(ctx, 8, 14);
+    }
 
     // Si es un niño / cría, escalar para que sea pequeño y adorable
     if (type === 'child') {
@@ -42,6 +66,18 @@ export class AnimationManager {
       this.drawExternalFrame(ctx, sheet, direction, frame, isMoving);
     } else {
       this.drawMinishCharacter(ctx, type, direction, frame, isMoving, hasCargo);
+    }
+
+    // 🌊 Sumersión visual si está en el agua y no es el profeta
+    if (inWater && type !== 'prophet') {
+      ctx.save();
+      // Capa translúcida de agua sobre las piernas
+      ctx.fillStyle = 'rgba(24, 85, 175, 0.6)';
+      ctx.fillRect(2, 11, 12, 5);
+      // Espuma blanca en la línea de flotación
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.fillRect(3, 11, 10, 1);
+      ctx.restore();
     }
 
     // Efectos Celestiales si está poseído

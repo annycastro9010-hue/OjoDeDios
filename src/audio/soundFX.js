@@ -357,6 +357,86 @@ class SoundSystem {
       osc.stop(this.ctx.currentTime + 0.12);
     } catch (e) { }
   }
+
+  // 🌊 Chapoteo / Salpicadura de Agua
+  playWaterSplash() {
+    if (this.muted) return;
+    this.init();
+    try {
+      // Impacto de gota + filtro pasa-bajos acuático
+      const duration = 0.18;
+      const buffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * duration), this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < buffer.length; i++) {
+        const env = Math.exp(-i / (this.ctx.sampleRate * 0.04));
+        data[i] = (Math.random() * 2 - 1) * env;
+      }
+      const node = this.ctx.createBufferSource();
+      node.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800 + Math.random() * 200, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + duration);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+      node.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      node.start();
+    } catch (e) { }
+  }
+
+  // 💨 Siseo Térmico de Vapor (Agua extinguiendo fuego o enfriando lava)
+  playSteamHiss() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const duration = 0.35;
+      const buffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * duration), this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < buffer.length; i++) {
+        const env = Math.exp(-i / (this.ctx.sampleRate * 0.15));
+        data[i] = (Math.random() * 2 - 1) * env;
+      }
+      const node = this.ctx.createBufferSource();
+      node.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2400, this.ctx.currentTime);
+      filter.Q.value = 2.0;
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+      node.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      node.start();
+    } catch (e) { }
+  }
+
+  // 🔥 Contacto con fuego / quemadura
+  playBurn() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(140, this.ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.15);
+    } catch (e) { }
+  }
 }
 
 export const sound = new SoundSystem();

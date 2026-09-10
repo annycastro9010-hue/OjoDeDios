@@ -66,6 +66,55 @@ export class VFXSystem {
     });
   }
 
+  // 🌊 Salpicadura de gotas de agua al pisar, nadar o zambullirse
+  addWaterSplash(x, y, count = 5) {
+    const splashColors = ['#bae6fd', '#7dd3fc', '#38bdf8', '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * 1.8;
+      const spd = Math.random() * 1.4 + 0.6;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 8,
+        y: y + 10 + (Math.random() - 0.5) * 3,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 1.0,
+        decay: 0.08 + Math.random() * 0.05,
+        size: Math.random() < 0.5 ? 2 : 1.5,
+        color: splashColors[Math.floor(Math.random() * splashColors.length)]
+      });
+    }
+  }
+
+  // 🌊 Onda concéntrica de agua (estela / ripple al flotar o nadar)
+  addWaterRipple(x, y, maxRadius = 14) {
+    this.shockwaves.push({
+      x,
+      y,
+      radius: 2,
+      maxRadius,
+      alpha: 0.75,
+      color: '#e0f2fe',
+      lineWidth: 1.2
+    });
+  }
+
+  // 🔥 Chispas de fuego o humo al tocar lava o quemarse
+  addFireEmber(x, y, count = 4) {
+    const emberColors = ['#ff4500', '#ff8c00', '#ffd700'];
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 8,
+        y: y + (Math.random() - 0.5) * 8,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -Math.random() * 1.2 - 0.4,
+        life: 1.0,
+        decay: 0.06 + Math.random() * 0.04,
+        size: 2,
+        color: emberColors[Math.floor(Math.random() * emberColors.length)]
+      });
+    }
+  }
+
   update(camera) {
     // 1. Manejo de la secuencia cinemática de posesión
     if (this.possessionSequence) {
@@ -158,7 +207,7 @@ export class VFXSystem {
       ctx.save();
       ctx.strokeStyle = sw.color;
       ctx.globalAlpha = Math.max(0, sw.alpha);
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = sw.lineWidth || 2.5;
       ctx.beginPath();
       ctx.ellipse(sw.x + 8, sw.y + 14, sw.radius, sw.radius * 0.55, 0, 0, Math.PI * 2);
       ctx.stroke();

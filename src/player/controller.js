@@ -1,5 +1,6 @@
 import { ELEM } from '../sim/elements.js';
 import { sound } from '../audio/soundFX.js';
+import { vfx } from '../render/fx.js';
 
 export class PlayerController {
   constructor() {
@@ -69,6 +70,13 @@ export class PlayerController {
     bindBtn('#padAscend', 'ascend');
   }
 
+  isSolid(grid, px, py, tileSize) {
+    const tx = Math.floor(px / tileSize);
+    const ty = Math.floor(py / tileSize);
+    const elem = grid.get(tx, ty);
+    return elem === ELEM.BUILDING || elem === ELEM.STONE || elem === ELEM.RUBBLE || elem === ELEM.CHASM;
+  }
+
   update(possessedNpc, grid, onQuestProgress, onAscendRequest, tileSize = 8, allNpcs = []) {
     if (!possessedNpc) return;
 
@@ -86,10 +94,99 @@ export class PlayerController {
       moveY *= 0.7071;
     }
 
-    const baseSpeed = possessedNpc.type === 'mototaxista' ? 2.4 : 1.6;
+    // 🌊 Detección de Bioma / Suelo bajo los pies
+    const footTileX = Math.floor((possessedNpc.x + 8) / tileSize);
+    const footTileY = Math.floor((possessedNpc.y + 13) / tileSize);
+    const groundElem = grid.get(footTileX, footTileY);
+    const inWater = (groundElem === ELEM.WATER);
+
+    let speedMultiplier = 1.0;
+
+    if (inWater) {
+      if (possessedNpc.type === 'prophet') {
+        // ✨ El profeta camina sobre las aguas con gracia divina
+        possessedNpc.isSwimming = false;
+        speedMultiplier = 1.0;
+        if (Math.random() < 0.2) {
+          vfx.addHolySpark(possessedNpc.x + 8, possessedNpc.y + 12);
+          vfx.addWaterRipple(possessedNpc.x, possessedNpc.y, 11);
+        }
+      } else if (possessedNpc.type === 'mototaxista') {
+        // 🛵 La moto se ahoga en agua: motor calado y desaceleración extrema
+        possessedNpc.isSwimming = false;
+        speedMultiplier = 0.2;
+        if (moveX !== 0 || moveY !== 0) {
+          if (this.stepTimer % 20 === 0) {
+            sound.playWaterSplash();
+            vfx.addWaterSplash(possessedNpc.x + 8, possessedNpc.y, 4);
+            grid.set(footTileX, Math.max(0, footTileY - 1), ELEM.SMOKE, 15);
+            if (Math.random() < 0.35) {
+              possessedNpc.brain.setThoughtBubble("🛵 ¡Pffft! ¡Se me ahogó la moto en el agua!", 90);
+            }
+          }
+        }
+      } else if (possessedNpc.canSwim) {
+        // 🏊 Sabe nadar: se sumerge a la cintura, velocidad reducida y brazadas
+        possessedNpc.isSwimming = true;
+        possessedNpc.drowningTimer = 0;
+        speedMultiplier = 0.55;
+        if ((moveX !== 0 || moveY !== 0) && this.stepTimer % 18 === 0) {
+          sound.playWaterSplash();
+          vfx.addWaterSplash(possessedNpc.x + 8, possessedNpc.y, 3);
+          vfx.addWaterRipple(possessedNpc.x, possessedNpc.y, 13);
+        }
+      } else {
+        // 🌊 No sabe nadar: forcejeo torpe, pánico y riesgo de ahogamiento
+        possessedNpc.isSwimming = false;
+        speedMultiplier = 0.28;
+        possessedNpc.drowningTimer = (possessedNpc.drowningTimer || 0) + 1;
+        if ((moveX !== 0 || moveY !== 0) && this.stepTimer % 14 === 0) {
+          sound.playWaterSplash();
+          vfx.addWaterSplash(possessedNpc.x + 8, possessedNpc.y, 5);
+          vfx.addWaterRipple(possessedNpc.x, possessedNpc.y, 12);
+        }
+        if (possessedNpc.drowningTimer % 40 === 0) {
+          sound.playWaterSplash();
+          possessedNpc.brain.setThoughtBubble("🌊 ¡SOCORRO! ¡No sé nadar, me ahogo!", 85);
+        }
+        if (possessedNpc.drowningTimer > 240) {
+          possessedNpc.brain.setThoughtBubble("😵 ¡Casi me ahogo! Por poco no la cuento...", 120);
+          possessedNpc.drowningTimer = 0;
+        }
+      }
+    } else {
+      possessedNpc.isSwimming = false;
+      possessedNpc.drowningTimer = 0;
+
+      // 🔥 Reacción al pisar Fuego o Lava
+      if (groundElem === ELEM.FIRE || groundElem === ELEM.LAVA) {
+        vfx.addFireEmber(possessedNpc.x + 8, possessedNpc.y + 12, 4);
+        if (this.stepTimer % 20 === 0) {
+          sound.playBurn();
+          possessedNpc.brain.setThoughtBubble("🔥 ¡AAAAHHH QUEMA! ¡ME QUEMO!", 70);
+        }
+        speedMultiplier = 1.25; // Impulso por quemadura
+      }
+    }
+
+    const baseSpeed = (possessedNpc.type === 'mototaxista' ? 2.4 : 1.6) * speedMultiplier;
+
     if (moveX !== 0 || moveY !== 0) {
-      possessedNpc.x += moveX * baseSpeed;
-      possessedNpc.y += moveY * baseSpeed;
+      const dx = moveX * baseSpeed;
+      const dy = moveY * baseSpeed;
+
+      // 🧱 Colisión Física con Construcciones, Rocas y Abismos (Deslizamiento eje por eje)
+      const newX = possessedNpc.x + dx;
+      if (!this.isSolid(grid, newX + 4, possessedNpc.y + 13, tileSize) &&
+          !this.isSolid(grid, newX + 12, possessedNpc.y + 13, tileSize)) {
+        possessedNpc.x = newX;
+      }
+
+      const newY = possessedNpc.y + dy;
+      if (!this.isSolid(grid, possessedNpc.x + 4, newY + 13, tileSize) &&
+          !this.isSolid(grid, possessedNpc.x + 12, newY + 13, tileSize)) {
+        possessedNpc.y = newY;
+      }
 
       // Dirección del sprite
       if (Math.abs(moveX) > Math.abs(moveY)) {
@@ -98,13 +195,15 @@ export class PlayerController {
         possessedNpc.direction = moveY > 0 ? 'down' : 'up';
       }
 
-      // Animación y sonido de pasos o motor
+      // Animación y sonido
       this.stepTimer++;
       if (this.stepTimer % 14 === 0) {
         possessedNpc.frame = (possessedNpc.frame + 1) % 4;
-        if (possessedNpc.type === 'mototaxista') {
+        if (possessedNpc.isSwimming) {
+          sound.playWaterSplash();
+        } else if (possessedNpc.type === 'mototaxista' && !inWater) {
           sound.playMotorbike();
-        } else {
+        } else if (!inWater) {
           sound.playStep();
         }
       }

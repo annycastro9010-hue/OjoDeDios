@@ -1,4 +1,5 @@
 import { ELEM, ELEM_PROPS } from './elements.js';
+import { sound } from '../audio/soundFX.js';
 
 export class SimulationGrid {
   constructor(width = 140, height = 90) {
@@ -7,6 +8,7 @@ export class SimulationGrid {
     this.grid = new Uint8Array(width * height);
     this.life = new Uint8Array(width * height); // Vida o timer para fuego, crecimiento, etc.
     this.updated = new Uint8Array(width * height);
+    this.soundCooldown = 0;
 
     this.buildingLocations = []; // Puntos clave (Almacén clandestino, puerto)
     this.initWorld();
@@ -117,20 +119,37 @@ export class SimulationGrid {
             if (current === ELEM.BUILDING) continue; // No destruir muros con pincel básico
 
             if (elem === ELEM.FIRE) {
-              this.set(x, y, ELEM.FIRE, 40 + Math.floor(Math.random() * 20));
+              if (current === ELEM.WATER) {
+                this.set(x, y, ELEM.SMOKE, 15);
+              } else {
+                this.set(x, y, ELEM.FIRE, 40 + Math.floor(Math.random() * 20));
+              }
             } else if (elem === ELEM.SEED) {
-              // Si cae en tierra fértil o tierra
               if (current === ELEM.DIRT || current === ELEM.FERTILE_DIRT || current === ELEM.ROAD) {
                 this.set(x, y, ELEM.SEED, 0);
               }
             } else if (elem === ELEM.WATER) {
-              // Agua hidrata tierra
               if (current === ELEM.DIRT) {
                 this.set(x, y, ELEM.FERTILE_DIRT);
               } else if (current === ELEM.FIRE) {
-                this.set(x, y, ELEM.SMOKE, 15);
+                this.set(x, y, ELEM.SMOKE, 20);
+                sound.playSteamHiss();
+              } else if (current === ELEM.LAVA) {
+                this.set(x, y, ELEM.STONE);
+                if (y > 0) this.set(x, y - 1, ELEM.SMOKE, 25);
+                sound.playSteamHiss();
               } else if (current === ELEM.EMPTY || current === ELEM.ASH) {
                 this.set(x, y, ELEM.WATER);
+              }
+            } else if (elem === ELEM.LAVA) {
+              if (current === ELEM.WATER) {
+                this.set(x, y, ELEM.STONE);
+                if (y > 0) this.set(x, y - 1, ELEM.SMOKE, 25);
+                sound.playSteamHiss();
+              } else if (current === ELEM.WOOD || current === ELEM.PLANT || current === ELEM.PLANT_BLOOM) {
+                this.set(x, y, ELEM.FIRE, 50);
+              } else {
+                this.set(x, y, ELEM.LAVA);
               }
             } else {
               this.set(x, y, elem);
@@ -220,6 +239,7 @@ export class SimulationGrid {
   // Actualización de física celular (60 FPS)
   step() {
     this.updated.fill(0);
+    if (this.soundCooldown > 0) this.soundCooldown--;
 
     // Recorrido de abajo hacia arriba para física de caída
     for (let y = this.height - 1; y >= 0; y--) {
@@ -236,16 +256,28 @@ export class SimulationGrid {
         const elem = this.grid[idx];
         if (elem === ELEM.EMPTY) continue;
 
-        // 1. AGUA
+        // ================= 1. AGUA =================
         if (elem === ELEM.WATER) {
           const down = this.get(x, y + 1);
+
           if (down === ELEM.DIRT) {
             // Agua penetra e hidrata la tierra
             this.set(x, y + 1, ELEM.FERTILE_DIRT);
             this.set(x, y, ELEM.EMPTY);
             continue;
           } else if (down === ELEM.FIRE) {
-            this.set(x, y + 1, ELEM.SMOKE, 20);
+            this.set(x, y + 1, ELEM.SMOKE, 25);
+            this.set(x, y, ELEM.EMPTY);
+            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+            continue;
+          } else if (down === ELEM.LAVA) {
+            // Agua enfría lava directamente en roca volcánica
+            this.set(x, y + 1, ELEM.STONE);
+            this.set(x, y, ELEM.SMOKE, 30);
+            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+            continue;
+          } else if (down === ELEM.CHASM) {
+            // Agua se precipita al abismo tectónico
             this.set(x, y, ELEM.EMPTY);
             continue;
           }
@@ -255,11 +287,27 @@ export class SimulationGrid {
             this.set(x, y, ELEM.EMPTY);
             this.updated[this.getIndex(x, y + 1)] = 1;
           } else {
-            // Flujo diagonal y horizontal
+            // Revisar interacción con lava o fuego en los costados
             const dir = Math.random() < 0.5 ? -1 : 1;
+            const sideLava1 = this.get(x + dir, y);
+            const sideLava2 = this.get(x - dir, y);
+
+            if (sideLava1 === ELEM.LAVA) {
+              this.set(x + dir, y, ELEM.STONE);
+              this.set(x, y, ELEM.SMOKE, 25);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+              continue;
+            } else if (sideLava2 === ELEM.LAVA) {
+              this.set(x - dir, y, ELEM.STONE);
+              this.set(x, y, ELEM.SMOKE, 25);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+              continue;
+            }
+
+            // Flujo diagonal y horizontal
             const diag1 = this.get(x + dir, y + 1);
             const diag2 = this.get(x - dir, y + 1);
-            
+
             if (diag1 === ELEM.EMPTY && y < this.height - 1) {
               this.set(x + dir, y + 1, ELEM.WATER);
               this.set(x, y, ELEM.EMPTY);
@@ -285,7 +333,101 @@ export class SimulationGrid {
           }
         }
 
-        // 2. FUEGO
+        // ================= 2. LAVA / MAGMA =================
+        else if (elem === ELEM.LAVA) {
+          const down = this.get(x, y + 1);
+
+          if (down === ELEM.WATER) {
+            // Lava toca agua: petrificación inmediata en roca y vapor
+            this.set(x, y, ELEM.STONE);
+            this.set(x, y + 1, ELEM.SMOKE, 30);
+            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+            continue;
+          } else if (down === ELEM.WOOD || down === ELEM.PLANT || down === ELEM.PLANT_BLOOM || down === ELEM.SEED) {
+            this.set(x, y + 1, ELEM.FIRE, 60);
+          }
+
+          // Caída viscosa (algo más lenta que el agua)
+          if (Math.random() < 0.75) {
+            if (y < this.height - 1 && down === ELEM.EMPTY) {
+              this.set(x, y + 1, ELEM.LAVA);
+              this.set(x, y, ELEM.EMPTY);
+              this.updated[this.getIndex(x, y + 1)] = 1;
+            } else {
+              const dir = Math.random() < 0.5 ? -1 : 1;
+              const diag = this.get(x + dir, y + 1);
+              const side = this.get(x + dir, y);
+
+              if (side === ELEM.WATER) {
+                this.set(x + dir, y, ELEM.STONE);
+                this.set(x, y, ELEM.SMOKE, 25);
+                if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+                continue;
+              }
+
+              if (diag === ELEM.EMPTY && y < this.height - 1) {
+                this.set(x + dir, y + 1, ELEM.LAVA);
+                this.set(x, y, ELEM.EMPTY);
+                this.updated[this.getIndex(x + dir, y + 1)] = 1;
+              } else if (side === ELEM.EMPTY && Math.random() < 0.4) {
+                this.set(x + dir, y, ELEM.LAVA);
+                this.set(x, y, ELEM.EMPTY);
+                this.updated[this.getIndex(x + dir, y)] = 1;
+              }
+            }
+          }
+
+          // Calentar e incendiar vegetación o madera circundante
+          const neighbors = [[x + 1, y], [x - 1, y], [x, y - 1]];
+          for (const [nx, ny] of neighbors) {
+            const ne = this.get(nx, ny);
+            if (ne === ELEM.WOOD || ne === ELEM.PLANT || ne === ELEM.PLANT_BLOOM || ne === ELEM.SEED) {
+              if (Math.random() < 0.3) {
+                this.set(nx, ny, ELEM.FIRE, 50);
+              }
+            }
+          }
+        }
+
+        // ================= 3. ARENA (Física Granular Real) =================
+        else if (elem === ELEM.SAND) {
+          const down = this.get(x, y + 1);
+
+          if (y < this.height - 1) {
+            if (down === ELEM.EMPTY) {
+              // La arena cae por gravedad en el aire
+              this.set(x, y + 1, ELEM.SAND);
+              this.set(x, y, ELEM.EMPTY);
+              this.updated[this.getIndex(x, y + 1)] = 1;
+            } else if (down === ELEM.WATER) {
+              // La arena es más densa que el agua: se hunde al fondo desplazando el agua
+              this.set(x, y + 1, ELEM.SAND);
+              this.set(x, y, ELEM.WATER);
+              this.updated[this.getIndex(x, y + 1)] = 1;
+            } else {
+              // Deslizamiento diagonal en talud natural
+              const dir = Math.random() < 0.5 ? -1 : 1;
+              const diag1 = this.get(x + dir, y + 1);
+              const diag2 = this.get(x - dir, y + 1);
+
+              if (diag1 === ELEM.EMPTY) {
+                this.set(x + dir, y + 1, ELEM.SAND);
+                this.set(x, y, ELEM.EMPTY);
+                this.updated[this.getIndex(x + dir, y + 1)] = 1;
+              } else if (diag2 === ELEM.EMPTY) {
+                this.set(x - dir, y + 1, ELEM.SAND);
+                this.set(x, y, ELEM.EMPTY);
+                this.updated[this.getIndex(x - dir, y + 1)] = 1;
+              } else if (diag1 === ELEM.WATER) {
+                this.set(x + dir, y + 1, ELEM.SAND);
+                this.set(x, y, ELEM.WATER);
+                this.updated[this.getIndex(x + dir, y + 1)] = 1;
+              }
+            }
+          }
+        }
+
+        // ================= 4. FUEGO =================
         else if (elem === ELEM.FIRE) {
           let life = this.life[idx] - 1;
           if (life <= 0) {
@@ -294,7 +436,7 @@ export class SimulationGrid {
           }
           this.life[idx] = life;
 
-          // Propagar a vecinos inflamables
+          // Propagar a vecinos inflamables (incluyendo troncos de madera)
           const neighbors = [
             [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1],
             [x + 1, y - 1], [x - 1, y - 1]
@@ -306,19 +448,26 @@ export class SimulationGrid {
                 this.set(nx, ny, ELEM.FIRE, 35 + Math.floor(Math.random() * 25));
                 this.updated[this.getIndex(nx, ny)] = 1;
               }
+            } else if (ne === ELEM.WOOD || ne === ELEM.CAMPFIRE) {
+              // La madera arde con fuego duradero
+              if (Math.random() < 0.18) {
+                this.set(nx, ny, ELEM.FIRE, 65 + Math.floor(Math.random() * 35));
+                this.updated[this.getIndex(nx, ny)] = 1;
+              }
             } else if (ne === ELEM.WATER) {
-              this.set(x, y, ELEM.SMOKE, 15);
+              this.set(x, y, ELEM.SMOKE, 20);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
               break;
             }
           }
 
           // Emitir humo hacia arriba
-          if (y > 0 && Math.random() < 0.15 && this.get(x, y - 1) === ELEM.EMPTY) {
-            this.set(x, y - 1, ELEM.SMOKE, 12);
+          if (y > 0 && Math.random() < 0.18 && this.get(x, y - 1) === ELEM.EMPTY) {
+            this.set(x, y - 1, ELEM.SMOKE, 14);
           }
         }
 
-        // 3. HUMO
+        // ================= 5. HUMO =================
         else if (elem === ELEM.SMOKE) {
           let life = this.life[idx] - 1;
           if (life <= 0) {
@@ -328,7 +477,7 @@ export class SimulationGrid {
           this.life[idx] = life;
           // Ascender y disiparse
           if (y > 0 && this.get(x, y - 1) === ELEM.EMPTY) {
-            const drift = Math.random() < 0.3 ? (Math.random() < 0.5 ? -1 : 1) : 0;
+            const drift = Math.random() < 0.35 ? (Math.random() < 0.5 ? -1 : 1) : 0;
             const targetX = Math.max(0, Math.min(this.width - 1, x + drift));
             if (this.get(targetX, y - 1) === ELEM.EMPTY) {
               this.set(targetX, y - 1, ELEM.SMOKE, life);
@@ -338,16 +487,15 @@ export class SimulationGrid {
           }
         }
 
-        // 4. CRECIMIENTO DE SEMILLAS Y PLANTAS
+        // ================= 6. CRECIMIENTO BOTÁNICO =================
         else if (elem === ELEM.SEED) {
-          // Si está sobre tierra fértil o tiene agua cerca, germina
           const below = this.get(x, y + 1);
           const sides = [this.get(x - 1, y), this.get(x + 1, y), below];
           const hasWater = sides.some(s => s === ELEM.WATER || s === ELEM.FERTILE_DIRT);
 
           if (hasWater) {
             this.life[idx] += 1;
-            if (this.life[idx] > 60) { // ~1 segundo
+            if (this.life[idx] > 60) {
               this.set(x, y, ELEM.PLANT, 0);
             }
           }
@@ -355,10 +503,8 @@ export class SimulationGrid {
 
         else if (elem === ELEM.PLANT) {
           this.life[idx] += 1;
-          // Crece hacia arriba si hay espacio y florece
           if (this.life[idx] > 120) {
             this.set(x, y, ELEM.PLANT_BLOOM, 0);
-            // Puede expandirse a los lados
             const side = Math.random() < 0.5 ? -1 : 1;
             if (this.get(x + side, y) === ELEM.FERTILE_DIRT && this.get(x + side, y - 1) === ELEM.EMPTY) {
               if (Math.random() < 0.08) {

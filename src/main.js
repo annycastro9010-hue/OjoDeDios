@@ -150,19 +150,33 @@ function setupEraWorld(era) {
     chronicles.add("📖 ¡GÉNESIS! Adán, Eva, Caín y Abel fundan la civilización junto al Río de la Vida y el Altar Sagrado.", "divine");
     notify("🕊️ ¡Albores Bíblicos! La humanidad aprende a sembrar, construir y orar.");
   } else if (era.id === 'seventies') {
-    const bob = spawnNpc('musician', midX + 7 * 8, midY + 3 * 8, 'seventies');
+    // 🎸 Bob Marley en el centro de su gran escenario de madera
+    const bob = spawnNpc('musician', midX + 1 * 8, midY - 5 * 8, 'seventies');
     bob.brain.name = "Bob Marley";
     bob.brain.title = "Voz de la Paz";
-    bob.brain.setThoughtBubble("🎶 One Love, One Heart, Let's get together!", 180);
+    bob.brain.setThoughtBubble("🎶 One Love, One Heart, Let's get together and feel all right!", 200);
 
-    spawnNpc('healer', midX - 25 * 8, midY - 14 * 8, 'seventies');
-    spawnNpc('hippie', midX - 30 * 8, midY + 4 * 8, 'seventies');
-    spawnNpc('cultivator', midX + 12 * 8, midY + 18 * 8, 'seventies');
-    spawnNpc('child', midX, midY + 10 * 8, 'seventies');
-    spawnAnimal('dog', midX + 2 * 8, midY + 5 * 8);
+    // Público hippie frente al escenario escuchando la música
+    const h1 = spawnNpc('hippie', midX - 2 * 8, midY + 1 * 8, 'seventies');
+    h1.brain.setThoughtBubble("☮️ ¡Siente la vibración de la música!", 160);
 
-    chronicles.add("☮️ ¡FESTIVAL DE LA PAZ! Bob Marley y la comuna encienden la fogata de la armonía libre.", "divine");
-    notify("☮️ ¡Años 70! Paz, guitarras, amor libre y comuna ecológica.");
+    const h2 = spawnNpc('musician', midX + 4 * 8, midY + 2 * 8, 'seventies');
+    h2.brain.name = "Ziggy";
+    h2.brain.title = "Guitarrista";
+    h2.brain.setThoughtBubble("🎸 Siguiendo el compás del bajo...", 150);
+
+    // Sanadora en la Carpa Sanadora
+    const healer = spawnNpc('healer', midX - 23 * 8, midY - 12 * 8, 'seventies');
+    healer.brain.name = "Rita";
+    healer.brain.title = "Sanadora Herbal";
+
+    // Niños y fauna en la comuna
+    spawnNpc('child', midX - 10 * 8, midY + 5 * 8, 'seventies');
+    spawnNpc('cultivator', midX + 14 * 8, midY + 16 * 8, 'seventies');
+    spawnAnimal('dog', midX, midY + 8 * 8); // Perro cerca de la fogata
+
+    chronicles.add("☮️ ¡FESTIVAL DE LA PAZ! Bob Marley canta en su tarima con amplificadores y la comuna enciende la fogata.", "divine");
+    notify("☮️ ¡Años 70! Bob Marley en concierto, praderas floridas, amplificadores y comuna.");
   } else if (era.id === 'eighties') {
     const boss = spawnNpc('boss', midX - 15 * 8, midY - 21 * 8, 'eighties');
     boss.brain.name = "El Patrón";
@@ -736,7 +750,7 @@ function gameLoop() {
 
   // 6. Renderizado
   const worldMouse = camera.screenToWorld(mousePos.x, mousePos.y);
-  renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius);
+  renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius, currentEra);
 
   // 7. Actualización de Estadísticas cada 25 frames
   if (frameCount % 25 === 0 && mode === 'god') {
