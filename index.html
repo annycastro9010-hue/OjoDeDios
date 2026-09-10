@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ojo de Dios: Sandbox & Posesión Clandestina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #05070d;
+      font-family: 'VT323', monospace;
+      color: #f8fafc;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      cursor: crosshair;
+    }
+
+    /* BARRA SUPERIOR ESTADÍSTICAS */
+    .top-bar {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: rgba(10, 14, 26, 0.88);
+      border: 2px solid #334155;
+      padding: 8px 20px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+      font-size: 20px;
+    }
+
+    .title-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+      margin-right: 8px;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-val {
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .alert-bar-container {
+      width: 90px;
+      height: 12px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .alert-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: #ef4444;
+      transition: width 0.3s;
+    }
+
+    /* BARRA INFERIOR DE PODERES DIVINOS */
+    .bottom-toolbar {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid #475569;
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+
+    .tool-btn {
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 58px;
+      transition: all 0.15s;
+    }
+
+    .tool-btn:hover {
+      background: #334155;
+      border-color: #64748b;
+      transform: translateY(-2px);
+    }
+
+    .tool-btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+      transform: translateY(-3px);
+    }
+
+    .tool-btn.possess-btn {
+      border-color: #eab308;
+      background: #713f12;
+      color: #fef08a;
+    }
+
+    .tool-btn.possess-btn.active {
+      background: #ca8a04;
+      border-color: #fef08a;
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.8);
+    }
+
+    /* MODO INMERSIVO (ZELDA / POSESIÓN) */
+    .possessed-hud {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 3px solid #facc15;
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.4);
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 20;
+      text-align: center;
+      max-width: 540px;
+      display: none;
+    }
+
+    .quest-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      color: #facc15;
+      margin-bottom: 6px;
+    }
+
+    .quest-desc {
+      font-size: 20px;
+      color: #e2e8f0;
+      margin-bottom: 8px;
+    }
+
+    .quest-stats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      font-size: 20px;
+      color: #38bdf8;
+    }
+
+    .ascend-btn {
+      margin-top: 10px;
+      background: #ca8a04;
+      border: 2px solid #fef08a;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      animation: pulse 1.2s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 8px #facc15; }
+      100% { transform: scale(1.04); box-shadow: 0 0 20px #facc15; }
+    }
+
+    .controls-help {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 6px 16px;
+      font-size: 18px;
+      color: #cbd5e1;
+      z-index: 20;
+      display: none;
+    }
+
+    .notification {
+      position: absolute;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #38bdf8;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 20px;
+      color: #38bdf8;
+      z-index: 15;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Barra Superior en Modo Dios -->
+  <div class="top-bar" id="topBar">
+    <div class="title-badge">👁️ OJO DE DIOS</div>
+    <div class="stat-item">
+      <span>👥</span>
+      <span class="stat-val" id="statPop">0</span>
+    </div>
+    <div class="stat-item">
+      <span>🌿 Cosecha:</span>
+      <span class="stat-val" id="statCrops">0</span>
+    </div>
+    <div class="stat-item">
+      <span>💵 Dinero:</span>
+      <span class="stat-val" id="statCash">$0</span>
+    </div>
+    <div class="stat-item">
+      <span>🚨 Alerta:</span>
+      <div class="alert-bar-container">
+        <div class="alert-bar-fill" id="statAlert"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Herramientas en Modo Dios -->
+  <div class="bottom-toolbar" id="bottomToolbar">
+    <button class="tool-btn active" data-tool="water">💧 Agua</button>
+    <button class="tool-btn" data-tool="dirt">🟫 Tierra</button>
+    <button class="tool-btn" data-tool="seed">🌿 Semilla</button>
+    <button class="tool-btn" data-tool="fire">🔥 Fuego</button>
+    <button class="tool-btn" data-tool="lightning">⚡ Rayo</button>
+    <button class="tool-btn" data-tool="rain">🌧️ Lluvia</button>
+    <button class="tool-btn" data-tool="spawn_cultivator">👨‍🌾 Jíbaro</button>
+    <button class="tool-btn" data-tool="spawn_police">👮 Policía</button>
+    <button class="tool-btn" data-tool="spawn_boss">👑 Patrón</button>
+    <button class="tool-btn possess-btn" data-tool="possess">👁️ POSEER</button>
+  </div>
+
+  <!-- HUD en Modo Posesión Inmersiva (Estilo Zelda Minish Cap) -->
+  <div class="possessed-hud" id="possessedHud">
+    <div class="quest-title" id="questTitle">MISIÓN ACTIVA</div>
+    <div class="quest-desc" id="questDesc">Cargando misión...</div>
+    <div class="quest-stats">
+      <span>🌿 Cosechados: <b id="questHarvest">0/2</b></span>
+      <span>📦 Entregados: <b id="questDeliver">0/2</b></span>
+    </div>
+    <button class="ascend-btn" id="ascendBtn" style="display: none;">✨ ASCENDER AL CIELO [Q]</button>
+  </div>
+
+  <!-- Ayuda de Controles en Posesión -->
+  <div class="controls-help" id="controlsHelp">
+    <b>[WASD / Flechas]</b> Moverse &nbsp;|&nbsp; <b>[ESPACIO / E]</b> Cosechar o Entregar &nbsp;|&nbsp; <b>[Q / ESC]</b> Desposeer
+  </div>
+
+  <div class="notification" id="notification"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
