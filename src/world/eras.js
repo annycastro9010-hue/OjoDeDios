@@ -60,5 +60,17 @@ export const ERAS = {
     questDesc: 'Sobrevive a la trocha y a los retenes, esquiva los comparendos y entrega los víveres en la tienda comunitaria.',
     mapPreset: 'colombia',
     themeColor: '#facc15'
+  },
+  HYRULE: {
+    id: 'hyrule',
+    name: 'Aldea Minish (Profundidad 2.5D)',
+    year: 'Era de la Leyenda',
+    icon: '🗡️',
+    description: 'Aldea campestre con cabañas de tejado azul, acantilados de piedra con escaleras de mano, huertos hundidos, pozos de agua, cercas y frondosos árboles volumétricos estilo The Minish Cap.',
+    roles: ['hero', 'farmer', 'child', 'healer', 'prophet'],
+    questTitle: 'EL SECRETO DE LA ALDEA VERDE',
+    questDesc: 'Recorre la aldea entre los árboles y canales de agua, trepa la escalera del acantilado y visita la cabaña central.',
+    mapPreset: 'hyrule',
+    themeColor: '#22c55e'
   }
 };

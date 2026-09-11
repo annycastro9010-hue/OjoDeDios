@@ -21,6 +21,8 @@ export class MapGenerator {
       this.generateForties(grid, w, h, cx, cy);
     } else if (type === 'colombia') {
       this.generateColombia(grid, w, h, cx, cy);
+    } else if (type === 'hyrule' || type === 'minish') {
+      this.generateHyrule(grid, w, h, cx, cy);
     } else if (type === 'genesis') {
       this.generateGenesis(grid, w, h, cx, cy);
     } else {
@@ -408,5 +410,153 @@ export class MapGenerator {
       grid.set(dockX + dy, dockY + 1, ELEM.ROAD);
     }
     grid.buildingLocations.push({ x: dockX + 1, y: dockY, name: "Muelle de Canoas" });
+  }
+
+  // 6. 🗡️ ALDEA MINISH: Profundidad 2.5D, Acantilados con Escaleras, Huertos Hundidos y Árboles Volumétricos
+  static generateHyrule(grid, w, h, cx, cy) {
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
+
+    // 1. Suelo Base: Pradera viva con flores silvestres y océano circundante
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (x - cx) / radiusX;
+        const dy = (y - cy) / radiusY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const wobble = Math.sin(x * 0.16) * 0.06 + Math.cos(y * 0.16) * 0.06;
+
+        if (dist + wobble < 0.68) {
+          grid.set(x, y, ELEM.FERTILE_DIRT);
+          if (Math.random() < 0.15) grid.set(x, y, ELEM.PLANT_BLOOM);
+        } else {
+          grid.set(x, y, ELEM.WATER);
+        }
+      }
+    }
+
+    // 2. 🧱 Acantilado / Pared de Piedra Norte con Escalera de Mano
+    const cliffY = cy - 18;
+    for (let x = cx - 28; x <= cx + 24; x++) {
+      grid.set(x, cliffY, ELEM.CLIFF);
+    }
+    // Escalera de madera apoyada en el muro para subir a la terraza superior
+    const ladderX = cx - 14;
+    grid.set(ladderX, cliffY, ELEM.LADDER);
+    grid.buildingLocations.push({ x: ladderX, y: cliffY, name: "Escalera del Muro" });
+
+    // Terraza superior sobre el muro
+    for (let ty = cliffY - 5; ty < cliffY; ty++) {
+      for (let tx = cx - 26; tx <= cx + 22; tx++) {
+        if (Math.random() < 0.25) grid.set(tx, ty, ELEM.PLANT_BLOOM);
+      }
+    }
+
+    // 3. 🏡 Cabaña Central con Tejado Azul
+    const houseX = cx - 5;
+    const houseY = cy - 6;
+    grid.createBuilding(houseX, houseY, 10, 6);
+    grid.buildingLocations.push({ x: houseX + 5, y: houseY + 3, name: "Cabaña de la Aldea" });
+
+    // 4. 🪨 Camino de Adoquines Principal
+    for (let y = houseY + 6; y <= cy + 22; y++) {
+      grid.set(cx - 1, y, ELEM.ROAD);
+      grid.set(cx, y, ELEM.ROAD);
+      grid.set(cx + 1, y, ELEM.ROAD);
+    }
+    // Ramal de camino hacia el pozo y el huerto
+    for (let x = cx + 2; x <= cx + 18; x++) {
+      grid.set(x, cy, ELEM.ROAD);
+    }
+
+    // 5. 🌳 Árboles Volumétricos Frondosos (Minish Cap)
+    // Fila izquierda (bosquecillo perimetral)
+    for (let y = cy - 15; y <= cy + 18; y += 6) {
+      grid.set(cx - 26, y, ELEM.TREE);
+    }
+    // Huerto de árboles frutales superiores
+    grid.set(cx - 6, cy - 14, ELEM.TREE);
+    grid.set(cx + 4, cy - 14, ELEM.TREE);
+    grid.set(cx + 14, cy - 14, ELEM.TREE);
+    // Árboles de entrada sur
+    grid.set(cx - 6, cy + 18, ELEM.TREE);
+    grid.set(cx + 6, cy + 18, ELEM.TREE);
+
+    // 6. 🪣 Pozo de Agua de Piedra
+    const wellX = cx + 16;
+    const wellY = cy - 8;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        grid.set(wellX + dx, wellY + dy, ELEM.STONE);
+      }
+    }
+    grid.set(wellX, wellY, ELEM.WATER); // Agua en el fondo del pozo
+    grid.buildingLocations.push({ x: wellX, y: wellY, name: "Pozo de Piedra" });
+
+    // 7. 🪵 Cercas de Madera con Postes y Entradas
+    const fenceY = cy + 4;
+    // Cerca izquierda
+    for (let x = cx - 22; x <= cx - 3; x++) {
+      grid.set(x, fenceY, ELEM.FENCE);
+    }
+    // Cerca derecha
+    for (let x = cx + 3; x <= cx + 22; x++) {
+      grid.set(x, fenceY, ELEM.FENCE);
+    }
+
+    // 8. 🌾 Parcela de Trigo Dorado
+    for (let ty = cy - 14; ty <= cy - 4; ty++) {
+      for (let tx = cx - 22; tx <= cx - 12; tx++) {
+        grid.set(tx, ty, ELEM.SAND);
+        if (Math.random() < 0.3) grid.set(tx, ty, ELEM.SEED);
+      }
+    }
+    grid.buildingLocations.push({ x: cx - 17, y: cy - 9, name: "Campo de Trigo" });
+
+    // 9. 🥕 Huerto Hundido con Muros y Cultivos
+    const gardenX = cx + 10;
+    const gardenY = cy + 8;
+    const gardenW = 14;
+    const gardenH = 10;
+    // Borde de desnivel / pared de tierra
+    for (let gx = gardenX; gx < gardenX + gardenW; gx++) {
+      grid.set(gx, gardenY, ELEM.CLIFF);
+      grid.set(gx, gardenY + gardenH - 1, ELEM.FENCE);
+    }
+    for (let gy = gardenY; gy < gardenY + gardenH; gy++) {
+      grid.set(gardenX, gy, ELEM.CLIFF);
+      grid.set(gardenX + gardenW - 1, gy, ELEM.FENCE);
+    }
+    // Interior del huerto hundido (surcos)
+    for (let gy = gardenY + 1; gy < gardenY + gardenH - 1; gy++) {
+      for (let gx = gardenX + 1; gx < gardenX + gardenW - 1; gx++) {
+        grid.set(gx, gy, ELEM.FERTILE_DIRT);
+        if (gy % 2 === 0) {
+          grid.set(gx, gy, ELEM.PLANT_BLOOM);
+        }
+      }
+    }
+    // Rocas en el borde del huerto
+    grid.set(gardenX + 2, gardenY + 1, ELEM.STONE);
+    grid.set(gardenX + gardenW - 3, gardenY + 1, ELEM.STONE);
+    grid.buildingLocations.push({ x: gardenX + 7, y: gardenY + 5, name: "Huerto Hundido" });
+
+    // 10. 🌊 Canal de Agua Hundido y Puente de Madera
+    const canalX = cx + 27;
+    for (let y = cy - 16; y <= cy + 20; y++) {
+      grid.set(canalX, y, ELEM.WATER);
+      grid.set(canalX + 1, y, ELEM.WATER);
+      grid.set(canalX + 2, y, ELEM.WATER);
+    }
+    // Puente de madera sobre el canal
+    const bridgeY = cy;
+    for (let bx = canalX - 1; bx <= canalX + 3; bx++) {
+      grid.set(bx, bridgeY, ELEM.ROAD);
+      grid.set(bx, bridgeY + 1, ELEM.ROAD);
+    }
+    grid.set(canalX - 1, bridgeY - 1, ELEM.WOOD); // Barandillas del puente
+    grid.set(canalX + 3, bridgeY - 1, ELEM.WOOD);
+    grid.set(canalX - 1, bridgeY + 2, ELEM.WOOD);
+    grid.set(canalX + 3, bridgeY + 2, ELEM.WOOD);
+    grid.buildingLocations.push({ x: canalX + 1, y: bridgeY, name: "Puente del Canal" });
   }
 }

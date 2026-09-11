@@ -82,8 +82,7 @@ export class Animal {
     const isSolid = (px, py) => {
       const gtx = Math.floor(px / tileSize);
       const gty = Math.floor(py / tileSize);
-      const el = grid.get(gtx, gty);
-      return el === ELEM.BUILDING || el === ELEM.STONE || el === ELEM.RUBBLE || el === ELEM.CHASM;
+      return grid.isSolid ? grid.isSolid(gtx, gty) : (grid.get(gtx, gty) === ELEM.BUILDING || grid.get(gtx, gty) === ELEM.STONE || grid.get(gtx, gty) === ELEM.RUBBLE || grid.get(gtx, gty) === ELEM.CHASM);
     };
 
     if (!isSolid(this.x + this.vx + 8, this.y + 12)) {

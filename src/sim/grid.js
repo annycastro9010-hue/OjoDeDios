@@ -32,6 +32,20 @@ export class SimulationGrid {
     this.life[idx] = lifeVal;
   }
 
+  isSolid(x, y) {
+    const elem = this.get(x, y);
+    if (elem === ELEM.LADDER) return false; // Escaleras siempre transitables
+    return (
+      elem === ELEM.BUILDING ||
+      elem === ELEM.STONE ||
+      elem === ELEM.RUBBLE ||
+      elem === ELEM.CHASM ||
+      elem === ELEM.CLIFF ||
+      elem === ELEM.FENCE ||
+      elem === ELEM.TREE
+    );
+  }
+
   initWorld() {
     this.grid.fill(ELEM.EMPTY);
     this.life.fill(0);
@@ -336,8 +350,8 @@ export class SimulationGrid {
               if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
               solidified = true;
               break;
-            } else if (target === ELEM.WOOD || target === ELEM.PLANT || target === ELEM.PLANT_BLOOM || target === ELEM.SEED) {
-              // Incendia vegetación o construcciones de madera
+            } else if (target === ELEM.WOOD || target === ELEM.PLANT || target === ELEM.PLANT_BLOOM || target === ELEM.SEED || target === ELEM.TREE || target === ELEM.FENCE) {
+              // Incendia vegetación, árboles o cercas de madera
               this.set(nx, ny, ELEM.FIRE, 60);
             } else if (target === ELEM.SAND && Math.random() < 0.03) {
               // Vitrifica arena en piedra
@@ -384,8 +398,8 @@ export class SimulationGrid {
                 this.set(nx, ny, ELEM.FIRE, 35 + Math.floor(Math.random() * 25));
                 this.updated[this.getIndex(nx, ny)] = 1;
               }
-            } else if (ne === ELEM.WOOD || ne === ELEM.CAMPFIRE) {
-              // La madera arde con fuego duradero
+            } else if (ne === ELEM.WOOD || ne === ELEM.CAMPFIRE || ne === ELEM.TREE || ne === ELEM.FENCE) {
+              // La madera y árboles arden con fuego duradero
               if (Math.random() < 0.18) {
                 this.set(nx, ny, ELEM.FIRE, 65 + Math.floor(Math.random() * 35));
                 this.updated[this.getIndex(nx, ny)] = 1;

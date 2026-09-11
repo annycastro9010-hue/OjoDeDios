@@ -252,6 +252,33 @@ function setupEraWorld(era) {
 
     chronicles.add("🇨🇴 ¡REALIDAD MACONDO! El cuadrante patrulla la trocha, la guerrilla hierve el sancocho y Doña Gloria vigila.", "divine");
     notify("🇨🇴 ¡Realidad Macondo! Selva, retenes, cuadrantes, mototaxis y aguacates.");
+  } else if (era.id === 'hyrule') {
+    // 🗡️ ALDEA MINISH (2.5D Zelda The Minish Cap): Link, Herrero Smith, Malon y el Pozo
+    const link = spawnNpc('hero', midX - 2 * 8, midY + 4 * 8, 'hyrule');
+    link.brain.name = "Link";
+    link.brain.title = "Héroe Minish";
+    link.brain.setThoughtBubble("🗡️ ¡El abuelo Smith me encargó llevar la espada al castillo!", 220);
+
+    const smith = spawnNpc('prophet', midX - 6 * 8, midY - 6 * 8, 'hyrule');
+    smith.brain.name = "Maestro Smith";
+    smith.brain.title = "Herrero Real";
+    smith.brain.setThoughtBubble("⚒️ El acero sagrado necesita templarse en la fragua.", 180);
+
+    const malon = spawnNpc('farmer', midX + 18 * 8, midY - 8 * 8, 'hyrule');
+    malon.brain.name = "Malon";
+    malon.brain.title = "Granjera del Valle";
+    malon.brain.setThoughtBubble("🌾 Cuidando las hortalizas del huerto hundido...", 180);
+
+    const child = spawnNpc('child', midX + 2 * 8, midY + 8 * 8, 'hyrule');
+    child.brain.name = "Pico";
+    child.brain.title = "Aldeano Curioso";
+    child.brain.setThoughtBubble("✨ ¿Has visto a los seres diminutos del bosque?", 170);
+
+    spawnAnimal('dog', midX - 4 * 8, midY + 12 * 8);
+    spawnAnimal('pig', midX + 20 * 8, midY - 4 * 8);
+
+    chronicles.add("🗡️ ¡ALDEA MINISH! Link recorre los caminos empedrados, cabañas con tejado azul, árboles volumétricos y acantilados con escaleras.", "divine");
+    notify("🗡️ ¡Aldea Minish (2.5D Zelda)! Profundidad visual, árboles esféricos, huertos hundidos y acantilados transitables.");
   }
 
   // Elegir orgánicamente el líder de la civilización para la era
@@ -608,6 +635,15 @@ function handlePointerAction() {
   } else if (currentTool === 'wood') {
     grid.paint(tileX, tileY, ELEM.WOOD, brushRadius);
     civ.addResource('wood', 2);
+  } else if (currentTool === 'tree') {
+    grid.paint(tileX, tileY, ELEM.TREE, 1);
+    sound.playPlant();
+  } else if (currentTool === 'cliff') {
+    grid.paint(tileX, tileY, ELEM.CLIFF, brushRadius);
+  } else if (currentTool === 'ladder') {
+    grid.paint(tileX, tileY, ELEM.LADDER, 1);
+  } else if (currentTool === 'fence') {
+    grid.paint(tileX, tileY, ELEM.FENCE, 1);
   } else if (currentTool === 'fire') {
     grid.paint(tileX, tileY, ELEM.FIRE, brushRadius);
     sound.playFire();

@@ -23,6 +23,7 @@ export class GameRenderer {
     else if (eraId === 'eighties') skyBg = '#083344';   // Bahía caribeña de resort
     else if (eraId === 'forties') skyBg = '#0f172a';    // Cielo grisáceo bélico
     else if (eraId === 'colombia') skyBg = '#022c22';   // Delta fluvial selvático
+    else if (eraId === 'hyrule') skyBg = '#0369a1';     // Cielo azul puro de Hyrule / Minish
 
     ctx.fillStyle = skyBg;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -34,6 +35,7 @@ export class GameRenderer {
     const w = grid.width;
     const h = grid.height;
     const ts = this.tileSize;
+    const treeCanopies = []; // Registrar copas elevadas de árboles para pase Y-Sort
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -46,7 +48,15 @@ export class GameRenderer {
         // A. AGUA SEGÚN ERA
         if (elem === ELEM.WATER) {
           const wave = Math.sin(x * 0.4 + this.waterTime) * 12;
-          if (eraId === 'seventies') {
+          if (eraId === 'hyrule') {
+            // Agua cristalina de canal Minish Cap (azul cielo brillante con ondas)
+            ctx.fillStyle = `rgb(38, ${165 + Math.floor(wave)}, ${235 + Math.floor(wave)})`;
+            ctx.fillRect(px, py, ts, ts);
+            if ((x * 13 + y * 7 + Math.floor(this.waterTime * 2)) % 8 === 0) {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+              ctx.fillRect(px + 2, py + 3, 3, 1);
+            }
+          } else if (eraId === 'seventies') {
             // Agua turquesa cristalina tropical
             ctx.fillStyle = `rgb(14, ${185 + Math.floor(wave)}, ${235 + Math.floor(wave)})`;
             ctx.fillRect(px, py, ts, ts);
@@ -66,6 +76,20 @@ export class GameRenderer {
             // Agua azul clásica
             ctx.fillStyle = `rgb(35, ${120 + Math.floor(wave)}, ${210 + Math.floor(wave)})`;
             ctx.fillRect(px, py, ts, ts);
+          }
+
+          // 🌊 Relieve y Profundidad del Canal (Efecto de agua hundida 2.5D respecto al suelo)
+          const upElem = grid.get(x, y - 1);
+          if (upElem !== ELEM.WATER && upElem !== ELEM.EMPTY) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+            ctx.fillRect(px, py, ts, 2); // Sombra profunda del borde
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fillRect(px, py + 2, ts, 1); // Borde de luz/espuma
+          }
+          const leftElem = grid.get(x - 1, y);
+          if (leftElem !== ELEM.WATER && leftElem !== ELEM.EMPTY) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.fillRect(px, py, 1, ts);
           }
         }
 
@@ -123,6 +147,26 @@ export class GameRenderer {
               ctx.fillStyle = '#9a3412'; // Greda rojiza de la trocha
             }
             ctx.fillRect(px, py, ts, ts);
+          } else if (eraId === 'hyrule') {
+            // 🗡️ Césped vivo esmeralda The Minish Cap con flores y briznas
+            ctx.fillStyle = elem === ELEM.FERTILE_DIRT ? '#22c55e' : '#16a34a';
+            ctx.fillRect(px, py, ts, ts);
+            const patHash = (x * 31 + y * 47) % 11;
+            if (patHash === 1) {
+              ctx.fillStyle = '#4ade80'; // Brizna de hierba clara
+              ctx.fillRect(px + 2, py + 2, 1, 3);
+              ctx.fillRect(px + 4, py + 1, 1, 3);
+            } else if (patHash === 2) {
+              // Flores rojas silvestres de pradera
+              ctx.fillStyle = '#ef4444';
+              ctx.fillRect(px + 3, py + 3, 2, 2);
+              ctx.fillStyle = '#fef08a';
+              ctx.fillRect(px + 4, py + 4, 1, 1);
+            } else if (patHash === 3) {
+              // Flores celestes de campo
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillRect(px + 2, py + 4, 2, 2);
+            }
           } else {
             ctx.fillStyle = elem === ELEM.FERTILE_DIRT ? '#3d2314' : '#8b5a2b';
             ctx.fillRect(px, py, ts, ts);
@@ -141,7 +185,16 @@ export class GameRenderer {
 
         // D. SENDEROS Y CAMINOS SEGÚN ERA
         else if (elem === ELEM.ROAD) {
-          if (eraId === 'seventies') {
+          if (eraId === 'hyrule') {
+            // Adoquines de piedra irregular Minish Cap (Camino del pueblo)
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(px, py, ts, ts);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(px + 1, py + 1, 3, 2);
+            ctx.fillRect(px + 4, py + 4, 3, 2);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(px, py + ts - 1, ts, 1); // Ranura entre losas
+          } else if (eraId === 'seventies') {
             // Tablas de madera de cedro para el escenario y el festival
             ctx.fillStyle = '#d97706';
             ctx.fillRect(px, py, ts, ts);
@@ -266,6 +319,98 @@ export class GameRenderer {
           ctx.fillStyle = '#9ca3af';
           ctx.fillRect(px + 1, py + 1, 3, 3);
           ctx.fillRect(px + 4, py + 3, 3, 3);
+        }
+
+        // M. 🧱 ACANTILADO / MURO DE PIEDRA (Relieve 2.5D The Minish Cap)
+        else if (elem === ELEM.CLIFF) {
+          // Borde superior iluminado (Canto superior con césped y piedra clara)
+          ctx.fillStyle = '#86efac';
+          ctx.fillRect(px, py, ts, 1);
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(px, py + 1, ts, 1);
+
+          // Cara vertical de sillería de piedra (relieve de pared)
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(px, py + 2, ts, ts - 4);
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(px + 1, py + 2, 2, 2);
+          ctx.fillRect(px + 5, py + 4, 2, 2);
+          if ((x * 17) % 5 === 0) {
+            ctx.fillStyle = '#16a34a'; // Enredadera / musgo colgante
+            ctx.fillRect(px + 2, py + 2, 1, 4);
+          }
+
+          // Sombra oclusiva al pie del muro arrojada sobre el suelo inferior
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+          ctx.fillRect(px, py + ts - 2, ts, 2);
+        }
+
+        // N. 🪜 ESCALERA DE MANO DE MADERA (Para trepar desniveles)
+        else if (elem === ELEM.LADDER) {
+          // Muro de fondo
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(px, py, ts, ts);
+
+          // Largueros verticales de madera
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(px + 1, py, 2, ts);
+          ctx.fillRect(px + 5, py, 2, ts);
+
+          // Peldaños dorados con sombra
+          for (let ly = 1; ly < ts; ly += 3) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(px + 2, py + ly + 1, 4, 1); // Sombra del peldaño
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(px + 2, py + ly, 4, 1); // Peldaño
+          }
+        }
+
+        // O. 🪵 CERCA DE MADERA CON POSTES Y SOMBRA (Minish Cap)
+        else if (elem === ELEM.FENCE) {
+          // Sombra elíptica en el suelo bajo el poste
+          ctx.fillStyle = 'rgba(10, 20, 15, 0.35)';
+          ctx.beginPath();
+          ctx.ellipse(px + 4, py + 7, 4, 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Travesaños horizontales dobles
+          ctx.fillStyle = '#854d0e';
+          ctx.fillRect(px, py + 2, ts, 1);
+          ctx.fillRect(px, py + 5, ts, 1);
+          ctx.fillStyle = '#b45309';
+          ctx.fillRect(px, py + 3, ts, 1);
+          ctx.fillRect(px, py + 6, ts, 1);
+
+          // Poste de madera vertical con remate redondeado
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(px + 2, py, 4, 7);
+          ctx.fillStyle = '#d97706';
+          ctx.fillRect(px + 3, py + 1, 2, 5); // Brillo
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(px + 3, py + 2, 2, 1); // Remate superior
+        }
+
+        // P. 🌳 ÁRBOL FRONDOSO VOLUMÉTRICO (The Minish Cap)
+        else if (elem === ELEM.TREE) {
+          // Sombra suave en el suelo bajo el tronco
+          ctx.fillStyle = 'rgba(10, 25, 15, 0.38)';
+          ctx.beginPath();
+          ctx.ellipse(px + 4, py + 7, 9, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Tronco de madera con corteza (único punto con colisión sólida en los pies)
+          ctx.fillStyle = '#5c2d12';
+          ctx.fillRect(px + 2, py + 1, 4, 6);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(px + 3, py + 2, 2, 4);
+
+          // Registrar la copa elevada para el pase unificado Y-Sort
+          treeCanopies.push({
+            x: px,
+            y: py,
+            gridX: x,
+            gridY: y
+          });
         } else {
           ctx.fillStyle = ELEM_PROPS[elem]?.color || '#fff';
           ctx.fillRect(px, py, ts, ts);
@@ -294,34 +439,50 @@ export class GameRenderer {
       ctx.fillText(b.name, b.x * ts + 12, b.y * ts - 4);
     }
 
-    // 4. Renderizar Animales de la Isla
+    // 6. Renderizado Unificado con Ordenación Y (Y-Sorting para Profundidad 2.5D Real)
+    // Agrupa NPCs, Animales y Copas de Árboles para que los objetos detrás se oculten naturalmente
+    const renderList = [];
+
+    for (const npc of npcs) {
+      renderList.push({ type: 'npc', sortY: npc.y + 13, item: npc });
+    }
     for (const animal of animals) {
-      animal.draw(ctx);
+      renderList.push({ type: 'animal', sortY: animal.y + 12, item: animal });
+    }
+    for (const tree of treeCanopies) {
+      // El punto de clasificación es la base del tronco (y + 7)
+      renderList.push({ type: 'tree', sortY: tree.y + 7, item: tree });
     }
 
-    // 5. Renderizar NPCs con AnimationManager (soporta tanto procedural como SpriteSheets externos)
-    const sortedNpcs = [...npcs].sort((a, b) => a.y - b.y);
-    for (const npc of sortedNpcs) {
-      const isPossessed = (possessedNpc && possessedNpc.id === npc.id);
-      const isMoving = Math.abs(npc.vx || 0) > 0.05 || Math.abs(npc.vy || 0) > 0.05;
+    renderList.sort((a, b) => a.sortY - b.sortY);
 
-      const nTx = Math.floor((npc.x + 8) / ts);
-      const nTy = Math.floor((npc.y + 13) / ts);
-      const inWater = (grid.get(nTx, nTy) === ELEM.WATER);
+    for (const obj of renderList) {
+      if (obj.type === 'tree') {
+        this.drawMinishTreeCanopy(ctx, obj.item.x, obj.item.y, obj.item.gridX, obj.item.gridY);
+      } else if (obj.type === 'animal') {
+        obj.item.draw(ctx);
+      } else if (obj.type === 'npc') {
+        const npc = obj.item;
+        const isPossessed = (possessedNpc && possessedNpc.id === npc.id);
+        const isMoving = Math.abs(npc.vx || 0) > 0.05 || Math.abs(npc.vy || 0) > 0.05;
 
-      animManager.draw(
-        ctx,
-        npc.type,
-        npc.x,
-        npc.y,
-        npc.direction,
-        npc.frame,
-        isMoving,
-        npc.cargo > 0,
-        isPossessed,
-        npc.isSwimming,
-        inWater
-      );
+        const nTx = Math.floor((npc.x + 8) / ts);
+        const nTy = Math.floor((npc.y + 13) / ts);
+        const inWater = (grid.get(nTx, nTy) === ELEM.WATER);
+
+        animManager.draw(
+          ctx,
+          npc.type,
+          npc.x,
+          npc.y,
+          npc.direction,
+          npc.frame,
+          isMoving,
+          npc.cargo > 0,
+          isPossessed,
+          npc.isSwimming,
+          inWater
+        );
 
       // Icono de alerta (!) si el policía está persiguiendo
       if (npc.alerted) {
@@ -378,6 +539,7 @@ export class GameRenderer {
         ctx.restore();
       }
     }
+  }
 
     // 5. Renderizar Efectos Visuales VFX (Vórtice mágico, ondas de choque, chispas)
     vfx.render(ctx);
@@ -688,6 +850,174 @@ export class GameRenderer {
         ctx.fillRect(bx + 1, by + 5, 6, 2); // Interior hueco de la canoa
         ctx.restore();
       }
+
+      // 🗡️ ALDEA MINISH: CABAÑA DE TEJADO AZUL (The Minish Cap)
+      else if (b.name.includes("Cabaña de la Aldea")) {
+        ctx.save();
+        // Sombra arrojada de la casa hacia el sureste
+        ctx.fillStyle = 'rgba(10, 20, 15, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(bx + 26, by + 26, 28, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fachada de la casa (pared blanca estucada con vigas de madera)
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(bx - 4, by + 10, 48, 16);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx - 4, by + 10, 48, 16);
+        // Vigas de madera verticales
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(bx - 4, by + 10, 2, 16);
+        ctx.fillRect(bx + 42, by + 10, 2, 16);
+        ctx.fillRect(bx + 14, by + 10, 2, 16);
+        ctx.fillRect(bx + 24, by + 10, 2, 16);
+
+        // Puerta principal arqueada de roble
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(bx + 17, by + 15, 7, 11);
+        ctx.fillStyle = '#facc15'; // Manija dorada
+        ctx.fillRect(bx + 22, by + 20, 1, 2);
+        // Escalón de piedra frontal
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(bx + 15, by + 25, 11, 2);
+
+        // Jardineras con flores bajo las ventanas laterales
+        ctx.fillStyle = '#854d0e';
+        ctx.fillRect(bx, by + 20, 10, 3);
+        ctx.fillRect(bx + 30, by + 20, 10, 3);
+        // Flores de colores
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(bx + 2, by + 18, 2, 2);
+        ctx.fillStyle = '#38bdf8'; ctx.fillRect(bx + 6, by + 18, 2, 2);
+        ctx.fillStyle = '#facc15'; ctx.fillRect(bx + 32, by + 18, 2, 2);
+        ctx.fillStyle = '#ec4899'; ctx.fillRect(bx + 36, by + 18, 2, 2);
+
+        // Tejado Azul Zafiro a dos aguas con cumbrera
+        ctx.fillStyle = '#1e40af'; // Sombra del alero
+        ctx.fillRect(bx - 8, by + 8, 56, 3);
+        ctx.fillStyle = '#1d4ed8'; // Pendiente de tejado
+        ctx.fillRect(bx - 6, by - 4, 52, 12);
+        ctx.fillStyle = '#3b82f6'; // Franja iluminada
+        ctx.fillRect(bx - 4, by - 8, 48, 5);
+        ctx.fillStyle = '#60a5fa'; // Cumbrera superior
+        ctx.fillRect(bx - 2, by - 10, 44, 3);
+
+        // Chimenea de ladrillos rojos con humo animado
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(bx + 6, by - 15, 6, 9);
+        ctx.fillStyle = '#450a0a';
+        ctx.fillRect(bx + 5, by - 16, 8, 2); // Remate superior
+        // Humo blanco ascendente
+        const smokeH = (this.waterTime * 10) % 18;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.arc(bx + 9 + Math.sin(smokeH * 0.4) * 3, by - 18 - smokeH, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // 🗡️ ALDEA MINISH: POZO DE PIEDRA CON CUBO
+      else if (b.name.includes("Pozo de Piedra")) {
+        ctx.save();
+        // Sombra
+        ctx.fillStyle = 'rgba(10, 20, 15, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(bx + 6, by + 10, 10, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brocal circular de sillería de piedra
+        ctx.fillStyle = '#475569';
+        ctx.beginPath();
+        ctx.ellipse(bx + 6, by + 6, 8, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.ellipse(bx + 6, by + 4, 6, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Agua en el fondo
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.ellipse(bx + 6, by + 4, 4, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Estructura de madera con polea
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(bx - 1, by - 4, 2, 10); // Poste izq
+        ctx.fillRect(bx + 11, by - 4, 2, 10); // Poste der
+        ctx.fillRect(bx - 2, by - 5, 16, 2); // Travesaño
+        // Cuerda y cubo
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(bx + 5, by - 4, 1, 5); // Cuerda
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(bx + 4, by + 1, 3, 3); // Cubo
+
+        ctx.restore();
+      }
+
+      // 🗡️ ALDEA MINISH: PUENTE DEL CANAL CON BARANDILLAS
+      else if (b.name.includes("Puente del Canal")) {
+        ctx.save();
+        // Barandillas de madera en los extremos
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(bx - 8, by - 6, 32, 2);
+        ctx.fillRect(bx - 8, by + 12, 32, 2);
+        ctx.fillStyle = '#a16207';
+        ctx.fillRect(bx - 8, by - 6, 3, 6);
+        ctx.fillRect(bx + 20, by - 6, 3, 6);
+        ctx.fillRect(bx - 8, by + 8, 3, 6);
+        ctx.fillRect(bx + 20, by + 8, 3, 6);
+        ctx.restore();
+      }
     }
+  }
+
+  // 🌳 Renderizado de Copa de Árbol Volumétrico (The Minish Cap 2.5D)
+  drawMinishTreeCanopy(ctx, x, y, gx, gy) {
+    const cx = x + 4;
+    const cy = y - 4; // Centro de la copa elevada sobre el tronco
+
+    ctx.save();
+    // 1. Sombra inferior profunda de la copa (verde bosque oscuro)
+    ctx.fillStyle = '#14532d';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 2, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Lóbulos volumétricos esféricos medianos (verde esmeralda Minish)
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath();
+    ctx.arc(cx - 4, cy + 1, 7, 0, Math.PI * 2);
+    ctx.arc(cx + 4, cy + 1, 7, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 3, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Destellos superiores iluminados por el sol (verde lima vivo)
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath();
+    ctx.arc(cx - 3, cy - 4, 5, 0, Math.PI * 2);
+    ctx.arc(cx + 2, cy - 5, 5, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 7, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4. Frutos o flores silvestres en la copa
+    const flw = (gx * 19 + gy * 31) % 4;
+    if (flw === 1) {
+      ctx.fillStyle = '#ef4444'; // Manzanitas rojas
+      ctx.fillRect(cx - 3, cy - 1, 2, 2);
+      ctx.fillRect(cx + 4, cy - 3, 2, 2);
+      ctx.fillRect(cx - 1, cy - 6, 2, 2);
+    } else if (flw === 2) {
+      ctx.fillStyle = '#facc15'; // Frutos dorados
+      ctx.fillRect(cx - 4, cy - 2, 2, 2);
+      ctx.fillRect(cx + 2, cy - 4, 2, 2);
+    } else if (flw === 3) {
+      ctx.fillStyle = '#ffffff'; // Flores blancas
+      ctx.fillRect(cx - 2, cy - 3, 2, 2);
+      ctx.fillRect(cx + 3, cy - 2, 2, 2);
+      ctx.fillRect(cx, cy - 5, 2, 2);
+    }
+
+    ctx.restore();
   }
 }

@@ -420,6 +420,30 @@ export class AnimationManager {
         ctx.fillStyle = '#dc2626';
         ctx.fillRect(9, 8 + bob, 2, 2);
       }
+    } else if (type === 'hero') {
+      // Gorro verde picudo estilo Link Minish Cap + mechones rubios
+      if (view === 'down') {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(4, 0 + bob, 8, 3);
+        ctx.fillRect(2, 1 + bob, 3, 3); // Punta del gorro doblada hacia el hombro
+        ctx.fillRect(1, 3 + bob, 2, 2);
+        // Mechones rubios
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(5, 3 + bob, 3, 2);
+        ctx.fillRect(9, 3 + bob, 2, 2);
+      } else if (view === 'side') {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(5, 0 + bob, 7, 3);
+        ctx.fillRect(3, 1 + bob, 3, 2);
+        ctx.fillRect(1, 2 + bob, 3, 2); // Punta flotando hacia atrás
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(9, 3 + bob, 3, 2);
+      } else {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(4, 0 + bob, 8, 4);
+        ctx.fillRect(3, 3 + bob, 3, 4);
+        ctx.fillRect(2, 6 + bob, 2, 3); // Gorro colgando en la espalda
+      }
     } else {
       // Sombrero campesino de paja tejido estilo Minish Cap
       ctx.fillStyle = colors.hat;
@@ -596,6 +620,17 @@ export class AnimationManager {
         hat: '#0f172a',   // Pelo engominado
         hatBand: '#facc15',
         outline: '#1e293b'
+      };
+    } else if (type === 'hero') {
+      return {
+        skin: '#fed7aa',
+        shirt: '#16a34a', // Túnica verde esmeralda icónica
+        pants: '#f8fafc', // Mallas blancas
+        shoes: '#78350f', // Botas de cuero marrón
+        belt: '#eab308',  // Cinturón con hebilla dorada
+        hat: '#15803d',   // Gorro verde picudo
+        hatBand: '#facc15', // Mechón rubio
+        outline: '#14532d'
       };
     }
 

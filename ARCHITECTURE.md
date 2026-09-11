@@ -78,7 +78,22 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Frente Bélico de los 40s:** Búnker de hormigón armado, trincheras con parapetos de sacos de arena y alambradas de púas cruzadas, y hospital militar de campaña con carpa y emblema de la Cruz Roja.
 - **Adaptabilidad Responsiva y Eventos Táctiles:** Normalización de coordenadas con soporte simultáneo para mouse en PC y toques `touchstart`/`touchmove` en smartphones y tablets.
 
-### E. Motor de Animación Desacoplado (`src/render/animationManager.js`)
+### E. Motor de Profundidad Espacial 2.5D y Oclusión Cenital (`src/render/renderer.js` & `src/sim/grid.js`)
+Inspirado directamente en la arquitectura visual de *The Legend of Zelda: The Minish Cap*:
+1. **Volumetría de Copas y Troncos de Árboles (`ELEM.TREE`):**
+   - La física sólida de colisión se confina estrictamente a la base del tronco (`8x6px`), permitiendo que el jugador y los NPCs caminen detrás de la copa sin chocar.
+   - Las copas esféricas de 3 niveles se dibujan con sombra inferior oscura, lóbulos medios verdes y copetes iluminados por la luz del sol matutino.
+2. **Pipeline de Renderizado Unificado Y-Sorted:**
+   - Para resolver la oclusión tridimensional, los personajes (`npc.y + 13`), animales (`animal.y + 12`) y copas de árboles (`tree.y + 7`) se combinan en una única lista (`renderList`) y se ordenan de menor a mayor en el eje Y.
+   - Si un personaje camina detrás de un árbol (`y < tree.y`), se dibuja primero y la copa lo cubre naturalmente; si camina por delante (`y > tree.y`), se dibuja después y se superpone al tronco.
+3. **Acantilados y Riscos de Piedra Multinivel (`ELEM.CLIFF` & `ELEM.LADDER`):**
+   - Cada bloque de risco proyecta un borde iluminado superior de 2px, una fachada vertical de sillares de piedra con juntas oscuras y una sombra profunda arrojada sobre el suelo inferior.
+   - Las escaleras de madera (`ELEM.LADDER`) suprimen la solidez del risco, permitiendo transitar entre pisos superiores e inferiores sin interrupciones.
+4. **Canales de Agua Hundidos con Oclusión en Pies:**
+   - Los límites norte de las baldosas de agua dibujan una sombra translúcida de 2px (`rgba(15, 23, 42, 0.45)`), produciendo el efecto óptico de canal excavado.
+   - Cuando un personaje entra al agua, sus pies quedan sumergidos (`submergeY = 4px`) y se generan ondas circulares concéntricas en la superficie.
+
+### F. Motor de Animación Desacoplado (`src/render/animationManager.js`)
 El juego separa estrictamente la **lógica física** de la **representación visual**:
 - **Doble soporte (Procedural + SpriteSheets de artistas):**
   - Si un pixel artist te entrega una hoja de sprites `.png` (hecha en Aseprite, Photoshop, etc.), simplemente la registras con:

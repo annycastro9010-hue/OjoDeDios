@@ -19,7 +19,11 @@ export const ELEM = {
   CAMPFIRE: 16,
   GOLD: 17,
   CHASM: 18,
-  RUBBLE: 19
+  RUBBLE: 19,
+  CLIFF: 20,    // Muro/Acantilado con desnivel vertical y sombra
+  FENCE: 21,    // Cerca de madera con postes y travesaños
+  TREE: 22,     // Árbol volumétrico esférico estilo Minish Cap
+  LADDER: 23    // Escalera de madera para trepar acantilados
 };
 
 export const ELEM_PROPS = {
@@ -163,5 +167,33 @@ export const ELEM_PROPS = {
     isSolid: true,
     isLiquid: false,
     flammable: false
+  },
+  [ELEM.CLIFF]: {
+    name: 'Acantilado / Muro de Piedra',
+    color: '#475569',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.FENCE]: {
+    name: 'Cerca de Madera',
+    color: '#a16207',
+    isSolid: true,
+    isLiquid: false,
+    flammable: true
+  },
+  [ELEM.TREE]: {
+    name: 'Árbol Frondoso Minish',
+    color: '#15803d',
+    isSolid: true, // El tronco es sólido
+    isLiquid: false,
+    flammable: true
+  },
+  [ELEM.LADDER]: {
+    name: 'Escalera de Mano',
+    color: '#b45309',
+    isSolid: false, // Transitable para subir desniveles
+    isLiquid: false,
+    flammable: true
   }
 };

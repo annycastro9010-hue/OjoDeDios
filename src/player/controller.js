@@ -73,8 +73,7 @@ export class PlayerController {
   isSolid(grid, px, py, tileSize) {
     const tx = Math.floor(px / tileSize);
     const ty = Math.floor(py / tileSize);
-    const elem = grid.get(tx, ty);
-    return elem === ELEM.BUILDING || elem === ELEM.STONE || elem === ELEM.RUBBLE || elem === ELEM.CHASM;
+    return grid.isSolid ? grid.isSolid(tx, ty) : (grid.get(tx, ty) === ELEM.BUILDING || grid.get(tx, ty) === ELEM.STONE || grid.get(tx, ty) === ELEM.RUBBLE || grid.get(tx, ty) === ELEM.CHASM);
   }
 
   update(possessedNpc, grid, onQuestProgress, onAscendRequest, tileSize = 8, allNpcs = []) {

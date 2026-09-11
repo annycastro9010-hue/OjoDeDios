@@ -213,8 +213,7 @@ export class NPC {
     const isSolid = (px, py) => {
       const tx = Math.floor(px / tileSize);
       const ty = Math.floor(py / tileSize);
-      const el = grid.get(tx, ty);
-      return el === ELEM.BUILDING || el === ELEM.STONE || el === ELEM.RUBBLE || el === ELEM.CHASM;
+      return grid.isSolid ? grid.isSolid(tx, ty) : (grid.get(tx, ty) === ELEM.BUILDING || grid.get(tx, ty) === ELEM.STONE || grid.get(tx, ty) === ELEM.RUBBLE || grid.get(tx, ty) === ELEM.CHASM);
     };
 
     if (!isSolid(this.x + this.vx + 8, this.y + 13)) {
