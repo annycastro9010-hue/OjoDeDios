@@ -35,10 +35,10 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
 - **`elements.js`:** Registra cada elemento con sus banderas (`isSolid`, `isLiquid`, `flammable`, densidad y paleta de color).
   - Incluye `ELEM.CHASM` (fallas abisales que parten el suelo) y `ELEM.RUBBLE` (escombros generados por colapso estructural).
 - **`grid.js`:** Utiliza `Uint8Array` contiguos en memoria para representar el mapa.
-  - **Física de fluidos y agua real:** El agua cae por gravedad, busca equilibrio lateral e interactúa con otros biomas.
+  - **Física de Fluidos Isótropa (Top-Down):** En perspectiva cenital divina, el agua y la lava se difunden de forma equilibrada e isotrópica sin sesgo artificial hacia el sur. El agua hidrata la tierra circundante (`FERTILE_DIRT`), apaga incendios y drena en abismos tectónicos.
   - **Química de Lava y Agua:** El contacto entre agua y magma provoca petrificación instantánea en roca volcánica (`STONE`/`RUBBLE`) y emite nubes de vapor/humo (`SMOKE`) con siseo térmico.
-  - **Física Granular de Arena (`SAND`):** Cae por gravedad en el aire, se hunde en el agua desplazando el fluido hacia arriba y se desliza en diagonales formando taludes naturales.
-  - **Física de absorción:** Cuando el agua toca tierra, la fertiliza (`FERTILE_DIRT`).
+  - **Arena y Terreno Firme (`SAND`):** La arena es un bloque terrestre sólido y estable (playas, desiertos, dunas). No sufre gravedad artificial hacia abajo ni se hunde en el mar, manteniendo las costas y desiertos íntegros.
+  - **Física de Absorción y Humedad:** Cuando el agua toca tierra, la fertiliza (`FERTILE_DIRT`) en cualquier dirección.
   - **Botánica:** Las semillas germinan al contacto con humedad y crecen en dos fases: brote tierno y flor madura cosechable (`PLANT_BLOOM`).
   - **Combustión Realista:** El fuego consume vegetación, semillas y troncos de madera (`WOOD`), produciendo brasas duraderas, humo ascendente y cenizas (`ASH`), y se extingue al tocar agua.
   - **Física de Fractura Tectónica (`triggerEarthquake`):** Traza grietas fractales en tiempo real desde un epicentro, desgarrando celdas de tierra en abismos, demoliendo estructuras de madera/muros en escombros y levantando polvaredas.

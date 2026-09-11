@@ -256,176 +256,112 @@ export class SimulationGrid {
         const elem = this.grid[idx];
         if (elem === ELEM.EMPTY) continue;
 
-        // ================= 1. AGUA =================
+        // ================= 1. AGUA (Comportamiento Cenital / Isótropo) =================
         if (elem === ELEM.WATER) {
-          const down = this.get(x, y + 1);
-
-          if (down === ELEM.DIRT) {
-            // Agua penetra e hidrata la tierra
-            this.set(x, y + 1, ELEM.FERTILE_DIRT);
-            this.set(x, y, ELEM.EMPTY);
-            continue;
-          } else if (down === ELEM.FIRE) {
-            this.set(x, y + 1, ELEM.SMOKE, 25);
-            this.set(x, y, ELEM.EMPTY);
-            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-            continue;
-          } else if (down === ELEM.LAVA) {
-            // Agua enfría lava directamente en roca volcánica
-            this.set(x, y + 1, ELEM.STONE);
-            this.set(x, y, ELEM.SMOKE, 30);
-            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-            continue;
-          } else if (down === ELEM.CHASM) {
-            // Agua se precipita al abismo tectónico
-            this.set(x, y, ELEM.EMPTY);
-            continue;
+          // Vecinos cardinales en 4 direcciones (N, S, E, O)
+          const neighbors = [
+            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+          ];
+          // Desordenar para evitar cualquier sesgo direccional
+          for (let i = neighbors.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
           }
 
-          if (y < this.height - 1 && down === ELEM.EMPTY) {
-            this.set(x, y + 1, ELEM.WATER);
-            this.set(x, y, ELEM.EMPTY);
-            this.updated[this.getIndex(x, y + 1)] = 1;
-          } else {
-            // Revisar interacción con lava o fuego en los costados
-            const dir = Math.random() < 0.5 ? -1 : 1;
-            const sideLava1 = this.get(x + dir, y);
-            const sideLava2 = this.get(x - dir, y);
-
-            if (sideLava1 === ELEM.LAVA) {
-              this.set(x + dir, y, ELEM.STONE);
-              this.set(x, y, ELEM.SMOKE, 25);
-              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-              continue;
-            } else if (sideLava2 === ELEM.LAVA) {
-              this.set(x - dir, y, ELEM.STONE);
-              this.set(x, y, ELEM.SMOKE, 25);
-              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-              continue;
-            }
-
-            // Flujo diagonal y horizontal
-            const diag1 = this.get(x + dir, y + 1);
-            const diag2 = this.get(x - dir, y + 1);
-
-            if (diag1 === ELEM.EMPTY && y < this.height - 1) {
-              this.set(x + dir, y + 1, ELEM.WATER);
-              this.set(x, y, ELEM.EMPTY);
-              this.updated[this.getIndex(x + dir, y + 1)] = 1;
-            } else if (diag2 === ELEM.EMPTY && y < this.height - 1) {
-              this.set(x - dir, y + 1, ELEM.WATER);
-              this.set(x, y, ELEM.EMPTY);
-              this.updated[this.getIndex(x - dir, y + 1)] = 1;
-            } else {
-              // Expansión lateral
-              const side1 = this.get(x + dir, y);
-              const side2 = this.get(x - dir, y);
-              if (side1 === ELEM.EMPTY) {
-                this.set(x + dir, y, ELEM.WATER);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x + dir, y)] = 1;
-              } else if (side2 === ELEM.EMPTY) {
-                this.set(x - dir, y, ELEM.WATER);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x - dir, y)] = 1;
-              }
-            }
-          }
-        }
-
-        // ================= 2. LAVA / MAGMA =================
-        else if (elem === ELEM.LAVA) {
-          const down = this.get(x, y + 1);
-
-          if (down === ELEM.WATER) {
-            // Lava toca agua: petrificación inmediata en roca y vapor
-            this.set(x, y, ELEM.STONE);
-            this.set(x, y + 1, ELEM.SMOKE, 30);
-            if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-            continue;
-          } else if (down === ELEM.WOOD || down === ELEM.PLANT || down === ELEM.PLANT_BLOOM || down === ELEM.SEED) {
-            this.set(x, y + 1, ELEM.FIRE, 60);
-          }
-
-          // Caída viscosa (algo más lenta que el agua)
-          if (Math.random() < 0.75) {
-            if (y < this.height - 1 && down === ELEM.EMPTY) {
-              this.set(x, y + 1, ELEM.LAVA);
-              this.set(x, y, ELEM.EMPTY);
-              this.updated[this.getIndex(x, y + 1)] = 1;
-            } else {
-              const dir = Math.random() < 0.5 ? -1 : 1;
-              const diag = this.get(x + dir, y + 1);
-              const side = this.get(x + dir, y);
-
-              if (side === ELEM.WATER) {
-                this.set(x + dir, y, ELEM.STONE);
-                this.set(x, y, ELEM.SMOKE, 25);
-                if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
-                continue;
-              }
-
-              if (diag === ELEM.EMPTY && y < this.height - 1) {
-                this.set(x + dir, y + 1, ELEM.LAVA);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x + dir, y + 1)] = 1;
-              } else if (side === ELEM.EMPTY && Math.random() < 0.4) {
-                this.set(x + dir, y, ELEM.LAVA);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x + dir, y)] = 1;
-              }
-            }
-          }
-
-          // Calentar e incendiar vegetación o madera circundante
-          const neighbors = [[x + 1, y], [x - 1, y], [x, y - 1]];
+          let handled = false;
           for (const [nx, ny] of neighbors) {
-            const ne = this.get(nx, ny);
-            if (ne === ELEM.WOOD || ne === ELEM.PLANT || ne === ELEM.PLANT_BLOOM || ne === ELEM.SEED) {
-              if (Math.random() < 0.3) {
-                this.set(nx, ny, ELEM.FIRE, 50);
-              }
-            }
-          }
-        }
+            if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
+            const target = this.get(nx, ny);
 
-        // ================= 3. ARENA (Física Granular Real) =================
-        else if (elem === ELEM.SAND) {
-          const down = this.get(x, y + 1);
-
-          if (y < this.height - 1) {
-            if (down === ELEM.EMPTY) {
-              // La arena cae por gravedad en el aire
-              this.set(x, y + 1, ELEM.SAND);
+            if (target === ELEM.FIRE) {
+              // Apaga fuego y genera vapor
+              this.set(nx, ny, ELEM.SMOKE, 25);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+            } else if (target === ELEM.LAVA) {
+              // Enfría lava petrificándola en roca volcánica
+              this.set(nx, ny, ELEM.STONE);
+              this.set(x, y, ELEM.SMOKE, 30);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+              handled = true;
+              break;
+            } else if (target === ELEM.CHASM) {
+              // El agua se precipita y drena en el abismo tectónico
               this.set(x, y, ELEM.EMPTY);
-              this.updated[this.getIndex(x, y + 1)] = 1;
-            } else if (down === ELEM.WATER) {
-              // La arena es más densa que el agua: se hunde al fondo desplazando el agua
-              this.set(x, y + 1, ELEM.SAND);
-              this.set(x, y, ELEM.WATER);
-              this.updated[this.getIndex(x, y + 1)] = 1;
-            } else {
-              // Deslizamiento diagonal en talud natural
-              const dir = Math.random() < 0.5 ? -1 : 1;
-              const diag1 = this.get(x + dir, y + 1);
-              const diag2 = this.get(x - dir, y + 1);
+              handled = true;
+              break;
+            }
+          }
+          if (handled) continue;
 
-              if (diag1 === ELEM.EMPTY) {
-                this.set(x + dir, y + 1, ELEM.SAND);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x + dir, y + 1)] = 1;
-              } else if (diag2 === ELEM.EMPTY) {
-                this.set(x - dir, y + 1, ELEM.SAND);
-                this.set(x, y, ELEM.EMPTY);
-                this.updated[this.getIndex(x - dir, y + 1)] = 1;
-              } else if (diag1 === ELEM.WATER) {
-                this.set(x + dir, y + 1, ELEM.SAND);
-                this.set(x, y, ELEM.WATER);
-                this.updated[this.getIndex(x + dir, y + 1)] = 1;
+          // Hidrata tierra seca adyacente para convertirla en tierra fértil de cultivo
+          for (const [nx, ny] of neighbors) {
+            if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
+            if (this.get(nx, ny) === ELEM.DIRT && Math.random() < 0.08) {
+              this.set(nx, ny, ELEM.FERTILE_DIRT);
+            }
+          }
+
+          // Expansión fluida superficial únicamente a celdas vacías inmediatas (sin gravedad hacia el sur)
+          if (Math.random() < 0.15) {
+            for (const [nx, ny] of neighbors) {
+              if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
+              if (this.get(nx, ny) === ELEM.EMPTY) {
+                this.set(nx, ny, ELEM.WATER);
+                this.updated[this.getIndex(nx, ny)] = 1;
+                break;
               }
             }
           }
         }
+
+        // ================= 2. LAVA / MAGMA (Comportamiento Cenital) =================
+        else if (elem === ELEM.LAVA) {
+          const neighbors = [
+            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+          ];
+          for (let i = neighbors.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
+          }
+
+          let solidified = false;
+          for (const [nx, ny] of neighbors) {
+            if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
+            const target = this.get(nx, ny);
+
+            if (target === ELEM.WATER) {
+              // Contacto con agua: petrifica la lava instantáneamente
+              this.set(x, y, ELEM.STONE);
+              this.set(nx, ny, ELEM.SMOKE, 30);
+              if (this.soundCooldown === 0) { sound.playSteamHiss(); this.soundCooldown = 18; }
+              solidified = true;
+              break;
+            } else if (target === ELEM.WOOD || target === ELEM.PLANT || target === ELEM.PLANT_BLOOM || target === ELEM.SEED) {
+              // Incendia vegetación o construcciones de madera
+              this.set(nx, ny, ELEM.FIRE, 60);
+            } else if (target === ELEM.SAND && Math.random() < 0.03) {
+              // Vitrifica arena en piedra
+              this.set(nx, ny, ELEM.STONE);
+            }
+          }
+          if (solidified) continue;
+
+          // Flujo viscoso lento hacia celdas vacías (isótropo, sin caer hacia abajo)
+          if (Math.random() < 0.08) {
+            for (const [nx, ny] of neighbors) {
+              if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
+              if (this.get(nx, ny) === ELEM.EMPTY) {
+                this.set(nx, ny, ELEM.LAVA);
+                this.updated[this.getIndex(nx, ny)] = 1;
+                break;
+              }
+            }
+          }
+        }
+
+        // ================= 3. ARENA (Terreno Firme Natural) =================
+        // La arena es un bloque terrestre sólido y estable (playas, desiertos, dunas).
+        // En una perspectiva cenital divina, la arena NO cae hacia el sur ni se hunde al vacío.
 
         // ================= 4. FUEGO =================
         else if (elem === ELEM.FIRE) {
