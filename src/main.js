@@ -1,13 +1,13 @@
-import { ELEM } from './sim/elements.js';
-import { SimulationGrid } from './sim/grid.js';
+import { ELEM } from './sim/elements.js?v=20260910_nosandfall';
+import { SimulationGrid } from './sim/grid.js?v=20260910_nosandfall';
 import { Camera } from './player/camera.js';
-import { GameRenderer } from './render/renderer.js';
+import { GameRenderer } from './render/renderer.js?v=20260910_nosandfall';
 import { NPC } from './entities/npc.js';
 import { PlayerController } from './player/controller.js';
 import { QuestSystem } from './quests/questSystem.js';
 import { sound } from './audio/soundFX.js';
 import { vfx } from './render/fx.js';
-import { MapGenerator } from './world/mapGenerator.js';
+import { MapGenerator } from './world/mapGenerator.js?v=20260910_nosandfall';
 import { Animal } from './entities/animals.js';
 import { social, chronicles } from './social/relations.js';
 import { ERAS } from './world/eras.js';
