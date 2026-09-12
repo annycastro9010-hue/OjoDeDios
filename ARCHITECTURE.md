@@ -95,17 +95,12 @@ Inspirado directamente en la arquitectura visual de *The Legend of Zelda: The Mi
 
 ### F. Motor de Animación Desacoplado (`src/render/animationManager.js`)
 El juego separa estrictamente la **lógica física** de la **representación visual**:
-- **Doble soporte (Procedural + SpriteSheets de artistas):**
-  - Si un pixel artist te entrega una hoja de sprites `.png` (hecha en Aseprite, Photoshop, etc.), simplemente la registras con:
-    ```javascript
-    animManager.registerSheet('cultivator', './assets/cultivator_walk.png', 16, 16, {
-      walk_down: [0, 1, 2, 3],
-      walk_up: [4, 5, 6, 7],
-      walk_left: [8, 9, 10, 11],
-      walk_right: [12, 13, 14, 15]
-    });
-    ```
-  - Si no hay imagen externa, el motor usa su generador nativo de alta fidelidad estilo **The Minish Cap** con ciclo completo de marcha en 4 direcciones, balanceo de brazos opuesto a las piernas, inclinación de cabeza al pisar, notas musicales flotantes para artistas y sombra elíptica de suelo.
+- **Soporte Dual Activo (Hojas de Artista Minish Cap + Fallback Procedural):**
+  - Integra directamente las 2 hojas oficiales de sprites (`public/sprites/sheet1_minish.jpg` y `sheet2_minish.jpg`) procesadas en tiempo real con **Chroma Key dinámico** para remover el fondo verde y habilitar transparencia alpha pura.
+  - Mapeo completo de coordenadas para:
+    - **Hoja 1:** Bob Marley (`musician`), Don Mario (`vendedor`), Doña Gloria (`vecina_chismosa`), El Brayan (`mototaxista` a pie y en moto), El Patrón (`boss`), Moisés (`prophet`), Link (`hero`).
+    - **Hoja 2:** Patrullero Gómez (`police_cuadrante`), Comandante Tiro-Loco (`guerrillero`), Doctor Promesas (`alcalde`), Soldado (`soldier`), Enfermera (`medic`), Perro labrador (`dog`), Cerdito (`pig`), Caimán (`croc`).
+  - Si las imágenes están en proceso de carga o en red offline, el motor activa automáticamente su generador procedural nativo de 3 tonos con parpadeo procedural de ojos y respiración en reposo.
 
 ### D. Secuencia Mágica de Posesión y VFX (`src/render/fx.js`)
 - Inspirado en la reducción mágica de Link en *The Minish Cap*:
