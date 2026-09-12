@@ -486,7 +486,23 @@ function getEventPos(e) {
   return { x: e.clientX, y: e.clientY };
 }
 
+let isPanning = false;
+let lastPanPos = { x: 0, y: 0 };
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.18 : 0.85;
+  camera.zoomBy(factor, e.clientX, e.clientY);
+}, { passive: false });
+
 canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 2 || e.button === 1) {
+    isPanning = true;
+    lastPanPos = { x: e.clientX, y: e.clientY };
+    return;
+  }
   isMouseDown = true;
   mousePos = getEventPos(e);
   handlePointerAction();
@@ -494,9 +510,17 @@ canvas.addEventListener('mousedown', (e) => {
 
 window.addEventListener('mouseup', () => {
   isMouseDown = false;
+  isPanning = false;
 });
 
 canvas.addEventListener('mousemove', (e) => {
+  if (isPanning) {
+    const dx = e.clientX - lastPanPos.x;
+    const dy = e.clientY - lastPanPos.y;
+    camera.panBy(dx, dy);
+    lastPanPos = { x: e.clientX, y: e.clientY };
+    return;
+  }
   mousePos = getEventPos(e);
   if (isMouseDown && mode === 'god') {
     handlePointerAction();

@@ -65,6 +65,25 @@ export class Camera {
     }
   }
 
+  zoomBy(factor, cursorX = null, cursorY = null) {
+    const oldScale = this.targetScale;
+    const newScale = Math.max(0.4, Math.min(3.8, oldScale * factor));
+    this.targetScale = newScale;
+
+    if (cursorX !== null && cursorY !== null) {
+      const worldPos = this.screenToWorld(cursorX, cursorY);
+      this.targetX += (worldPos.x - this.targetX) * 0.2;
+      this.targetY += (worldPos.y - this.targetY) * 0.2;
+    }
+  }
+
+  panBy(dx, dy) {
+    this.targetX -= dx / this.scale;
+    this.targetY -= dy / this.scale;
+    this.x = this.targetX;
+    this.y = this.targetY;
+  }
+
   // Convierte coordenadas de pantalla (mouse click) a coordenadas de mundo en píxeles
   screenToWorld(screenX, screenY) {
     const cx = this.canvas.width / 2;

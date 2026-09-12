@@ -42,7 +42,10 @@ export class SimulationGrid {
       elem === ELEM.CHASM ||
       elem === ELEM.CLIFF ||
       elem === ELEM.FENCE ||
-      elem === ELEM.TREE
+      elem === ELEM.TREE ||
+      elem === ELEM.WALL ||
+      elem === ELEM.FOUNTAIN ||
+      elem === ELEM.MARKET
     );
   }
 
@@ -107,7 +110,7 @@ export class SimulationGrid {
     }
   }
 
-  createBuilding(startX, startY, w, h) {
+  createBuilding(startX, startY, w, h, name = "", options = {}) {
     for (let y = startY; y < startY + h; y++) {
       for (let x = startX; x < startX + w; x++) {
         if (x === startX || x === startX + w - 1 || y === startY || y === startY + h - 1) {
@@ -117,8 +120,23 @@ export class SimulationGrid {
         }
       }
     }
-    // Puerta
-    this.set(startX + Math.floor(w / 2), startY + h - 1, ELEM.ROAD);
+    // Puerta despejada
+    const doorX = startX + Math.floor(w / 2);
+    const doorY = startY + h - 1;
+    this.set(doorX, doorY, ELEM.ROAD);
+
+    if (name) {
+      this.buildingLocations.push({
+        x: startX,
+        y: startY,
+        w,
+        h,
+        doorX,
+        doorY,
+        name,
+        ...options
+      });
+    }
   }
 
   // Pincel Divino: aplicar elementos en radio

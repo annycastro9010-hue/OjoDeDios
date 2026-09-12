@@ -23,7 +23,11 @@ export const ELEM = {
   CLIFF: 20,    // Muro/Acantilado con desnivel vertical y sombra
   FENCE: 21,    // Cerca de madera con postes y travesaños
   TREE: 22,     // Árbol volumétrico esférico estilo Minish Cap
-  LADDER: 23    // Escalera de madera para trepar acantilados
+  LADDER: 23,   // Escalera de madera para trepar acantilados
+  WALL: 24,     // Muralla perimetral de castillo con almenas Minish Cap
+  FOUNTAIN: 25, // Fuente de mármol de plaza con chorro de agua
+  MARKET: 26,   // Puesto de mercado con toldo a rayas y mercancías
+  FLOWER_BED: 27 // Parterre de flores con bordillo de piedra blanca
 };
 
 export const ELEM_PROPS = {
@@ -193,6 +197,34 @@ export const ELEM_PROPS = {
     name: 'Escalera de Mano',
     color: '#b45309',
     isSolid: false, // Transitable para subir desniveles
+    isLiquid: false,
+    flammable: true
+  },
+  [ELEM.WALL]: {
+    name: 'Muralla de Castillo',
+    color: '#e2e8f0',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.FOUNTAIN]: {
+    name: 'Fuente de Mármol',
+    color: '#38bdf8',
+    isSolid: true,
+    isLiquid: false,
+    flammable: false
+  },
+  [ELEM.MARKET]: {
+    name: 'Puesto de Mercado',
+    color: '#f97316',
+    isSolid: true,
+    isLiquid: false,
+    flammable: true
+  },
+  [ELEM.FLOWER_BED]: {
+    name: 'Jardinera de Flores',
+    color: '#ec4899',
+    isSolid: false,
     isLiquid: false,
     flammable: true
   }

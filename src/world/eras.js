@@ -63,13 +63,13 @@ export const ERAS = {
   },
   HYRULE: {
     id: 'hyrule',
-    name: 'Aldea Minish (Profundidad 2.5D)',
+    name: 'Ciudadela de Hyrule (The Minish Cap)',
     year: 'Era de la Leyenda',
     icon: '🗡️',
-    description: 'Aldea campestre con cabañas de tejado azul, acantilados de piedra con escaleras de mano, huertos hundidos, pozos de agua, cercas y frondosos árboles volumétricos estilo The Minish Cap.',
+    description: 'Ciudadela amurallada de estilo 16-bit GBA: tejados curvos multicolores, gran plaza con fuente de mármol y bazares, canal con molino y rueda hidráulica giratoria, puerta monumental del castillo y jardineras floridas.',
     roles: ['hero', 'farmer', 'child', 'healer', 'prophet'],
-    questTitle: 'EL SECRETO DE LA ALDEA VERDE',
-    questDesc: 'Recorre la aldea entre los árboles y canales de agua, trepa la escalera del acantilado y visita la cabaña central.',
+    questTitle: 'EL SECRETO DE LA CIUDADELA',
+    questDesc: 'Recorre la gran plaza, cruza los puentes del canal hacia el molino de agua y visita el dojo de los maestros.',
     mapPreset: 'hyrule',
     themeColor: '#22c55e'
   }

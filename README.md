@@ -31,17 +31,25 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
   - **Elección Popular de Líderes:** La civilización elige orgánicamente a su líder supremo según la cultura dominante (el más sabio, el más devoto o el más votado), quien lleva una corona dorada (`👑`) sobre su cabeza.
   - **Decretos y Políticas Activas:** Proclama o deroga leyes como *Racionamiento de Alimentos* en hambrunas, *Tributo de Obras Públicas* (+recursos), *Culto Sagrado* (+fe y ciencia) y *Guardia y Orden Cívico* (-crímenes).
   - **Estabilidad Social y Revueltas:** Si la población sufre hambruna o mal gobierno prolongado, la felicidad se desploma y el pueblo derroca al líder en una revuelta popular.
-  - 🗡️ **Aldea Minish (Profundidad 2.5D - The Minish Cap):** Fiel reconstrucción estética de Game Boy Advance con cabañas de tejado azul azurita, chimenea con humo animado, árboles volumétricos esféricos con sombras proyectadas, acantilados de piedra multinivel con escaleras de madera transitables, pozo de los deseos, huerto hundido con sombras de contención y canal de agua navegable.
-  - 🇨🇴 **Realidad Macondo (Selva, Retenes y Cuadrante - 2026):** Trochas de barro, río serpenteante con canoas, cambuche guerrillero con sancocho en la selva, retenes clandestinos, patrullas del cuadrante, tiendas con billar y mototaxis suicidas.
-  - 📜 **Albores Bíblicos (Tras Caín y Abel):** Adán y Eva en su hogar ancestral, Caín labrando la tierra buscando redención, Abel cuidando rebaños, profetas orando ante el Monte del Altar Sagrado y el Río de la Vida.
-  - ☮️ **Comuna de Paz (Años 70 - Bob Marley):** Gran escenario musical de madera, fogata de la paz y comuna de carpas y huertos libres.
-  - 💰 **Imperio Clandestino (Años 80):** Hacienda del Patrón con piscina privada de azulejos, pista de aterrizaje clandestina y muelles secretos.
-  - ⚔️ **Frente de Resistencia (Años 40):** Búnker de mando fortificado, red de trincheras en zigzag, hospital militar de campaña y partisanos.
+  - 🗡️ **Ciudadela de Hyrule (The Minish Cap - Pixel Art 16-bit GBA):** Fiel reconstrucción estética de Game Boy Advance de la ciudadela de Hyrule:
+    - **Tejados Curvos Multicolores con Shingles:** Cabañas y tiendas con tejados abombados en rojo, azul, amarillo, verde, púrpura y piedra, con chimeneas de ladrillo y penachos de humo animados.
+    - **Carteles Comerciales Colgantes:** Zapatería de Rem (`shoe`), Panadería (`bread`), Botica de Pociones (`potion`), Armería y Forja (`shield`), Campanario y Dojo (`bell`), y Alfarería (`pot`).
+    - **Gran Plaza Mayor y Mercado:** Fuente central de mármol con chorro de agua animado y ondas concéntricas (`ELEM.FOUNTAIN`), rodeada de puestos de mercado con toldos a rayas bicolores y mercancías expuestas (`ELEM.MARKET`).
+    - **Canal de Agua y Molino Hidráulico:** Riberas de cantería, puentes de piedra y madera, y molino con gran rueda hidráulica giratoria de 8 paletas con salpicaduras de espuma animadas.
+    - **Gran Arco Monumental Norte del Castillo:** Portal señorial de cantería con campana real y blasón alado dorado de Hyrule.
+    - **Jardineras Esculpidas y Árboles Frondosos:** Parterres con bordillo blanco y flores de 4 pétalos (`ELEM.FLOWER_BED`), y árboles esféricos volumétricos de 8 lóbulos con manzanas rojas y flores.
+    - **Murallas con Almenas Defensivas:** Muros perimetrales de sillería (`ELEM.WALL`) que confinan la ciudadela.
+  - 🇨🇴 **Realidad Macondo (Selva, Retenes y Cuadrante - 2026):** Trochas de barro, río serpenteante con canoas, cambuche guerrillero con sancocho en la selva, retenes clandestinos, patrullas del cuadrante, tiendas con billar, puestos de mercado y mototaxis suicidas.
+  - 📜 **Albores Bíblicos (Tras Caín y Abel):** Adán y Eva en su hogar ancestral, Caín labrando la tierra buscando redención, Abel cuidando rebaños, profetas orando ante el Monte del Altar Sagrado, huertos con jardineras y el Río de la Vida.
+  - ☮️ **Comuna de Paz (Años 70 - Bob Marley):** Gran escenario musical de madera con torres de amplificadores, notas musicales animadas, fogata de la paz y comuna de carpas bohemias y huertos floridos.
+  - 💰 **Imperio Clandestino (Años 80):** Mansión señorial de cantería del Patrón con piscina privada de azulejos, jardineras de lujo, pista de aterrizaje clandestina y muelles secretos.
+  - ⚔️ **Frente de Resistencia (Años 40):** Búnker de mando fortificado, red de trincheras en zigzag con parapetos de vallas y alambradas, hospital militar de campaña y estación de radio.
 * **🌳 Motor de Profundidad Espacial 2.5D (Top-Down Y-Sorting):**
-  - **Árboles Volumétricos:** Copas esféricas de 3 capas con follaje iluminado, sombras suaves translúcidas en el suelo y colisión física confinada únicamente a la base del tronco (`8x6px`). Los personajes y criaturas pueden caminar detrás de la copa y quedar ocluidos de forma natural.
-  - **Acantilados y Riscos:** Paredes de piedra con relieve tridimensional (borde iluminado superior, fachada vertical y sombra inferior profunda). Las escaleras de madera (`LADDER`) permiten ascender y descender de los riscos sin atascos.
-  - **Canales de Agua Hundidos:** Los bordes de agua proyectan sombras internas de contención, generando una sensación instantánea de zanja / foso excavado en el terreno.
+  - **Árboles Volumétricos:** Copas esféricas de alta fidelidad con 8 lóbulos festoneados, follaje iluminado por capas, frutos rojos/dorados o flores blancas, sombras suaves translúcidas en el suelo y colisión física confinada únicamente a la base del tronco (`8x6px`). Los personajes y criaturas pueden caminar detrás de la copa y quedar ocluidos de forma natural.
+  - **Acantilados y Murallas:** Paredes de piedra con relieve tridimensional (almenas, borde iluminado superior, fachada vertical y sombra inferior profunda). Las escaleras de madera (`LADDER`) permiten ascender y descender de los riscos sin atascos.
+  - **Canales de Agua Hundidos y Ruedas Hidráulicas:** Los bordes de agua proyectan sombras internas de contención, generando una sensación instantánea de zanja / foso excavado en el terreno.
   - **Oclusión Dinámica (Y-Sort):** Pipeline de renderizado unificado donde personajes, animales y copas de árboles se ordenan por su línea de base en el eje Y.
+  - **Zoom Suave y Desplazamiento (Pan & Zoom):** Rueda del ratón para acercar/alejar la vista y botón derecho/central para desplazarse libremente por el mapa examinando cada detalle del pixel art.
 * **📱 Adaptabilidad Total y Pantallas Táctiles:** El juego escala dinámicamente en cualquier pantalla (celulares verticales, tablets o monitores panorámicos 4K), con soporte táctil nativo para jugar con los dedos en móviles.
 
 ### 2. Vida Social, Crianza y Emociones (`src/social/relations.js` & `src/ai/brain.js`)

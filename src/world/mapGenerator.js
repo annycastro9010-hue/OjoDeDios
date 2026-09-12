@@ -32,9 +32,8 @@ export class MapGenerator {
 
   // 1. 📜 ERA BÍBLICA: Los Primeros Humanos tras el Edén, Monte del Altar y Oasis
   static generateBiblical(grid, w, h, cx, cy) {
-    // Terreno base: Oasis fértil rodeado de desierto y cordillera
-    const radiusX = Math.floor(w * 0.42);
-    const radiusY = Math.floor(h * 0.38);
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -43,88 +42,102 @@ export class MapGenerator {
         const dist = Math.sqrt(dx * dx + dy * dy);
         const noise = Math.sin(x * 0.18) * 0.07 + Math.cos(y * 0.22) * 0.07;
 
-        if (dist + noise < 0.32) {
-          // Valle central del Edén: Tierra muy fértil y cultivos
+        if (dist + noise < 0.35) {
           grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.12) grid.set(x, y, ELEM.PLANT_BLOOM);
-        } else if (dist + noise < 0.58) {
-          // Llanuras agrícolas de Caín y pastoreo de Abel
+        } else if (dist + noise < 0.65) {
           grid.set(x, y, ELEM.DIRT);
-          if (Math.random() < 0.05) grid.set(x, y, ELEM.WOOD);
-        } else if (dist + noise < 0.78) {
-          // Desierto dorado circundante (Tierra de Nod)
-          grid.set(x, y, ELEM.SAND);
+        } else if (dist + noise < 0.76) {
+          grid.set(x, y, ELEM.SAND); // Arena dorada costera
         } else {
-          // Gran Mar Primordial
-          grid.set(x, y, ELEM.WATER);
+          grid.set(x, y, ELEM.WATER); // Mar Primordial
         }
       }
     }
 
-    // Río Sagrado de las Aguas Vivas (Jordán) que cruza el oasis
+    // Río Sagrado de las Aguas Vivas (Jordán)
     for (let y = 0; y < h; y++) {
-      const riverX = cx + Math.floor(Math.sin(y * 0.12) * 14 - 8);
+      const riverX = cx + Math.floor(Math.sin(y * 0.12) * 14 - 10);
       for (let rx = riverX - 3; rx <= riverX + 3; rx++) {
         if (rx >= 0 && rx < w) {
           grid.set(rx, y, ELEM.WATER);
         }
       }
-      // Orillas húmedas
       grid.set(riverX - 4, y, ELEM.FERTILE_DIRT);
       grid.set(riverX + 4, y, ELEM.FERTILE_DIRT);
     }
 
-    // Puentes sagrados de troncos y piedra
+    // Puentes de piedra Minish Cap
     const b1 = cy - 14;
     const b2 = cy + 14;
-    for (let bx = cx - 18; bx <= cx - 2; bx++) {
+    for (let bx = cx - 20; bx <= cx - 4; bx++) {
       grid.set(bx, b1, ELEM.ROAD);
       grid.set(bx, b1 + 1, ELEM.ROAD);
       grid.set(bx, b2, ELEM.ROAD);
       grid.set(bx, b2 + 1, ELEM.ROAD);
     }
 
-    // 🏔️ Monte del Altar Sagrado de Dios (Centro Ceremonial)
+    // 🏔️ Monte del Altar Elevado (Acantilado Minish Cap con Escalera)
     const altarX = cx + 18;
-    const altarY = cy - 6;
+    const altarY = cy - 8;
     for (let dy = -4; dy <= 4; dy++) {
-      for (let dx = -4; dx <= 4; dx++) {
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 4) {
-          grid.set(altarX + dx, altarY + dy, ELEM.STONE);
-        }
+      for (let dx = -6; dx <= 6; dx++) {
+        grid.set(altarX + dx, altarY + dy, ELEM.FERTILE_DIRT);
       }
     }
-    // Altar con reliquia de oro en la cima
+    // Muros de piedra perimetrales
+    for (let dx = -6; dx <= 6; dx++) {
+      grid.set(altarX + dx, altarY + 4, ELEM.CLIFF);
+      grid.set(altarX + dx, altarY - 4, ELEM.CLIFF);
+    }
+    for (let dy = -4; dy <= 4; dy++) {
+      grid.set(altarX - 6, altarY + dy, ELEM.CLIFF);
+      grid.set(altarX + 6, altarY + dy, ELEM.CLIFF);
+    }
+    // Escalera de madera para subir al monte sagrado
+    grid.set(altarX, altarY + 4, ELEM.LADDER);
     grid.set(altarX, altarY, ELEM.GOLD);
-    grid.set(altarX, altarY - 1, ELEM.CAMPFIRE); // Fuego sagrado
-    grid.buildingLocations.push({ x: altarX, y: altarY, name: "Altar Sagrado a Dios" });
+    grid.set(altarX, altarY - 1, ELEM.CAMPFIRE);
+    grid.buildingLocations.push({ x: altarX, y: altarY, name: "Altar Sagrado en el Monte" });
 
-    // 🏡 Aldea Primitiva de Casas de Arcilla y Adobe
-    grid.createBuilding(cx - 26, cy - 8, 7, 5);
-    grid.buildingLocations.push({ x: cx - 23, y: cy - 6, name: "Hogar de Adán y Eva" });
+    // 🌳 Huerto Sagrado del Edén (Árboles Minish con frutos dorados)
+    for (let tx = cx - 28; tx <= cx - 10; tx += 6) {
+      grid.set(tx, cy - 16, ELEM.TREE);
+    }
+    grid.set(altarX - 4, altarY - 2, ELEM.TREE);
+    grid.set(altarX + 4, altarY - 2, ELEM.TREE);
 
-    grid.createBuilding(cx - 28, cy + 10, 6, 5);
-    grid.buildingLocations.push({ x: cx - 25, y: cy + 12, name: "Cabaña de Caín" });
+    // 🪵 Cercas de madera Minish
+    for (let fx = cx - 26; fx <= cx - 6; fx++) {
+      grid.set(fx, cy + 6, ELEM.FENCE);
+    }
 
-    // Pozo comunal de agua bendita
-    grid.set(cx - 18, cy + 3, ELEM.STONE);
-    grid.set(cx - 17, cy + 3, ELEM.WATER);
-    grid.set(cx - 16, cy + 3, ELEM.STONE);
-    grid.buildingLocations.push({ x: cx - 17, y: cy + 3, name: "Pozo de la Vida" });
+    // 🏡 Aldea de Arcilla de Adán y Caín (Estilo Minish Cap)
+    grid.createBuilding(cx - 26, cy - 8, 8, 6, "Hogar de Adán y Eva", { roofColor: 'yellow' });
+    grid.createBuilding(cx - 28, cy + 10, 7, 5, "Cabaña de Caín", { roofColor: 'red' });
 
-    // Senderos de tierra apisonada que conectan la aldea
+    // Jardineras y huertos floridos Minish
+    grid.set(cx - 26, cy - 2, ELEM.FLOWER_BED);
+    grid.set(cx - 19, cy - 2, ELEM.FLOWER_BED);
+    grid.set(altarX - 3, altarY + 2, ELEM.FLOWER_BED);
+    grid.set(altarX + 3, altarY + 2, ELEM.FLOWER_BED);
+
+    // Pozo de piedra
+    grid.set(cx - 16, cy + 2, ELEM.STONE);
+    grid.set(cx - 15, cy + 2, ELEM.WATER);
+    grid.set(cx - 14, cy + 2, ELEM.STONE);
+    grid.buildingLocations.push({ x: cx - 15, y: cy + 2, name: "Pozo de la Vida" });
+
+    // Caminos de adoquines
     for (let x = cx - 26; x <= altarX; x++) {
       grid.set(x, cy, ELEM.ROAD);
     }
   }
 
-  // 2. ☮️ AÑOS 70: Comuna de Paz, Gran Escenario de Bob Marley y Festival de Woodstock
+  // 2. ☮️ AÑOS 70: Comuna de Paz, Gran Escenario de Bob Marley y Festival
   static generateSeventies(grid, w, h, cx, cy) {
     const radiusX = Math.floor(w * 0.44);
     const radiusY = Math.floor(h * 0.40);
 
-    // Pradera vibrante de festival, flores psicodélicas y arboledas
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const dx = (x - cx) / radiusX;
@@ -132,199 +145,243 @@ export class MapGenerator {
         const dist = Math.sqrt(dx * dx + dy * dy);
         const wobble = Math.sin(x * 0.18) * 0.08 + Math.cos(y * 0.18) * 0.08;
 
-        if (dist + wobble < 0.65) {
-          // Todo el interior del festival es césped fértil y flores vivas (¡nada de tierra seca!)
+        if (dist + wobble < 0.68) {
           grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.22) grid.set(x, y, ELEM.PLANT_BLOOM);
-        } else if (dist + wobble < 0.74) {
-          // Borde con bosquecillos y palmeras/árboles de festival
-          grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.28) {
-            grid.set(x, y, ELEM.WOOD);
-          } else if (Math.random() < 0.3) {
-            grid.set(x, y, ELEM.PLANT_BLOOM);
-          }
         } else {
           grid.set(x, y, ELEM.WATER);
         }
       }
     }
 
-    // Lago de Meditación y Paz en el este con orilla florida
-    for (let dy = -7; dy <= 7; dy++) {
-      for (let dx = -7; dx <= 7; dx++) {
-        if (dx * dx + dy * dy < 42) {
-          grid.set(cx + 26 + dx, cy + 6 + dy, ELEM.WATER);
+    // 🧱 Terraza de Acantilado Norte con Escalera de Madera
+    const cliffY = cy - 16;
+    for (let x = cx - 26; x <= cx + 24; x++) {
+      grid.set(x, cliffY, ELEM.CLIFF);
+    }
+    grid.set(cx - 10, cliffY, ELEM.LADDER);
+    grid.set(cx + 12, cliffY, ELEM.LADDER);
+
+    // 🌳 Bosquecillo de Árboles Minish Cap con Flores y Manzanas
+    for (let x = cx - 24; x <= cx + 22; x += 6) {
+      grid.set(x, cliffY - 4, ELEM.TREE);
+    }
+    for (let y = cy - 8; y <= cy + 16; y += 6) {
+      grid.set(cx - 28, y, ELEM.TREE);
+      grid.set(cx + 28, y, ELEM.TREE);
+    }
+
+    // Lago de Meditación Minish Cap
+    for (let dy = -6; dy <= 6; dy++) {
+      for (let dx = -6; dx <= 6; dx++) {
+        if (dx * dx + dy * dy < 32) {
+          grid.set(cx + 22 + dx, cy + 4 + dy, ELEM.WATER);
         }
       }
     }
-    grid.buildingLocations.push({ x: cx + 26, y: cy + 6, name: "Lago de Meditación" });
+    grid.buildingLocations.push({ x: cx + 22, y: cy + 4, name: "Lago de Meditación" });
 
-    // 🎸 Gran Escenario Musical de Madera en el Centro (Tarima de concierto)
+    // 🎸 Gran Escenario Musical de Madera en el Centro
     const stageX = cx - 8;
-    const stageY = cy - 10;
+    const stageY = cy - 8;
     for (let sy = 0; sy < 8; sy++) {
       for (let sx = 0; sx < 16; sx++) {
-        grid.set(stageX + sx, stageY + sy, ELEM.ROAD); // Madera pulida del escenario
+        grid.set(stageX + sx, stageY + sy, ELEM.ROAD);
       }
     }
-    // Bordes y antorchas del escenario
     grid.set(stageX + 1, stageY + 1, ELEM.CAMPFIRE);
     grid.set(stageX + 14, stageY + 1, ELEM.CAMPFIRE);
     grid.buildingLocations.push({ x: stageX + 8, y: stageY + 4, name: "Escenario de Bob Marley" });
 
-    // 🏕️ Círculo de Cabañas y Carpas de la Comuna
-    const tents = [
-      { x: cx - 26, y: cy - 15, name: "Carpa Sanadora" },
-      { x: cx - 30, y: cy + 2, name: "Comuna de Paz" },
-      { x: cx - 18, y: cy + 16, name: "Taller de Guitarras" },
-      { x: cx + 12, y: cy + 18, name: "Huerto Ecológico" }
-    ];
+    // 🪵 Cercas de madera Minish
+    for (let x = cx - 18; x <= cx - 2; x++) {
+      grid.set(x, cy + 12, ELEM.FENCE);
+    }
+    for (let x = cx + 2; x <= cx + 18; x++) {
+      grid.set(x, cy + 12, ELEM.FENCE);
+    }
 
-    tents.forEach(t => {
-      grid.createBuilding(t.x, t.y, 6, 5);
-      grid.buildingLocations.push({ x: t.x + 2, y: t.y + 2, name: t.name });
-    });
+    // 🏕️ Carpas de la Comuna
+    grid.createBuilding(cx - 22, cy - 6, 7, 5, "Carpa Sanadora", { roofColor: 'purple' });
+    grid.createBuilding(cx - 20, cy + 14, 7, 5, "Comuna de Paz", { roofColor: 'green' });
 
-    // Senderos de madera que conectan el escenario con las carpas y el lago
-    for (let x = cx - 28; x <= cx + 20; x++) {
+    // Jardineras floridas alrededor del escenario musical
+    grid.set(stageX - 2, stageY + 3, ELEM.FLOWER_BED);
+    grid.set(stageX + 17, stageY + 3, ELEM.FLOWER_BED);
+    grid.set(cx - 15, cy - 1, ELEM.FLOWER_BED);
+    grid.set(cx + 15, cy - 1, ELEM.FLOWER_BED);
+
+    // Caminos de adoquines
+    for (let x = cx - 24; x <= cx + 20; x++) {
       grid.set(x, cy + 2, ELEM.ROAD);
     }
-    for (let y = cy - 8; y <= cy + 18; y++) {
+    for (let y = cy - 8; y <= cy + 16; y++) {
       grid.set(cx, y, ELEM.ROAD);
     }
 
-    // Gran Fogata Comunitaria central de la Paz rodeada de flores
+    // Gran Fogata Comunitaria central
     grid.set(cx, cy + 6, ELEM.CAMPFIRE);
-    for (let fAngle = 0; fAngle < 8; fAngle++) {
-      const fx = cx + Math.round(Math.cos(fAngle * Math.PI / 4) * 2);
-      const fy = cy + 6 + Math.round(Math.sin(fAngle * Math.PI / 4) * 2);
-      grid.set(fx, fy, ELEM.PLANT_BLOOM);
-    }
     grid.buildingLocations.push({ x: cx, y: cy + 6, name: "Fogata de la Paz" });
   }
 
   // 3. 💰 AÑOS 80: Hacienda del Patrón, Piscina, Pista de Aterrizaje y Muelles
   static generateEighties(grid, w, h, cx, cy) {
-    grid.initWorld(); // Isla base orgánica
-
-    // 🏰 Hacienda del Patrón (Norte)
-    const mX = cx - 20;
-    const mY = cy - 25;
-    grid.createBuilding(mX, mY, 14, 9);
-    grid.buildingLocations.push({ x: mX + 5, y: mY + 4, name: "Mansión del Patrón" });
-
-    // 🏊 Piscina privada azulejada de agua azul
-    for (let py = 0; py < 5; py++) {
-      for (let px = 0; px < 8; px++) {
-        grid.set(mX + 18 + px, mY + 2 + py, ELEM.WATER);
-      }
-    }
-    grid.buildingLocations.push({ x: mX + 22, y: mY + 4, name: "Piscina del Capo" });
-
-    // ✈️ Pista de Aterrizaje Clandestina (Recta de asfalto)
-    const runX = cx - 35;
-    const runY = cy + 12;
-    for (let rx = 0; rx < 45; rx++) {
-      grid.set(runX + rx, runY, ELEM.ROAD);
-      grid.set(runX + rx, runY + 1, ELEM.ROAD);
-      grid.set(runX + rx, runY + 2, ELEM.ROAD);
-    }
-    grid.buildingLocations.push({ x: runX + 22, y: runY + 1, name: "Pista de Aterrizaje" });
-
-    // Hangar y Almacén Clandestino junto a la pista
-    grid.createBuilding(runX + 46, runY - 2, 8, 6);
-    grid.buildingLocations.push({ x: runX + 49, y: runY + 1, name: "Hangar Clandestino" });
-
-    // Muelle secreto al sur
-    const dockX = cx + 8;
-    const dockY = cy + 26;
-    grid.createBuilding(dockX, dockY, 7, 5);
-    grid.buildingLocations.push({ x: dockX + 3, y: dockY + 2, name: "Muelle de Lanchas" });
-  }
-
-  // 4. ⚔️ AÑOS 40: Bastión de Guerra, Trincheras y Hospital de Campaña
-  static generateForties(grid, w, h, cx, cy) {
-    const radiusX = Math.floor(w * 0.42);
-    const radiusY = Math.floor(h * 0.38);
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const dx = (x - cx) / radiusX;
         const dy = (y - cy) / radiusY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const wobble = Math.sin(x * 0.22) * 0.06;
+        const wobble = Math.sin(x * 0.16) * 0.07;
 
-        if (dist + wobble < 0.45) {
-          grid.set(x, y, ELEM.DIRT);
-        } else if (dist + wobble < 0.7) {
-          grid.set(x, y, Math.random() < 0.5 ? ELEM.DIRT : ELEM.ASH);
+        if (dist + wobble < 0.68) {
+          grid.set(x, y, ELEM.FERTILE_DIRT);
         } else {
           grid.set(x, y, ELEM.WATER);
         }
       }
     }
 
-    // 🪖 Búnker de Mando Central
-    const bkX = cx - 8;
-    const bkY = cy - 14;
-    for (let by = 0; by < 7; by++) {
-      for (let bx = 0; bx < 16; bx++) {
-        grid.set(bkX + bx, bkY + by, ELEM.STONE);
+    // 🧱 Muro / Acantilado Perimetral de la Hacienda con Escaleras
+    const wallY = cy - 14;
+    for (let x = cx - 30; x <= cx + 26; x++) {
+      grid.set(x, wallY, ELEM.CLIFF);
+    }
+    grid.set(cx - 12, wallY, ELEM.LADDER);
+    grid.set(cx + 14, wallY, ELEM.LADDER);
+
+    // 🌳 Palmeras y Árboles Minish Cap
+    for (let x = cx - 28; x <= cx + 24; x += 6) {
+      grid.set(x, wallY - 4, ELEM.TREE);
+    }
+    for (let y = cy - 4; y <= cy + 18; y += 6) {
+      grid.set(cx - 30, y, ELEM.TREE);
+    }
+
+    // 🏰 Mansión del Patrón (Estilo Cantería Minish Cap)
+    const mX = cx - 18;
+    const mY = cy - 24;
+    grid.createBuilding(mX, mY, 14, 8, "Mansión del Patrón", { style: 'mansion' });
+
+    // 🏊 Piscina con relieve Minish Cap
+    for (let py = 0; py < 5; py++) {
+      for (let px = 0; px < 8; px++) {
+        grid.set(mX + 18 + px, mY + 1 + py, ELEM.WATER);
       }
     }
-    // Entrada del búnker
-    grid.set(bkX + 7, bkY + 6, ELEM.ROAD);
-    grid.set(bkX + 8, bkY + 6, ELEM.ROAD);
-    grid.buildingLocations.push({ x: bkX + 8, y: bkY + 3, name: "Búnker de Mando" });
+    grid.buildingLocations.push({ x: mX + 22, y: mY + 3, name: "Piscina del Capo" });
 
-    // 🛡️ Red de Trincheras en zigzag
+    // Jardineras señoriales junto a la piscina y la entrada
+    grid.set(mX + 18, mY + 7, ELEM.FLOWER_BED);
+    grid.set(mX + 25, mY + 7, ELEM.FLOWER_BED);
+    grid.set(mX - 2, mY + 6, ELEM.FLOWER_BED);
+
+    // ✈️ Pista de Aterrizaje de Adoquines y Asfalto
+    const runX = cx - 25;
+    const runY = cy + 12;
+    for (let rx = 0; rx < 38; rx++) {
+      grid.set(runX + rx, runY, ELEM.ROAD);
+      grid.set(runX + rx, runY + 1, ELEM.ROAD);
+      grid.set(runX + rx, runY + 2, ELEM.ROAD);
+    }
+    grid.buildingLocations.push({ x: runX + 19, y: runY + 1, name: "Pista de Aterrizaje" });
+
+    // Hangar y Muelle
+    grid.createBuilding(runX + 40, runY - 2, 8, 6, "Hangar Clandestino", { roofColor: 'stone' });
+
+    // 🪵 Cercas de la hacienda
+    for (let x = cx - 20; x <= cx + 20; x++) {
+      grid.set(x, cy + 4, ELEM.FENCE);
+    }
+  }
+
+  // 4. ⚔️ AÑOS 40: Bastión de Guerra, Trincheras y Acantilados
+  static generateForties(grid, w, h, cx, cy) {
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (x - cx) / radiusX;
+        const dy = (y - cy) / radiusY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 0.68) {
+          grid.set(x, y, ELEM.DIRT);
+        } else {
+          grid.set(x, y, ELEM.WATER);
+        }
+      }
+    }
+
+    // 🧱 Riscos Fortificados con Escaleras de Asalto
+    const rY = cy - 14;
+    for (let x = cx - 28; x <= cx + 28; x++) {
+      grid.set(x, rY, ELEM.CLIFF);
+    }
+    grid.set(cx - 10, rY, ELEM.LADDER);
+    grid.set(cx + 10, rY, ELEM.LADDER);
+
+    // 🌳 Árboles Minish en el perímetro
+    for (let x = cx - 26; x <= cx + 26; x += 6) {
+      grid.set(x, rY - 4, ELEM.TREE);
+    }
+
+    // 🪖 Búnker de Mando Fortificado
+    const bkX = cx - 8;
+    const bkY = cy - 24;
+    grid.createBuilding(bkX, bkY, 16, 7, "Búnker de Mando", { style: 'mansion' });
+
+    // 🛡️ Red de Trincheras con Adoquines y Cercas Barricada
     const tY1 = cy + 2;
-    const tY2 = cy + 12;
-    for (let x = cx - 35; x <= cx + 35; x++) {
+    for (let x = cx - 30; x <= cx + 30; x++) {
       const zig = (Math.floor(x / 4) % 2 === 0) ? 0 : 2;
       grid.set(x, tY1 + zig, ELEM.ROAD);
-      grid.set(x, tY1 + zig - 1, ELEM.STONE); // Sacos de arena
-      grid.set(x, tY2 + zig, ELEM.ROAD);
+      grid.set(x, tY1 + zig - 1, ELEM.FENCE); // Parapeto de vallas
     }
     grid.buildingLocations.push({ x: cx, y: tY1, name: "Línea de Trincheras" });
 
-    // 🏥 Hospital de Campaña de la Cruz Roja
-    grid.createBuilding(cx - 30, cy - 8, 8, 6);
-    grid.buildingLocations.push({ x: cx - 26, y: cy - 5, name: "Hospital Militar" });
-
-    // Almacén de Munición y Radio
-    grid.createBuilding(cx + 20, cy - 8, 8, 6);
-    grid.buildingLocations.push({ x: cx + 24, y: cy - 5, name: "Estación de Radio" });
+    // Hospital Militar y Estación de Radio
+    grid.createBuilding(cx - 26, cy - 4, 8, 6, "Hospital Militar", { roofColor: 'stone' });
+    grid.createBuilding(cx + 18, cy - 4, 8, 6, "Estación de Radio", { roofColor: 'blue' });
   }
 
-  // 5. 🌌 GÉNESIS: Océano Infinito y Monolito Primordial
+  // 5. 🌌 GÉNESIS: Océano Infinito y Monolito Primordial Minish
   static generateGenesis(grid, w, h, cx, cy) {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         grid.set(x, y, ELEM.WATER);
       }
     }
-    // Isla sagrada inicial donde comenzará la civilización
-    for (let dy = -4; dy <= 4; dy++) {
-      for (let dx = -4; dx <= 4; dx++) {
-        if (dx * dx + dy * dy < 16) {
+    // Isla sagrada con acantilado y árbol primordial
+    for (let dy = -6; dy <= 6; dy++) {
+      for (let dx = -8; dx <= 8; dx++) {
+        if (dx * dx + dy * dy < 48) {
           grid.set(cx + dx, cy + dy, ELEM.FERTILE_DIRT);
         }
       }
     }
-    grid.set(cx, cy, ELEM.GOLD);
-    grid.set(cx, cy - 1, ELEM.CAMPFIRE);
-    grid.set(cx, cy + 1, ELEM.PLANT_BLOOM);
-    grid.buildingLocations.push({ x: cx, y: cy, name: "Monolito Primordial" });
+    // Acantilado norte con escalera
+    for (let dx = -6; dx <= 6; dx++) {
+      grid.set(cx + dx, cy - 3, ELEM.CLIFF);
+    }
+    grid.set(cx, cy - 3, ELEM.LADDER);
+
+    // Árboles Minish Primordiales
+    grid.set(cx - 5, cy - 5, ELEM.TREE);
+    grid.set(cx + 5, cy - 5, ELEM.TREE);
+
+    grid.set(cx, cy + 2, ELEM.GOLD);
+    grid.set(cx, cy + 1, ELEM.CAMPFIRE);
+    grid.buildingLocations.push({ x: cx, y: cy + 2, name: "Monolito Primordial" });
   }
 
-  // 6. 🇨🇴 REALIDAD MACONDO: Selva húmeda, trochas de barro, retenes clandestinos y cuadrante
+  // 6. 🇨🇴 REALIDAD MACONDO: Selva Minish Cap, Acantilados, Trochas, Retenes y Río
   static generateColombia(grid, w, h, cx, cy) {
     const radiusX = Math.floor(w * 0.44);
     const radiusY = Math.floor(h * 0.40);
 
-    // Relieve montañoso selvático
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const dx = (x - cx) / radiusX;
@@ -332,23 +389,31 @@ export class MapGenerator {
         const dist = Math.sqrt(dx * dx + dy * dy);
         const noise = Math.sin(x * 0.22) * 0.08 + Math.cos(y * 0.26) * 0.08;
 
-        if (dist + noise < 0.45) {
-          // Selva espesa con vegetación, árboles y platanales
+        if (dist + noise < 0.68) {
           grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.14) grid.set(x, y, ELEM.PLANT_BLOOM);
-          if (Math.random() < 0.06) grid.set(x, y, ELEM.WOOD);
-        } else if (dist + noise < 0.75) {
-          // Llanura de pastizales y barro
-          grid.set(x, y, ELEM.DIRT);
-          if (Math.random() < 0.04) grid.set(x, y, ELEM.WOOD);
         } else {
-          // Río caudaloso circundante y ciénagas
           grid.set(x, y, ELEM.WATER);
         }
       }
     }
 
-    // Gran Río Sinuoso (tipo Magdalena / Atrato) que cruza el mapa
+    // 🧱 Riscos de Selva y Cordillera con Escaleras para Subir al Monte
+    const cliffY = cy - 16;
+    for (let x = cx - 28; x <= cx + 26; x++) {
+      grid.set(x, cliffY, ELEM.CLIFF);
+    }
+    grid.set(cx + 18, cliffY, ELEM.LADDER); // Escalera al campamento guerrillero
+    grid.set(cx - 16, cliffY, ELEM.LADDER);
+
+    // 🌳 Bosques de Árboles Minish Cap Selváticos
+    for (let x = cx - 26; x <= cx + 24; x += 6) {
+      grid.set(x, cliffY - 4, ELEM.TREE);
+    }
+    for (let y = cy - 8; y <= cy + 18; y += 6) {
+      grid.set(cx - 30, y, ELEM.TREE);
+    }
+
+    // Gran Río Sinuoso Minish Cap que cruza el mapa
     for (let y = 0; y < h; y++) {
       const riverX = cx + Math.floor(Math.sin(y * 0.1) * 16 - 12);
       for (let rx = riverX - 3; rx <= riverX + 3; rx++) {
@@ -360,47 +425,52 @@ export class MapGenerator {
       grid.set(riverX + 4, y, ELEM.FERTILE_DIRT);
     }
 
-    // Trocha Principal de Barro y Mula (conecta el pueblo con la selva)
+    // Trocha Principal de Adoquines y Barro
     for (let x = cx - 35; x <= cx + 35; x++) {
       const ty = cy + Math.floor(Math.sin(x * 0.08) * 6);
       grid.set(x, ty, ELEM.ROAD);
       grid.set(x, ty + 1, ELEM.ROAD);
-      if (Math.random() < 0.15) grid.set(x, ty + 1, ELEM.DIRT); // Barro en la trocha
     }
 
-    // Puente de troncos improvisado sobre el río
+    // Puente de madera sobre el río
     const bridgeY = cy + 2;
     for (let bx = cx - 20; bx <= cx - 5; bx++) {
       grid.set(bx, bridgeY, ELEM.ROAD);
       grid.set(bx, bridgeY + 1, ELEM.ROAD);
     }
 
-    // 🪖 1. Cambuche Guerrillero en el Monte (Olla del sancocho y cambuche)
-    const campX = cx + 22;
-    const campY = cy - 14;
-    grid.createBuilding(campX, campY, 8, 6);
-    grid.set(campX + 3, campY + 2, ELEM.CAMPFIRE); // La olla comunitaria
-    grid.set(campX + 4, campY + 2, ELEM.WOOD);
-    grid.buildingLocations.push({ x: campX + 4, y: campY + 2, name: "Campamento del Monte" });
+    // 🪵 Cercas de madera Minish en la trocha y huertos
+    for (let fx = cx - 18; fx <= cx - 4; fx++) {
+      grid.set(fx, cy + 10, ELEM.FENCE);
+    }
 
-    // 🛑 2. Retén Clandestino en la Trocha (barricada de troncos)
+    // 🪖 1. Cambuche Guerrillero en el Monte Alto
+    const campX = cx + 18;
+    const campY = cliffY - 8;
+    grid.createBuilding(campX, campY, 8, 5, "Campamento del Monte", { roofColor: 'stone' });
+    grid.set(campX + 3, campY + 2, ELEM.CAMPFIRE); // La paila del sancocho
+
+    // 🛑 2. Retén Clandestino en la Trocha
     const retenX = cx + 8;
     const retenY = cy + Math.floor(Math.sin(retenX * 0.08) * 6);
-    grid.set(retenX, retenY - 2, ELEM.WOOD);
-    grid.set(retenX, retenY + 3, ELEM.WOOD);
+    grid.set(retenX, retenY - 2, ELEM.FENCE);
+    grid.set(retenX, retenY + 3, ELEM.FENCE);
     grid.buildingLocations.push({ x: retenX, y: retenY, name: "Retén en la Trocha" });
 
     // 👮‍♂️ 3. Puesto de Policía del Cuadrante y Alcaldía
-    const townX = cx - 28;
-    const townY = cy - 12;
-    grid.createBuilding(townX, townY, 9, 6);
-    grid.buildingLocations.push({ x: townX + 4, y: townY + 3, name: "Puesto del Cuadrante" });
+    const townX = cx - 26;
+    const townY = cy - 8;
+    grid.createBuilding(townX, townY, 8, 6, "Puesto del Cuadrante", { roofColor: 'green' });
 
     // 🏪 4. Tienda de Doña Gloria y Billar
     const storeX = cx - 26;
-    const storeY = cy + 8;
-    grid.createBuilding(storeX, storeY, 8, 6);
-    grid.buildingLocations.push({ x: storeX + 4, y: storeY + 3, name: "Tienda y Billar" });
+    const storeY = cy + 12;
+    grid.createBuilding(storeX, storeY, 8, 6, "Tienda y Billar", { roofColor: 'red', sign: 'pot' });
+
+    // Puesto de frutas y aguacates en la plaza del pueblo (ELEM.MARKET)
+    grid.set(townX + 10, townY + 3, ELEM.MARKET);
+    grid.set(townX + 11, townY + 3, ELEM.MARKET);
+    grid.set(storeX + 10, storeY + 2, ELEM.FLOWER_BED);
 
     // 🛶 5. Muelle de Canoas en el Río
     const dockX = cx - 8;
@@ -412,151 +482,271 @@ export class MapGenerator {
     grid.buildingLocations.push({ x: dockX + 1, y: dockY, name: "Muelle de Canoas" });
   }
 
-  // 6. 🗡️ ALDEA MINISH: Profundidad 2.5D, Acantilados con Escaleras, Huertos Hundidos y Árboles Volumétricos
+  // 6. 🗡️ CIUDADELA DE HYRULE: The Legend of Zelda: The Minish Cap (Fidelidad Pixel Art GBA)
   static generateHyrule(grid, w, h, cx, cy) {
-    const radiusX = Math.floor(w * 0.44);
-    const radiusY = Math.floor(h * 0.40);
+    const radiusX = Math.floor(w * 0.47);
+    const radiusY = Math.floor(h * 0.45);
 
-    // 1. Suelo Base: Pradera viva con flores silvestres y océano circundante
+    // 1. Suelo Base: Pradera viva y foso de agua exterior
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const dx = (x - cx) / radiusX;
         const dy = (y - cy) / radiusY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const wobble = Math.sin(x * 0.16) * 0.06 + Math.cos(y * 0.16) * 0.06;
+        const wobble = Math.sin(x * 0.14) * 0.05 + Math.cos(y * 0.14) * 0.05;
 
-        if (dist + wobble < 0.68) {
+        if (dist + wobble < 0.72) {
           grid.set(x, y, ELEM.FERTILE_DIRT);
-          if (Math.random() < 0.15) grid.set(x, y, ELEM.PLANT_BLOOM);
+          if (Math.random() < 0.12) grid.set(x, y, ELEM.PLANT_BLOOM);
         } else {
-          grid.set(x, y, ELEM.WATER);
+          grid.set(x, y, ELEM.WATER); // Foso / lago exterior de Hyrule
         }
       }
     }
 
-    // 2. 🧱 Acantilado / Pared de Piedra Norte con Escalera de Mano
-    const cliffY = cy - 18;
-    for (let x = cx - 28; x <= cx + 24; x++) {
-      grid.set(x, cliffY, ELEM.CLIFF);
-    }
-    // Escalera de madera apoyada en el muro para subir a la terraza superior
-    const ladderX = cx - 14;
-    grid.set(ladderX, cliffY, ELEM.LADDER);
-    grid.buildingLocations.push({ x: ladderX, y: cliffY, name: "Escalera del Muro" });
+    // Coordenadas de las murallas de la ciudadela
+    const wallNorth = cy - 26;
+    const wallSouth = cy + 28;
+    const wallWest = cx - 36;
+    const wallEast = cx + 36;
 
-    // Terraza superior sobre el muro
-    for (let ty = cliffY - 5; ty < cliffY; ty++) {
-      for (let tx = cx - 26; tx <= cx + 22; tx++) {
-        if (Math.random() < 0.25) grid.set(tx, ty, ELEM.PLANT_BLOOM);
+    // 2. 🧱 Murallas de Cantería y Almenas de la Ciudadela (ELEM.WALL)
+    // Muralla Norte (con apertura central para la Gran Puerta del Castillo)
+    for (let x = wallWest; x <= wallEast; x++) {
+      if (x < cx - 3 || x > cx + 3) {
+        grid.set(x, wallNorth, ELEM.WALL);
+        grid.set(x, wallNorth - 1, ELEM.WALL);
       }
     }
+    // Muralla Sur (con apertura central para el puente de salida sur)
+    for (let x = wallWest; x <= wallEast; x++) {
+      if (x < cx - 2 || x > cx + 2) {
+        grid.set(x, wallSouth, ELEM.WALL);
+        grid.set(x, wallSouth + 1, ELEM.WALL);
+      }
+    }
+    // Murallas Oeste y Este
+    for (let y = wallNorth; y <= wallSouth; y++) {
+      grid.set(wallWest, y, ELEM.WALL);
+      grid.set(wallWest - 1, y, ELEM.WALL);
+      grid.set(wallEast, y, ELEM.WALL);
+      grid.set(wallEast + 1, y, ELEM.WALL);
+    }
 
-    // 3. 🏡 Cabaña Central con Tejado Azul
-    const houseX = cx - 5;
-    const houseY = cy - 6;
-    grid.createBuilding(houseX, houseY, 10, 6);
-    grid.buildingLocations.push({ x: houseX + 5, y: houseY + 3, name: "Cabaña de la Aldea" });
+    // 🏰 Gran Arco Monumental Norte del Castillo (con campana y emblema real)
+    grid.buildingLocations.push({
+      x: cx - 3,
+      y: wallNorth - 1,
+      w: 6,
+      h: 4,
+      name: "Puerta Norte del Castillo"
+    });
 
-    // 4. 🪨 Camino de Adoquines Principal
-    for (let y = houseY + 6; y <= cy + 22; y++) {
+    // Camino real que cruza de norte a sur por la puerta
+    for (let y = wallNorth - 4; y <= wallSouth + 4; y++) {
       grid.set(cx - 1, y, ELEM.ROAD);
       grid.set(cx, y, ELEM.ROAD);
       grid.set(cx + 1, y, ELEM.ROAD);
     }
-    // Ramal de camino hacia el pozo y el huerto
-    for (let x = cx + 2; x <= cx + 18; x++) {
-      grid.set(x, cy, ELEM.ROAD);
+
+    // 🌊 3. Canal de Agua del Oeste y Molino Hidráulico
+    const canalX1 = cx - 30;
+    const canalX2 = cx - 27;
+    for (let y = wallNorth + 2; y <= wallSouth - 2; y++) {
+      for (let x = canalX1; x <= canalX2; x++) {
+        grid.set(x, y, ELEM.WATER);
+      }
+      // Ribera adoquinada del canal
+      grid.set(canalX1 - 1, y, ELEM.ROAD);
+      grid.set(canalX2 + 1, y, ELEM.ROAD);
     }
 
-    // 5. 🌳 Árboles Volumétricos Frondosos (Minish Cap)
-    // Fila izquierda (bosquecillo perimetral)
-    for (let y = cy - 15; y <= cy + 18; y += 6) {
-      grid.set(cx - 26, y, ELEM.TREE);
+    // Puente de Piedra Norte sobre el canal
+    const bridgeNorthY = cy - 14;
+    for (let x = canalX1 - 2; x <= canalX2 + 2; x++) {
+      grid.set(x, bridgeNorthY, ELEM.ROAD);
+      grid.set(x, bridgeNorthY + 1, ELEM.ROAD);
     }
-    // Huerto de árboles frutales superiores
-    grid.set(cx - 6, cy - 14, ELEM.TREE);
-    grid.set(cx + 4, cy - 14, ELEM.TREE);
-    grid.set(cx + 14, cy - 14, ELEM.TREE);
-    // Árboles de entrada sur
-    grid.set(cx - 6, cy + 18, ELEM.TREE);
-    grid.set(cx + 6, cy + 18, ELEM.TREE);
+    grid.buildingLocations.push({ x: canalX1, y: bridgeNorthY, name: "Puente Norte del Canal" });
 
-    // 6. 🪣 Pozo de Agua de Piedra
-    const wellX = cx + 16;
-    const wellY = cy - 8;
+    // Puente de Madera Sur sobre el canal con barandillas
+    const bridgeSouthY = cy + 14;
+    for (let x = canalX1 - 2; x <= canalX2 + 2; x++) {
+      grid.set(x, bridgeSouthY, ELEM.ROAD);
+      grid.set(x, bridgeSouthY + 1, ELEM.ROAD);
+    }
+    grid.set(canalX1 - 1, bridgeSouthY - 1, ELEM.WOOD);
+    grid.set(canalX2 + 1, bridgeSouthY - 1, ELEM.WOOD);
+    grid.set(canalX1 - 1, bridgeSouthY + 2, ELEM.WOOD);
+    grid.set(canalX2 + 1, bridgeSouthY + 2, ELEM.WOOD);
+    grid.buildingLocations.push({ x: canalX1, y: bridgeSouthY, name: "Puente Sur del Canal" });
+
+    // 🌊 Molino de Agua con Rueda Hidráulica Giratoria
+    grid.createBuilding(canalX2 + 2, cy - 24, 9, 6, "Molino de Agua", {
+      style: 'watermill',
+      roofColor: 'stone'
+    });
+
+    // ⛲ 4. Gran Plaza Mayor de Hyrule (Town Square)
+    const pX1 = cx - 13;
+    const pX2 = cx + 13;
+    const pY1 = cy - 9;
+    const pY2 = cy + 11;
+    for (let py = pY1; py <= pY2; py++) {
+      for (let px = pX1; px <= pX2; px++) {
+        grid.set(px, py, ELEM.ROAD);
+      }
+    }
+
+    // Gran Fuente de Mármol Central con Chorro de Agua Animado (ELEM.FOUNTAIN)
+    grid.set(cx - 1, cy - 2, ELEM.FOUNTAIN);
+    grid.set(cx, cy - 2, ELEM.FOUNTAIN);
+    grid.set(cx + 1, cy - 2, ELEM.FOUNTAIN);
+    grid.set(cx - 1, cy - 1, ELEM.FOUNTAIN);
+    grid.set(cx, cy - 1, ELEM.FOUNTAIN);
+    grid.set(cx + 1, cy - 1, ELEM.FOUNTAIN);
+    grid.buildingLocations.push({ x: cx - 1, y: cy - 2, name: "Fuente de Hyrule", showName: false });
+
+    // 🎪 Bazares y Puestos de Mercado con Toldos a Rayas (ELEM.MARKET)
+    grid.set(cx - 9, cy - 5, ELEM.MARKET);
+    grid.set(cx - 8, cy - 5, ELEM.MARKET);
+    grid.set(cx + 7, cy - 5, ELEM.MARKET);
+    grid.set(cx + 8, cy - 5, ELEM.MARKET);
+    grid.set(cx - 9, cy + 6, ELEM.MARKET);
+    grid.set(cx - 8, cy + 6, ELEM.MARKET);
+    grid.set(cx + 7, cy + 6, ELEM.MARKET);
+    grid.set(cx + 8, cy + 6, ELEM.MARKET);
+
+    // 🌷 Jardineras Ornamentales con Bordillo Blanco en la Plaza (ELEM.FLOWER_BED)
+    for (let x = cx - 5; x <= cx + 5; x++) {
+      if (Math.abs(x - cx) >= 2) {
+        grid.set(x, pY1 + 1, ELEM.FLOWER_BED);
+        grid.set(x, pY2 - 1, ELEM.FLOWER_BED);
+      }
+    }
+    grid.set(pX1 + 1, cy, ELEM.FLOWER_BED);
+    grid.set(pX2 - 1, cy, ELEM.FLOWER_BED);
+
+    // 5. 🏡 Cabañas y Comercios con Tejados Curvos Multicolores y Carteles Colgantes (The Minish Cap)
+    // A. Zapatería de Rem (Tejado Rojo, Cartel Zapato)
+    grid.createBuilding(cx - 25, cy - 9, 8, 6, "Zapatería de Rem", {
+      roofColor: 'red',
+      sign: 'shoe'
+    });
+
+    // B. Panadería Real (Tejado Amarillo, Cartel Pan)
+    grid.createBuilding(cx + 16, cy - 9, 8, 6, "Panadería Real", {
+      roofColor: 'yellow',
+      sign: 'bread'
+    });
+
+    // C. Botica de Pociones de Syrup (Tejado Azul, Cartel Poción)
+    grid.createBuilding(cx + 26, cy - 9, 8, 6, "Botica de Pociones", {
+      roofColor: 'blue',
+      sign: 'potion'
+    });
+
+    // D. Armería y Forja Real (Tejado Azul, Cartel Escudo)
+    grid.createBuilding(cx - 25, cy + 6, 8, 6, "Armería y Escudos", {
+      roofColor: 'blue',
+      sign: 'shield'
+    });
+
+    // E. Posada y Taberna del Viajero (Tejado Verde, Dos Pisos)
+    grid.createBuilding(cx + 16, cy + 6, 9, 6, "Posada del Viajero", {
+      roofColor: 'green'
+    });
+
+    // F. Gran Mansión Señorial / Ayuntamiento (Estilo Cantería Señorial)
+    grid.createBuilding(cx - 16, cy - 23, 12, 7, "Mansión Señorial", {
+      style: 'mansion'
+    });
+
+    // G. Dojo de Swiftblade - Maestro de la Espada (Tejado de Piedra, Cartel Bell/Dojo)
+    grid.createBuilding(cx + 16, cy - 23, 10, 6, "Dojo de Swiftblade", {
+      roofColor: 'stone',
+      sign: 'shield'
+    });
+
+    // H. Biblioteca Real de Hyrule (Tejado Púrpura)
+    grid.createBuilding(cx + 26, cy + 16, 8, 6, "Biblioteca Real", {
+      roofColor: 'purple'
+    });
+
+    // I. Casa Residencial Campestre (Tejado Rojo)
+    grid.createBuilding(cx - 16, cy + 18, 8, 6, "Cabaña Residencial", {
+      roofColor: 'red'
+    });
+
+    // 6. 🪣 Pozo de Agua de Piedra y Plaza Sureste
+    const wellX = cx + 8;
+    const wellY = cy + 18;
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         grid.set(wellX + dx, wellY + dy, ELEM.STONE);
       }
     }
-    grid.set(wellX, wellY, ELEM.WATER); // Agua en el fondo del pozo
-    grid.buildingLocations.push({ x: wellX, y: wellY, name: "Pozo de Piedra" });
+    grid.set(wellX, wellY, ELEM.WATER);
+    grid.buildingLocations.push({ x: wellX, y: wellY, name: "Pozo de la Plaza" });
 
-    // 7. 🪵 Cercas de Madera con Postes y Entradas
-    const fenceY = cy + 4;
-    // Cerca izquierda
-    for (let x = cx - 22; x <= cx - 3; x++) {
-      grid.set(x, fenceY, ELEM.FENCE);
+    // 7. 🛣️ Red de Calles Adoquinadas Conectando Toda la Ciudadela
+    // Calle Este-Oeste Principal
+    for (let x = canalX2 + 1; x <= wallEast - 2; x++) {
+      grid.set(x, cy + 2, ELEM.ROAD);
+      grid.set(x, cy + 3, ELEM.ROAD);
     }
-    // Cerca derecha
-    for (let x = cx + 3; x <= cx + 22; x++) {
-      grid.set(x, fenceY, ELEM.FENCE);
+    // Calle Norte transversal
+    for (let x = canalX2 + 1; x <= wallEast - 2; x++) {
+      grid.set(x, cy - 14, ELEM.ROAD);
+    }
+    // Calle Sur transversal
+    for (let x = canalX2 + 1; x <= wallEast - 2; x++) {
+      grid.set(x, cy + 14, ELEM.ROAD);
+    }
+    // Conexiones verticales
+    for (let y = cy - 22; y <= cy + 24; y++) {
+      grid.set(cx - 15, y, ELEM.ROAD);
+      grid.set(cx + 14, y, ELEM.ROAD);
     }
 
-    // 8. 🌾 Parcela de Trigo Dorado
-    for (let ty = cy - 14; ty <= cy - 4; ty++) {
-      for (let tx = cx - 22; tx <= cx - 12; tx++) {
-        grid.set(tx, ty, ELEM.SAND);
-        if (Math.random() < 0.3) grid.set(tx, ty, ELEM.SEED);
-      }
+    // 8. 🌳 Árboles Volumétricos Frondosos de Hyrule (ELEM.TREE)
+    const treePositions = [
+      // Ribera del canal
+      { x: canalX1 - 4, y: cy - 20 },
+      { x: canalX1 - 4, y: cy - 8 },
+      { x: canalX1 - 4, y: cy + 4 },
+      { x: canalX1 - 4, y: cy + 18 },
+      // Esquinas exteriores de la Plaza Mayor
+      { x: cx - 14, y: cy - 11 },
+      { x: cx + 14, y: cy - 11 },
+      { x: cx - 14, y: cy + 12 },
+      { x: cx + 14, y: cy + 12 },
+      // Frente al dojo y mansión
+      { x: cx - 2, y: cy - 18 },
+      { x: cx + 2, y: cy - 18 },
+      { x: cx + 28, y: cy - 18 },
+      // Entrada sur
+      { x: cx - 6, y: wallSouth - 4 },
+      { x: cx + 6, y: wallSouth - 4 }
+    ];
+    for (const pos of treePositions) {
+      grid.set(pos.x, pos.y, ELEM.TREE);
     }
-    grid.buildingLocations.push({ x: cx - 17, y: cy - 9, name: "Campo de Trigo" });
 
-    // 9. 🥕 Huerto Hundido con Muros y Cultivos
-    const gardenX = cx + 10;
-    const gardenY = cy + 8;
-    const gardenW = 14;
-    const gardenH = 10;
-    // Borde de desnivel / pared de tierra
-    for (let gx = gardenX; gx < gardenX + gardenW; gx++) {
-      grid.set(gx, gardenY, ELEM.CLIFF);
-      grid.set(gx, gardenY + gardenH - 1, ELEM.FENCE);
+    // 9. 🪵 Cercas de Madera Perimetrales en Patios (ELEM.FENCE)
+    for (let x = cx - 25; x <= cx - 17; x++) {
+      grid.set(x, cy - 2, ELEM.FENCE);
+      grid.set(x, cy + 13, ELEM.FENCE);
     }
-    for (let gy = gardenY; gy < gardenY + gardenH; gy++) {
-      grid.set(gardenX, gy, ELEM.CLIFF);
-      grid.set(gardenX + gardenW - 1, gy, ELEM.FENCE);
+    for (let x = cx + 16; x <= cx + 25; x++) {
+      grid.set(x, cy - 2, ELEM.FENCE);
+      grid.set(x, cy + 13, ELEM.FENCE);
     }
-    // Interior del huerto hundido (surcos)
-    for (let gy = gardenY + 1; gy < gardenY + gardenH - 1; gy++) {
-      for (let gx = gardenX + 1; gx < gardenX + gardenW - 1; gx++) {
-        grid.set(gx, gy, ELEM.FERTILE_DIRT);
-        if (gy % 2 === 0) {
-          grid.set(gx, gy, ELEM.PLANT_BLOOM);
-        }
-      }
-    }
-    // Rocas en el borde del huerto
-    grid.set(gardenX + 2, gardenY + 1, ELEM.STONE);
-    grid.set(gardenX + gardenW - 3, gardenY + 1, ELEM.STONE);
-    grid.buildingLocations.push({ x: gardenX + 7, y: gardenY + 5, name: "Huerto Hundido" });
 
-    // 10. 🌊 Canal de Agua Hundido y Puente de Madera
-    const canalX = cx + 27;
-    for (let y = cy - 16; y <= cy + 20; y++) {
-      grid.set(canalX, y, ELEM.WATER);
-      grid.set(canalX + 1, y, ELEM.WATER);
-      grid.set(canalX + 2, y, ELEM.WATER);
-    }
-    // Puente de madera sobre el canal
-    const bridgeY = cy;
-    for (let bx = canalX - 1; bx <= canalX + 3; bx++) {
-      grid.set(bx, bridgeY, ELEM.ROAD);
-      grid.set(bx, bridgeY + 1, ELEM.ROAD);
-    }
-    grid.set(canalX - 1, bridgeY - 1, ELEM.WOOD); // Barandillas del puente
-    grid.set(canalX + 3, bridgeY - 1, ELEM.WOOD);
-    grid.set(canalX - 1, bridgeY + 2, ELEM.WOOD);
-    grid.set(canalX + 3, bridgeY + 2, ELEM.WOOD);
-    grid.buildingLocations.push({ x: canalX + 1, y: bridgeY, name: "Puente del Canal" });
+    // Jardineras adicionales frente a los comercios
+    grid.set(cx - 25, cy - 3, ELEM.FLOWER_BED);
+    grid.set(cx - 17, cy - 3, ELEM.FLOWER_BED);
+    grid.set(cx + 16, cy - 3, ELEM.FLOWER_BED);
+    grid.set(cx + 25, cy - 3, ELEM.FLOWER_BED);
   }
 }
