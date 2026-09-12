@@ -1,5 +1,5 @@
 import { ELEM, ELEM_PROPS } from '../sim/elements.js';
-import { animManager } from './animationManager.js';
+import { animManager } from './animationManager.js?v=20260912_minish_sprites_v2';
 import { sprites } from './sprites.js';
 import { vfx } from './fx.js';
 

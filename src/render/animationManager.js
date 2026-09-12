@@ -16,11 +16,24 @@ export class AnimationManager {
   initMinishSheets() {
     if (typeof window === 'undefined' || typeof Image === 'undefined') return;
 
-    const basePath = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : './';
-    const s1Url = `${basePath}sprites/sheet1_minish.jpg`.replace('//', '/');
-    const s2Url = `${basePath}sprites/sheet2_minish.jpg`.replace('//', '/');
+    const loadImg = (paths) => {
+      return new Promise((resolve) => {
+        const tryPath = (idx) => {
+          if (idx >= paths.length) {
+            resolve(null);
+            return;
+          }
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => tryPath(idx + 1);
+          img.src = paths[idx];
+        };
+        tryPath(0);
+      });
+    };
 
     const cleanGreenBg = (img) => {
+      if (!img) return null;
       const cvs = document.createElement('canvas');
       cvs.width = img.width;
       cvs.height = img.height;
@@ -30,9 +43,10 @@ export class AnimationManager {
       try {
         const imgData = ctx.getImageData(0, 0, cvs.width, cvs.height);
         const d = imgData.data;
-        const bgR = d[16];
-        const bgG = d[17];
-        const bgB = d[18];
+        const bgIdx = (10 * cvs.width + 10) * 4;
+        const bgR = d[bgIdx];
+        const bgG = d[bgIdx + 1];
+        const bgB = d[bgIdx + 2];
 
         for (let i = 0; i < d.length; i += 4) {
           const r = d[i];
@@ -47,34 +61,34 @@ export class AnimationManager {
         }
         ctx.putImageData(imgData, 0, 0);
       } catch (e) {
-        console.warn('Chroma key bypass:', e);
+        console.warn('Chroma key warning:', e);
       }
       return cvs;
     };
 
-    let loadedCount = 0;
-    const onLoaded = () => {
-      loadedCount++;
-      if (loadedCount >= 2) {
+    const s1Paths = [
+      './sprites/sheet1_minish.jpg',
+      'sprites/sheet1_minish.jpg',
+      '/OjoDeDios/sprites/sheet1_minish.jpg',
+      '/sprites/sheet1_minish.jpg',
+      './public/sprites/sheet1_minish.jpg'
+    ];
+    const s2Paths = [
+      './sprites/sheet2_minish.jpg',
+      'sprites/sheet2_minish.jpg',
+      '/OjoDeDios/sprites/sheet2_minish.jpg',
+      '/sprites/sheet2_minish.jpg',
+      './public/sprites/sheet2_minish.jpg'
+    ];
+
+    Promise.all([loadImg(s1Paths), loadImg(s2Paths)]).then(([img1, img2]) => {
+      if (img1) this.sheet1Canvas = cleanGreenBg(img1);
+      if (img2) this.sheet2Canvas = cleanGreenBg(img2);
+      if (this.sheet1Canvas || this.sheet2Canvas) {
         this.sheetsReady = true;
+        console.log('✨ [OjoDeDios] Hojas de sprites Minish Cap activadas con éxito.');
       }
-    };
-
-    const img1 = new Image();
-    img1.crossOrigin = 'anonymous';
-    img1.onload = () => {
-      this.sheet1Canvas = cleanGreenBg(img1);
-      onLoaded();
-    };
-    img1.src = s1Url;
-
-    const img2 = new Image();
-    img2.crossOrigin = 'anonymous';
-    img2.onload = () => {
-      this.sheet2Canvas = cleanGreenBg(img2);
-      onLoaded();
-    };
-    img2.src = s2Url;
+    });
 
     // Coordenadas exactas en las hojas de sprites 1024x1024
     this.spriteMap = {
