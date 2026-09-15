@@ -50,7 +50,10 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
   - **Canales de Agua Hundidos y Ruedas Hidráulicas:** Los bordes de agua proyectan sombras internas de contención, generando una sensación instantánea de zanja / foso excavado en el terreno.
   - **Oclusión Dinámica (Y-Sort):** Pipeline de renderizado unificado donde personajes, animales y copas de árboles se ordenan por su línea de base en el eje Y.
   - **Zoom Suave y Desplazamiento (Pan & Zoom):** Rueda del ratón para acercar/alejar la vista y botón derecho/central para desplazarse libremente por el mapa examinando cada detalle del pixel art.
-* **📱 Adaptabilidad Total y Pantallas Táctiles:** El juego escala dinámicamente en cualquier pantalla (celulares verticales, tablets o monitores panorámicos 4K), con soporte táctil nativo para jugar con los dedos en móviles.
+  - **🔍 Controles Flotantes de Zoom (`➕`, `➖`, `🎯`):** Botones táctiles siempre disponibles para acercarse, alejarse o centrar la vista en la isla tanto en PC como en móviles.
+  - **🎥 Modo Observador / Cámara Espectador:** Observa de cerca a cualquier mortal sin poseerlo ni interrumpir su IA autónoma; la cámara lo sigue suavemente en primer plano mientras vive, trabaja y conversa.
+  - **🖐️ Herramienta Mover / Explorar:** Permite arrastrar el mapa con un solo dedo o click izquierdo sin riesgo de derramar elementos o pintar el suelo accidentalmente.
+* **📱 Adaptabilidad Total y Pantallas Táctiles:** Soporte multitáctil nativo con **pellizco para acercar/alejar (*pinch-to-zoom*)** y arrastre con dos dedos en teléfonos y tablets. El juego escala dinámicamente en cualquier pantalla vertical u horizontal.
 
 ### 2. Vida Social, Crianza y Emociones (`src/social/relations.js` & `src/ai/brain.js`)
 * **Familias y Crianza:** Las parejas establecidas pueden tener bebés. Los niños corretean, juegan imitando a los adultos y al cabo del tiempo crecen convirtiéndose en campesinos adultos.

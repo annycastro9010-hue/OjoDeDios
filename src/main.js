@@ -379,6 +379,75 @@ btnPossessFromMind.addEventListener('click', () => {
   enterPossession(target);
 });
 
+// --- MODO OBSERVADOR / ESPECTADOR Y CONTROLES DE ZOOM ---
+const btnFollowFromMind = document.getElementById('btnFollowFromMind');
+const spectatorHud = document.getElementById('spectatorHud');
+const spectatorTargetName = document.getElementById('spectatorTargetName');
+const btnStopFollow = document.getElementById('btnStopFollow');
+const zoomControls = document.getElementById('zoomControls');
+const btnZoomIn = document.getElementById('btnZoomIn');
+const btnZoomOut = document.getElementById('btnZoomOut');
+const btnZoomReset = document.getElementById('btnZoomReset');
+
+function startObserving(npc) {
+  if (!npc) return;
+  camera.follow(npc);
+  if (mindPanel) mindPanel.style.display = 'none';
+  if (spectatorHud) {
+    spectatorHud.style.display = 'flex';
+    if (spectatorTargetName) {
+      spectatorTargetName.innerText = `${npc.brain.name} (${npc.brain.title})`;
+    }
+  }
+  sound.playAscend();
+  notify(`🎥 Modo Observador: Siguiendo a ${npc.brain.name} de cerca`);
+}
+
+function stopObserving(notifyUser = false) {
+  if (camera.followedEntity) {
+    camera.unfollow();
+    if (spectatorHud) spectatorHud.style.display = 'none';
+    if (notifyUser) notify("👁️ Vista libre celestial restaurada");
+  }
+}
+
+if (btnFollowFromMind) {
+  btnFollowFromMind.addEventListener('click', () => {
+    if (!inspectedNpc) return;
+    const target = inspectedNpc;
+    inspectedNpc = null;
+    startObserving(target);
+  });
+}
+
+if (btnStopFollow) {
+  btnStopFollow.addEventListener('click', () => {
+    stopObserving(true);
+  });
+}
+
+if (btnZoomIn) {
+  btnZoomIn.addEventListener('click', () => {
+    camera.zoomBy(1.25);
+    notify("🔍 Acercando vista");
+  });
+}
+
+if (btnZoomOut) {
+  btnZoomOut.addEventListener('click', () => {
+    camera.zoomBy(0.8);
+    notify("🔍 Alejando vista");
+  });
+}
+
+if (btnZoomReset) {
+  btnZoomReset.addEventListener('click', () => {
+    stopObserving();
+    camera.resetView(grid.width, grid.height);
+    notify("🎯 Vista general de la isla centrada");
+  });
+}
+
 // --- SISTEMA Y MODAL DE GOBIERNO, CIENCIA Y LEYES ---
 function openGovModal() {
   renderGovModalUI();
@@ -459,8 +528,11 @@ document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
     document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentTool = btn.dataset.tool;
+    canvas.style.cursor = currentTool === 'pan' ? 'grab' : 'crosshair';
 
-    if (currentTool === 'possess') {
+    if (currentTool === 'pan') {
+      notify("🖐️ Arrastra con el dedo o ratón para mover el mapa. Toca un aldeano para inspeccionarlo.");
+    } else if (currentTool === 'possess') {
       notify("👁️ Toca o haz click sobre cualquier personaje para encarnar en él");
     } else if (currentTool === 'inspect') {
       notify("🧠 Toca o haz click sobre cualquier aldeano para leer su mente y sabiduría");
@@ -488,6 +560,7 @@ function getEventPos(e) {
 
 let isPanning = false;
 let lastPanPos = { x: 0, y: 0 };
+let mouseDownPos = { x: 0, y: 0 };
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -498,9 +571,12 @@ canvas.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 canvas.addEventListener('mousedown', (e) => {
-  if (e.button === 2 || e.button === 1) {
+  mouseDownPos = { x: e.clientX, y: e.clientY };
+  if (e.button === 2 || e.button === 1 || currentTool === 'pan') {
     isPanning = true;
     lastPanPos = { x: e.clientX, y: e.clientY };
+    stopObserving();
+    if (currentTool === 'pan') canvas.style.cursor = 'grabbing';
     return;
   }
   isMouseDown = true;
@@ -508,7 +584,20 @@ canvas.addEventListener('mousedown', (e) => {
   handlePointerAction();
 });
 
-window.addEventListener('mouseup', () => {
+window.addEventListener('mouseup', (e) => {
+  if (currentTool === 'pan') {
+    canvas.style.cursor = 'grab';
+    if (isPanning) {
+      const distMoved = Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y);
+      if (distMoved < 6) {
+        const worldCoords = camera.screenToWorld(e.clientX, e.clientY);
+        const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
+        if (clickedNpc) {
+          openMindPanel(clickedNpc);
+        }
+      }
+    }
+  }
   isMouseDown = false;
   isPanning = false;
 });
@@ -518,33 +607,122 @@ canvas.addEventListener('mousemove', (e) => {
     const dx = e.clientX - lastPanPos.x;
     const dy = e.clientY - lastPanPos.y;
     camera.panBy(dx, dy);
+    stopObserving();
     lastPanPos = { x: e.clientX, y: e.clientY };
     return;
   }
   mousePos = getEventPos(e);
-  if (isMouseDown && mode === 'god') {
+  if (isMouseDown && mode === 'god' && currentTool !== 'pan') {
     handlePointerAction();
   }
 });
 
-// Eventos Táctiles para Móviles
+// Eventos Táctiles para Móviles y Tablets con soporte Pinch-to-Zoom y Desplazamiento
+let touchMode = 'none'; // 'paint' | 'pan' | 'pinch'
+let touchStartPos = { x: 0, y: 0 };
+let touchLastPanPos = { x: 0, y: 0 };
+let initialPinchDist = 0;
+
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  isMouseDown = true;
-  mousePos = getEventPos(e);
-  handlePointerAction();
-}, { passive: false });
 
-canvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  mousePos = getEventPos(e);
-  if (isMouseDown && mode === 'god') {
+  if (e.touches.length >= 2) {
+    touchMode = 'pinch';
+    isMouseDown = false;
+    isPanning = false;
+    stopObserving();
+    const t0 = e.touches[0];
+    const t1 = e.touches[1];
+    initialPinchDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+    touchLastPanPos = {
+      x: (t0.clientX + t1.clientX) / 2,
+      y: (t0.clientY + t1.clientY) / 2
+    };
+    return;
+  }
+
+  if (e.touches.length === 1) {
+    const t0 = e.touches[0];
+    touchStartPos = { x: t0.clientX, y: t0.clientY };
+    touchLastPanPos = { x: t0.clientX, y: t0.clientY };
+
+    if (currentTool === 'pan') {
+      touchMode = 'pan';
+      isPanning = true;
+      stopObserving();
+      return;
+    }
+
+    touchMode = 'paint';
+    isMouseDown = true;
+    mousePos = getEventPos(e);
     handlePointerAction();
   }
 }, { passive: false });
 
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+
+  if (e.touches.length >= 2) {
+    const t0 = e.touches[0];
+    const t1 = e.touches[1];
+    const currentDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+    const midX = (t0.clientX + t1.clientX) / 2;
+    const midY = (t0.clientY + t1.clientY) / 2;
+
+    if (initialPinchDist > 0) {
+      const factor = currentDist / initialPinchDist;
+      const clampedFactor = Math.max(0.88, Math.min(1.15, factor));
+      camera.zoomBy(clampedFactor, midX, midY);
+      initialPinchDist = currentDist;
+    }
+
+    const dx = midX - touchLastPanPos.x;
+    const dy = midY - touchLastPanPos.y;
+    camera.panBy(dx, dy);
+    stopObserving();
+    touchLastPanPos = { x: midX, y: midY };
+    return;
+  }
+
+  if (e.touches.length === 1) {
+    const t0 = e.touches[0];
+    if (touchMode === 'pan' || currentTool === 'pan') {
+      const dx = t0.clientX - touchLastPanPos.x;
+      const dy = t0.clientY - touchLastPanPos.y;
+      camera.panBy(dx, dy);
+      stopObserving();
+      touchLastPanPos = { x: t0.clientX, y: t0.clientY };
+      return;
+    }
+
+    if (isMouseDown && mode === 'god' && touchMode === 'paint') {
+      mousePos = getEventPos(e);
+      handlePointerAction();
+    }
+  }
+}, { passive: false });
+
 window.addEventListener('touchend', (e) => {
-  isMouseDown = false;
+  if (e.touches.length === 0) {
+    if (touchMode === 'pan') {
+      const distMoved = Math.hypot(touchLastPanPos.x - touchStartPos.x, touchLastPanPos.y - touchStartPos.y);
+      if (distMoved < 12) {
+        const worldCoords = camera.screenToWorld(touchLastPanPos.x, touchLastPanPos.y);
+        const clickedNpc = npcs.find(n => Math.hypot((n.x + 8) - worldCoords.x, (n.y + 8) - worldCoords.y) < 22);
+        if (clickedNpc) {
+          openMindPanel(clickedNpc);
+        }
+      }
+    }
+    isMouseDown = false;
+    isPanning = false;
+    touchMode = 'none';
+  } else if (e.touches.length === 1) {
+    const t0 = e.touches[0];
+    touchLastPanPos = { x: t0.clientX, y: t0.clientY };
+    touchMode = currentTool === 'pan' ? 'pan' : 'none';
+  }
 });
 
 // Lluvia divina masiva
@@ -644,6 +822,7 @@ let selectedRival = null;
 // Acciones según herramienta divina
 function handlePointerAction() {
   if (mode !== 'god') return;
+  if (currentTool === 'pan') return;
 
   const worldCoords = camera.screenToWorld(mousePos.x, mousePos.y);
   const { tileX, tileY } = camera.worldToTile(worldCoords.x, worldCoords.y);
@@ -760,11 +939,14 @@ function handlePointerAction() {
 
 // Iniciar Secuencia Mágica de Posesión (Estilo The Minish Cap)
 function enterPossession(npc) {
+  stopObserving();
   notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.brain.name}!`);
 
   topBar.style.display = 'none';
   bottomToolbar.style.display = 'none';
   if (mindPanel) mindPanel.style.display = 'none';
+  if (zoomControls) zoomControls.style.display = 'none';
+  if (spectatorHud) spectatorHud.style.display = 'none';
   inspectedNpc = null;
 
   npcs.filter(n => n.id !== npc.id && Math.hypot(n.x - npc.x, n.y - npc.y) < 120)
@@ -823,6 +1005,7 @@ function exitPossession() {
 
   topBar.style.display = 'flex';
   bottomToolbar.style.display = 'flex';
+  if (zoomControls) zoomControls.style.display = 'flex';
   possessedHud.style.display = 'none';
   controlsHelp.style.display = 'none';
 

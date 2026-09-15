@@ -17,6 +17,33 @@ export class Camera {
     this.isTransitioning = false;
     this.shake = 0;
     this.shakeDuration = 0;
+    this.followedEntity = null;
+  }
+
+  follow(entity, zoomScale = null) {
+    this.followedEntity = entity;
+    if (entity) {
+      const isMobile = this.canvas.width < 600;
+      this.targetScale = zoomScale !== null ? zoomScale : (isMobile ? 2.5 : 3.0);
+      this.targetX = entity.x + 8;
+      this.targetY = entity.y + 8;
+    }
+  }
+
+  unfollow() {
+    this.followedEntity = null;
+  }
+
+  resetView(worldWidth = 130, worldHeight = 85, tileSize = 8) {
+    this.unfollow();
+    const worldPxW = worldWidth * tileSize;
+    const worldPxH = worldHeight * tileSize;
+    const scaleX = this.canvas.width / worldPxW;
+    const scaleY = this.canvas.height / worldPxH;
+    this.godScale = Math.min(scaleX, scaleY) * 0.92;
+    this.targetScale = Math.max(0.25, Math.min(this.godScale, 1.5));
+    this.targetX = worldPxW / 2;
+    this.targetY = worldPxH / 2;
   }
 
   triggerShake(intensity = 4, duration = 10) {
@@ -45,10 +72,18 @@ export class Camera {
   }
 
   update(possessedEntity = null) {
-    // Si estamos poseyendo, la cámara sigue al personaje
+    // Si estamos poseyendo, la cámara sigue al personaje poseído
     if (possessedEntity) {
       this.targetX = possessedEntity.x + 8;
       this.targetY = possessedEntity.y + 8;
+    } else if (this.followedEntity) {
+      // Si estamos en modo espectador/observando a un aldeano
+      if (this.followedEntity.needs && this.followedEntity.needs.health <= 0) {
+        this.unfollow();
+      } else {
+        this.targetX = this.followedEntity.x + 8;
+        this.targetY = this.followedEntity.y + 8;
+      }
     }
 
     // Interpolación suave (Lerp)
@@ -67,10 +102,10 @@ export class Camera {
 
   zoomBy(factor, cursorX = null, cursorY = null) {
     const oldScale = this.targetScale;
-    const newScale = Math.max(0.4, Math.min(3.8, oldScale * factor));
+    const newScale = Math.max(0.35, Math.min(3.8, oldScale * factor));
     this.targetScale = newScale;
 
-    if (cursorX !== null && cursorY !== null) {
+    if (!this.followedEntity && cursorX !== null && cursorY !== null) {
       const worldPos = this.screenToWorld(cursorX, cursorY);
       this.targetX += (worldPos.x - this.targetX) * 0.2;
       this.targetY += (worldPos.y - this.targetY) * 0.2;
@@ -78,6 +113,7 @@ export class Camera {
   }
 
   panBy(dx, dy) {
+    this.unfollow();
     this.targetX -= dx / this.scale;
     this.targetY -= dy / this.scale;
     this.x = this.targetX;
