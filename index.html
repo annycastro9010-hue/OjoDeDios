@@ -277,6 +277,86 @@
       background: #334155;
     }
 
+    /* MODO ESPECTADOR / OBSERVADOR */
+    .spectator-hud {
+      position: absolute;
+      top: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
+      padding: 8px 16px;
+      border-radius: 20px;
+      z-index: 25;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      font-size: 17px;
+      color: #e2e8f0;
+      backdrop-filter: blur(6px);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .spectator-stop-btn {
+      background: #dc2626;
+      border: 1px solid #fca5a5;
+      color: #fff;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .spectator-stop-btn:hover {
+      background: #b91c1c;
+      transform: scale(1.04);
+    }
+
+    /* CONTROLES FLOTANTES DE ZOOM (PC Y MÓVIL) */
+    .zoom-controls {
+      position: absolute;
+      right: 18px;
+      bottom: 85px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 12;
+    }
+
+    .zoom-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid #38bdf8;
+      color: #f8fafc;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .zoom-btn:hover {
+      background: #1e293b;
+      border-color: #7dd3fc;
+      transform: scale(1.08);
+    }
+
+    .zoom-btn:active {
+      transform: scale(0.92);
+      background: #0284c7;
+    }
+
     /* MODO INMERSIVO (ZELDA / POSESIÓN) */
     .possessed-hud {
       position: absolute;
@@ -635,6 +715,22 @@
         font-size: 14px;
         padding: 4px 10px;
       }
+      .zoom-controls {
+        right: 10px;
+        bottom: 82px;
+        gap: 6px;
+      }
+      .zoom-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 17px;
+      }
+      .spectator-hud {
+        top: 50px;
+        font-size: 14px;
+        padding: 5px 12px;
+        max-width: 92vw;
+      }
     }
 
     /* CONTROLES TÁCTILES VIRTUALES (MÓVIL) */
@@ -745,7 +841,7 @@
       box-shadow: 0 0 16px rgba(253, 224, 71, 0.8);
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-fNaXeDil.js"></script>
+  <script type="module" crossorigin src="./assets/index-CqapqVBb.js"></script>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
@@ -826,6 +922,7 @@
 
   <!-- Barra de Herramientas en Modo Dios -->
   <div class="bottom-toolbar" id="bottomToolbar">
+    <button class="tool-btn" data-tool="pan" style="border-color: #38bdf8; color: #7dd3fc;" title="Mover la cámara y explorar sin pintar">🖐️ Mover</button>
     <button class="tool-btn active" data-tool="water">💧 Agua</button>
     <button class="tool-btn" data-tool="dirt">🟫 Tierra</button>
     <button class="tool-btn" data-tool="seed">🌿 Semilla</button>
@@ -962,11 +1059,25 @@
     </div>
 
     <div class="mind-actions">
+      <button class="mind-action-btn" id="btnFollowFromMind" style="color: #38bdf8; border-color: #0284c7;">🎥 Observar</button>
       <button class="mind-action-btn" id="btnBlessFaith">✨ Dar Fe</button>
       <button class="mind-action-btn" id="btnFeedNpc" style="color: #fdba74; border-color: #ea580c;">🍞 Alimentar</button>
       <button class="mind-action-btn" id="btnScare">😱 Asustar</button>
       <button class="mind-action-btn" id="btnPossessFromMind" style="color: #facc15; border-color: #ca8a04;">👁️ Poseer</button>
     </div>
+  </div>
+
+  <!-- HUD de Modo Observador / Espectador -->
+  <div class="spectator-hud" id="spectatorHud">
+    <span>🎥 Observando a <b id="spectatorTargetName" style="color: #facc15;">Aldeano</b></span>
+    <button class="spectator-stop-btn" id="btnStopFollow">✖ Salir</button>
+  </div>
+
+  <!-- Controles Flotantes de Zoom (Móvil y PC) -->
+  <div class="zoom-controls" id="zoomControls">
+    <button class="zoom-btn" id="btnZoomIn" title="Acercar vista (Zoom +)">➕</button>
+    <button class="zoom-btn" id="btnZoomOut" title="Alejar vista (Zoom -)">➖</button>
+    <button class="zoom-btn" id="btnZoomReset" title="Centrar Isla (Reset)">🎯</button>
   </div>
 
   <!-- HUD en Modo Posesión Inmersiva (Estilo Zelda Minish Cap) -->
