@@ -848,8 +848,19 @@
   <!-- Barra Superior en Modo Dios -->
   <div class="top-bar" id="topBar">
     <div class="title-badge">👁️ OJO DE DIOS</div>
-    <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 10px; font-size: 15px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: Albores Bíblicos</button>
-    <button class="tool-btn" id="btnOpenGov" style="min-width: unset; padding: 4px 10px; font-size: 15px; border-color: #38bdf8; background: #0c4a6e; color: #bae6fd;">👑 <span id="govBarTitle">Gobierno</span></button>
+
+    <!-- Controles de Aceleración del Tiempo Divino -->
+    <div class="time-controls" id="timeSpeedGroup" style="display: flex; align-items: center; gap: 2px; background: #1e293b; padding: 2px 6px; border-radius: 6px; border: 1px solid #475569;">
+      <button class="speed-btn" data-speed="0" title="Pausar Simulación" style="background: transparent; border: none; cursor: pointer; font-size: 14px; color: #94a3b8; padding: 2px 4px; border-radius: 4px;">⏸️</button>
+      <button class="speed-btn active" data-speed="1" title="Tiempo Normal (1x)" style="background: #0284c7; border: 1px solid #38bdf8; cursor: pointer; font-size: 14px; color: #fff; padding: 2px 5px; border-radius: 4px; font-weight: bold;">1x</button>
+      <button class="speed-btn" data-speed="2" title="Tiempo Acelerado (2x)" style="background: transparent; border: none; cursor: pointer; font-size: 14px; color: #94a3b8; padding: 2px 4px; border-radius: 4px;">2x</button>
+      <button class="speed-btn" data-speed="5" title="Evolución Rápida (5x)" style="background: transparent; border: none; cursor: pointer; font-size: 14px; color: #facc15; padding: 2px 4px; border-radius: 4px; font-weight: bold;">5x</button>
+      <button class="speed-btn" data-speed="10" title="Velocidad Cósmica Divina (10x)" style="background: transparent; border: none; cursor: pointer; font-size: 14px; color: #f43f5e; padding: 2px 4px; border-radius: 4px; font-weight: bold;">⚡10x</button>
+    </div>
+
+    <button class="tool-btn" id="btnOpenEras" style="min-width: unset; padding: 4px 8px; font-size: 15px; border-color: #ffd700; background: #713f12; color: #fef08a;">⏳ Era: Bíblica</button>
+    <button class="tool-btn" id="btnOpenGov" style="min-width: unset; padding: 4px 8px; font-size: 15px; border-color: #38bdf8; background: #0c4a6e; color: #bae6fd;">👑 <span id="govBarTitle">Gobierno</span></button>
+    <button class="tool-btn" id="btnOpenReligion" style="min-width: unset; padding: 4px 8px; font-size: 15px; border-color: #c084fc; background: #581c87; color: #f3e8ff;" title="Religión y Panteón">🕊️ <span id="religionBarTitle">Culto Primitivo</span></button>
     <div class="stat-item">
       <span id="civStage" style="color: #fef08a; font-weight: bold; background: #1e293b; padding: 2px 8px; border-radius: 4px; border: 1px solid #eab308; font-size: 16px;">🏕️ Tribu Primitiva</span>
     </div>
@@ -937,7 +948,8 @@
     <button class="tool-btn" data-tool="spawn_cultivator">👨‍🌾 Aldeano</button>
     <button class="tool-btn" data-tool="spawn_child">👶 Niño</button>
     <button class="tool-btn" data-tool="spawn_meme" style="border-color: #38bdf8; color: #7dd3fc;">🇨🇴 Personaje</button>
-    <button class="tool-btn" data-tool="spawn_animal">🐕 Animal</button>
+    <button class="tool-btn" data-tool="spawn_animal">🐕 Perro</button>
+    <button class="tool-btn" data-tool="spawn_cat" style="border-color: #f59e0b; color: #fef08a;">🐱 Gato</button>
     <button class="tool-btn" data-tool="build_house">🏡 Choza</button>
     <button class="tool-btn" data-tool="love">💘 Amor</button>
     <button class="tool-btn" data-tool="discord">⚔️ Cizaña</button>
@@ -965,6 +977,28 @@
         </div>
       </div>
       <button class="tool-btn" id="btnGovElect" style="border-color: #facc15; background: #713f12; color: #fef08a; font-size: 15px; padding: 4px 8px;">🗳️ Elecciones</button>
+    </div>
+
+    <div class="gov-section-title">🕊️ RELIGIÓN Y PANTEÓN SAGRADO (CREENCIAS VIVAS)</div>
+    <div class="gov-info-card" id="govReligionCard" style="border-color: #a855f7; background: #3b0764;">
+      <div>
+        <div style="font-size: 19px; color: #f3e8ff; font-weight: bold;" id="govReligName">Culto del Creador Primitivo</div>
+        <div style="font-size: 15px; color: #e9d5ff; margin-top: 2px;" id="govReligDeity">Deidad: El Hacedor Supremo</div>
+        <div style="font-size: 14px; color: #fef08a; margin-top: 4px; font-style: italic;" id="govReligDogma">"Venerar los ciclos de la tierra y agradecer el sustento sagrado."</div>
+        <div style="font-size: 13px; color: #d8b4fe; margin-top: 4px;" id="govReligStats">Milagros Presenciados: 0 | Catástrofes Divinas: 0</div>
+      </div>
+    </div>
+
+    <div class="gov-section-title">🐾 SOCIEDADES Y MANADAS ANIMALES AUTÓNOMAS</div>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+      <div style="flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px;">
+        <div style="font-size: 17px; color: #f59e0b; font-weight: bold;">🐕 Manada Canina</div>
+        <div style="font-size: 14px; color: #cbd5e1; margin-top: 2px;" id="govDogAlpha">Líder Alfa: Ninguno</div>
+      </div>
+      <div style="flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px;">
+        <div style="font-size: 17px; color: #fbbf24; font-weight: bold;">🐱 Imperio Felino</div>
+        <div style="font-size: 14px; color: #cbd5e1; margin-top: 2px;" id="govCatAlpha">Gran Felino: Ninguno</div>
+      </div>
     </div>
 
     <div class="gov-section-title">📜 DECRETOS Y POLÍTICAS PÚBLICAS</div>
@@ -1026,6 +1060,11 @@
     </div>
     <div class="mind-title" id="mindNpcTitle">Peón Rural (Nivel 1)</div>
     <div class="mind-trait" id="mindNpcTrait">Personalidad: Devoto Místico</div>
+    <div class="mind-stat-row" style="margin-bottom: 4px;">
+      <span>🎭 Emoción:</span>
+      <span id="mindNpcEmotion" style="color: #facc15; font-weight: bold;">🦁 Calmado</span>
+    </div>
+    <div id="mindRestStatus" style="font-size: 14px; color: #38bdf8; margin-bottom: 6px; display: none;">💤 Durmiendo para reponer energía...</div>
 
     <div class="mind-stat-row">
       <span>🕊️ Fe en Dios:</span>

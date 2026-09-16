@@ -209,6 +209,53 @@ export class NPC {
       this.updateCivilian();
     }
 
+    // Si el personaje está descansando/durmiendo, se queda inmóvil reponiendo fuerzas
+    if (this.brain && this.brain.isResting) {
+      this.vx = 0;
+      this.vy = 0;
+      return;
+    }
+
+    // Comportamiento de Gallardía vs Pánico ante Fuego Cercano
+    if (this.brain) {
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          if (grid.get(curTileX + dx, curTileY + dy) === ELEM.FIRE) {
+            if (this.brain.trait.id === 'gallardo') {
+              // Apagar el fuego heroicamente con tierra
+              grid.set(curTileX + dx, curTileY + dy, ELEM.DIRT);
+              this.brain.setEmotion('valiant', '🦁', 140);
+              this.brain.setThoughtBubble("🦁 ¡Fuego extinguido a pisotones con tierra!", 100);
+              sound.playPlant();
+            } else if (this.brain.trait.id === 'asustadizo') {
+              this.brain.setEmotion('scared', '😱', 160);
+              this.vx = (Math.random() - 0.5) * (this.speed * 2.2);
+              this.vy = (Math.random() - 0.5) * (this.speed * 2.2);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // 🚶‍♂️ Trilladas (Erosión orgánica de senderos) y Ahorro de Energía
+    const isMoving = Math.abs(this.vx) > 0.08 || Math.abs(this.vy) > 0.08;
+    if (isMoving && this.brain) {
+      if (groundElem === ELEM.ROAD) {
+        // En camino trillado: mayor velocidad y menor gasto de energía
+        this.vx *= 1.2;
+        this.vy *= 1.2;
+        this.brain.energy = Math.max(0, this.brain.energy - 0.009);
+        if (Math.random() < 0.002) {
+          this.brain.setThoughtBubble("🚶 Avanzo rápido por la trillada del camino.", 80);
+        }
+      } else {
+        // En campo abierto o tierra: desgaste gradual que forma nuevas trilladas
+        grid.recordFootstep(curTileX, curTileY);
+        this.brain.energy = Math.max(0, this.brain.energy - 0.018);
+      }
+    }
+
     // 🧱 Aplicar movimiento con colisión de obstáculos sólidos y abismos
     const isSolid = (px, py) => {
       const tx = Math.floor(px / tileSize);

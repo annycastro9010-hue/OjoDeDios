@@ -8,6 +8,7 @@ export class SimulationGrid {
     this.grid = new Uint8Array(width * height);
     this.life = new Uint8Array(width * height); // Vida o timer para fuego, crecimiento, etc.
     this.updated = new Uint8Array(width * height);
+    this.footsteps = new Uint8Array(width * height); // Pisadas acumuladas para trilladas orgánicas
     this.soundCooldown = 0;
 
     this.buildingLocations = []; // Puntos clave (Almacén clandestino, puerto)
@@ -47,6 +48,22 @@ export class SimulationGrid {
       elem === ELEM.FOUNTAIN ||
       elem === ELEM.MARKET
     );
+  }
+
+  // Desgaste del terreno por pisadas continuas: crea trilladas orgánicas (ELEM.ROAD)
+  recordFootstep(x, y) {
+    const idx = this.getIndex(x, y);
+    if (idx === -1) return false;
+    const elem = this.grid[idx];
+    if (elem === ELEM.DIRT || elem === ELEM.FERTILE_DIRT) {
+      this.footsteps[idx]++;
+      if (this.footsteps[idx] >= 16) {
+        this.grid[idx] = ELEM.ROAD;
+        this.footsteps[idx] = 0;
+        return true; // Se consolidó un sendero trillado
+      }
+    }
+    return false;
   }
 
   initWorld() {

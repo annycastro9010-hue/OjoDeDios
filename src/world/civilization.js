@@ -32,6 +32,33 @@ export class CivilizationSystem {
       public_order: false    // Vigilancia estricta y orden (reduce crímenes y miedo)
     };
 
+    // 🕊️ Sistema de Religión Dinámica Emergente (Se moldea según los actos de Dios)
+    this.religion = {
+      name: 'Culto del Creador Primitivo',
+      deityTitle: 'El Hacedor Supremo',
+      deityType: 'balanced', // 'protective', 'wrathful', 'mystic', 'balanced'
+      faith: 55,
+      fear: 20,
+      dogma: 'Venerar los ciclos de la tierra y agradecer el sustento sagrado.',
+      miraclesWitnessed: 0,
+      catastrophesWitnessed: 0,
+      possessionsWitnessed: 0
+    };
+
+    // 🐾 Sociedades y Civilizaciones Animales Autónomas
+    this.animalSocieties = {
+      dogPack: { name: 'Hermandad Canina', alphaName: 'Ninguno', alphaId: null },
+      catTribe: { name: 'Imperio Felino del Sol', alphaName: 'Ninguno', alphaId: null }
+    };
+
+    // Facciones Políticas Vivas
+    this.factions = {
+      traditionalists: 35, // Ancianos y agricultores conservadores
+      devout: 35,          // Místicos y creyentes
+      innovators: 15,      // Sabios e inventores
+      rebels: 15           // Inconformes
+    };
+
     // Árbol Tecnológico Completo de la Humanidad
     this.discoveries = {
       fire: true,             // Dominio del fuego
@@ -273,7 +300,76 @@ export class CivilizationSystem {
     }
   }
 
-  update(grid, npcs) {
+  // ⚡ Reactividad Divina: Registra cada intervención de Dios y moldea la Religión del pueblo
+  recordGodIntervention(eventType, intensity = 1, npcs = [], animals = []) {
+    if (eventType === 'lightning' || eventType === 'earthquake' || eventType === 'fire') {
+      this.religion.catastrophesWitnessed++;
+      this.religion.fear = Math.min(100, this.religion.fear + 15 * intensity);
+      this.religion.faith = Math.min(100, this.religion.faith + 8 * intensity);
+
+      if (this.religion.catastrophesWitnessed >= 2) {
+        this.religion.deityType = 'wrathful';
+        this.religion.name = 'Culto del Juicio Ardiente';
+        this.religion.deityTitle = 'Señor del Trueno y la Falla';
+        this.religion.dogma = 'Temed el poder del Creador; ofrendad en altares de piedra para apaciguar su cólera.';
+      }
+    } else if (eventType === 'rain' || eventType === 'bless_mana' || eventType === 'seed' || eventType === 'tree') {
+      this.religion.miraclesWitnessed++;
+      this.religion.faith = Math.min(100, this.religion.faith + 12 * intensity);
+      this.religion.fear = Math.max(0, this.religion.fear - 10 * intensity);
+      this.happiness = Math.min(100, this.happiness + 5 * intensity);
+
+      if (this.religion.miraclesWitnessed >= 2 && this.religion.catastrophesWitnessed <= 1) {
+        this.religion.deityType = 'protective';
+        this.religion.name = 'Culto del Proveedor Celeste';
+        this.religion.deityTitle = 'Padre Misericordioso de la Vida';
+        this.religion.dogma = 'El Creador nos cobija con lluvia fértil y multiplica las cosechas. ¡Danza y júbilo!';
+      }
+    } else if (eventType === 'possession') {
+      this.religion.possessionsWitnessed++;
+      this.religion.faith = Math.min(100, this.religion.faith + 20);
+      if (this.religion.possessionsWitnessed >= 2) {
+        this.religion.deityType = 'mystic';
+        this.religion.name = 'Orden del Espíritu Encarnado';
+        this.religion.deityTitle = 'El Dios Viviente que Camina entre Nosotros';
+        this.religion.dogma = 'El Creador desciende en cuerpo mortal para guiarnos y obrar milagros directos.';
+      }
+    }
+  }
+
+  // 🐾 Liderazgo y Evolución de las Sociedades Animales (Perros y Gatos)
+  updateAnimalSocieties(animals) {
+    if (!animals || animals.length === 0) return;
+
+    // 1. Manada Canina
+    const dogs = animals.filter(a => a.type === 'dog');
+    if (dogs.length > 0) {
+      // Si no hay alfa designado o el anterior desapareció
+      if (!dogs.some(d => d.isAlpha)) {
+        const alpha = dogs[0];
+        alpha.isAlpha = true;
+        this.animalSocieties.dogPack.alphaName = `Perro Alfa #${alpha.id}`;
+        this.animalSocieties.dogPack.alphaId = alpha.id;
+        alpha.setBubble("🐕 ¡GUAU! 👑 (Líder Alfa de la Manada)", 110);
+      }
+    }
+
+    // 2. Dinastía Felina
+    const cats = animals.filter(a => a.type === 'cat');
+    if (cats.length > 0) {
+      if (!cats.some(c => c.isAlpha)) {
+        const catAlpha = cats[0];
+        catAlpha.isAlpha = true;
+        this.animalSocieties.catTribe.alphaName = `Gran Felino #${catAlpha.id}`;
+        this.animalSocieties.catTribe.alphaId = catAlpha.id;
+        catAlpha.setBubble("🐱 ¡MIAU! 👑 (Gran Felino del Consejo)", 110);
+      }
+    }
+  }
+
+  update(grid, npcs, animals = []) {
+    // Actualizar civilizaciones animales
+    this.updateAnimalSocieties(animals);
     // 1. Contador de Elección y Sucesión de Liderazgo (cada ~15 segundos)
     this.electionTimer++;
     if (this.electionTimer > 900 || !npcs.some(n => n.id === this.leaderId)) {

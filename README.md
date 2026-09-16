@@ -20,6 +20,31 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
 * **🪵 Madera y 🏡 Choza:** Coloca madera para los artesanos o levanta los cimientos de un nuevo hogar.
+* **⏳ Acelerador de Tiempo Divino (0x a 10x):**
+  - Controles interactivos en la barra celestial: **⏸️ Pausa**, **▶️ 1x (Normal)**, **⏩ 2x (Acelerado)**, **⏭️ 5x (Evolución Rápida)** y **⚡ 10x (Velocidad Cósmica)**.
+  - A velocidades altas, las generaciones se suceden rápidamente: los niños crecen, las cosechas brotan, las religiones mutan y las trilladas se abren solas.
+* **🚶‍♂️ Trilladas Orgánicas (Caminos Naturales por Desgaste de Pisadas):**
+  - El tránsito repetido de humanos y animales sobre la tierra (`DIRT` o `FERTILE_DIRT`) desgasta el terreno, transformándolo orgánicamente en caminos transitables (`ELEM.ROAD`).
+  - Al transitar por las trilladas, los personajes aumentan su velocidad un +20% y reducen a la mitad el gasto de energía, aprendiendo a priorizar los senderos marcados.
+* **💤 Energía Vital, Fatiga y Descanso Reparador:**
+  - El trabajo, la recolección y las caminatas consumen energía.
+  - Al caer la energía por debajo de 20%, los personajes caen en fatiga y buscan descansar o dormir siestas (`💤`) junto a fogatas, bajo la copa de los árboles o en sus chozas, regenerando salud y energía.
+* **🎭 Personalidades Humanas Ricas y Emociones Dinámicas:**
+  - **Gallardía Heroica (`🦁`):** Ante incendios o peligros, no huyen despavoridos; se plantan con valentía, apagan el fuego pisoteándolo con tierra y defienden a los niños.
+  - **Asustadizo / Miedoso (`😱`):** Salta ante cualquier trueno o catástrofe, corriendo en pánico pero alertando a la aldea.
+  - **Místico / Teólogo (`✨`):** Interpreta los designios de Dios, difunde la fe y consagra rituales en los altares.
+  - **Innovador / Sabio (`💡`):** Acelera las investigaciones y experimenta con la naturaleza.
+  - **Holgazán (`💤`):** Ama las siestas largas y evita el esfuerzo excesivo.
+  - **Bochinchero (`🗣️`):** Esparce rumores y chismes entre los vecinos.
+  - Emociones visibles en tiempo real sobre las cabezas con iconos flotantes (`🦁`, `😱`, `✨`, `💤`, `🍞`).
+* **🐱 Gatos Domésticos y Sociedades Animales Autónomas:**
+  - **Gatos (`cat`):** Ágiles, trepan por los techos, cazan ratones en los trigales, toman siestas al sol y ronronean junto a los humanos (`prrr`), aliviando su miedo y estrés.
+  - **Sociedades y Manadas Animales:** Los perros y gatos organizan sus propias jerarquías eligiendo a su **Líder Alfa** o **Gran Felino** (coronados con `👑`).
+* **🕊️ Religión Dinámica y Reactividad Total de Dios:**
+  - Todo lo que el Dios haga tiene consecuencias vivas en el panteón del pueblo:
+    - **Dios de la Providencia y la Vida:** Si derramas lluvia, sanas y alimentas con maná, el pueblo funda el *Culto del Proveedor Celeste*, aumentando la fe amorosa y las fiestas comunales.
+    - **Dios del Juicio y la Cólera:** Si lanzas rayos, fuegos o terremotos, la religión muta al *Culto del Juicio Ardiente*, erigiendo templos de piedra para calmar la ira divina.
+    - **Dios de los Avatares:** Si encarnas en cuerpos mortales, surge la *Orden del Espíritu Encarnado*.
 * **🍗 Supervivencia Humana y Necesidades Biológicas:**
   - **Hambre y Salud:** Cada habitante experimenta hambre progresiva (`hunger`). Cuando tienen necesidad, consumen raciones de las reservas comunales de la aldea (`🍞`).
   - **Riesgo de Hambruna e Inanición:** Si se agotan los alimentos comunales, la población pierde salud y sufre descontento.

@@ -7,13 +7,14 @@ import { animManager } from '../render/animationManager.js';
 export class Animal {
   constructor(id, type, x, y) {
     this.id = id;
-    this.type = type; // 'dog', 'pig', 'croc'
+    this.type = type; // 'dog', 'cat', 'pig', 'croc'
     this.x = x;
     this.y = y;
     this.vx = 0;
     this.vy = 0;
-    this.speed = type === 'dog' ? 1.3 : (type === 'pig' ? 0.65 : 0.8);
+    this.speed = type === 'dog' ? 1.3 : (type === 'cat' ? 1.2 : (type === 'pig' ? 0.65 : 0.8));
     this.inWater = false;
+    this.isAlpha = false; // Alfa de la manada o líder del consejo animal
 
     this.direction = 'right';
     this.frame = 0;
@@ -57,7 +58,14 @@ export class Animal {
         vfx.addWaterSplash(this.x + 8, this.y + 10, 2);
         vfx.addWaterRipple(this.x, this.y, 10);
       }
-      this.updateDog(allNpcs);
+      this.updateDog(allNpcs, allAnimals);
+    } else if (this.type === 'cat') {
+      this.speed = this.inWater ? 0.45 : 1.2;
+      if (this.inWater && Math.random() < 0.08) {
+        vfx.addWaterSplash(this.x + 8, this.y + 10, 2);
+        if (Math.random() < 0.03) this.setBubble("🐱 ¡Fshhh! ¡El agua no!", 60);
+      }
+      this.updateCat(grid, allNpcs, allAnimals, tileSize);
     } else if (this.type === 'pig') {
       this.speed = this.inWater ? 0.35 : 0.65;
       if (this.inWater) {
@@ -77,6 +85,11 @@ export class Animal {
         vfx.addWaterRipple(this.x, this.y, 13);
       }
       this.updateCroc(allNpcs);
+    }
+
+    // Desgaste de senderos (trilladas) por animales en tránsito
+    if (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1) {
+      grid.recordFootstep(tx, ty);
     }
 
     // 🧱 Colisión Física con Construcciones, Rocas y Abismos
@@ -105,6 +118,60 @@ export class Animal {
 
     this.vx *= 0.82;
     this.vy *= 0.82;
+  }
+
+  updateCat(grid, allNpcs, allAnimals, tileSize) {
+    if (this.state === 'sleeping') {
+      this.vx = 0;
+      this.vy = 0;
+      if (this.stateTimer <= 0) {
+        this.state = 'wandering';
+        this.stateTimer = 70 + Math.floor(Math.random() * 80);
+        this.setBubble("🐱 ¡Miau! (Estirándose ágilmente)", 80);
+      }
+      return;
+    }
+
+    // Ronronear al lado de humanos para aliviar su estrés
+    const nearbyHuman = allNpcs.find(n => Math.hypot(n.x - this.x, n.y - this.y) < 30);
+    if (nearbyHuman && Math.random() < 0.03) {
+      if (nearbyHuman.brain) {
+        nearbyHuman.brain.onDivineEvent('cat_purr');
+      }
+      this.setBubble("🐱 ¡Prrrr! ❤️ (Ronroneando de felicidad)", 90);
+      this.vx *= 0.3;
+      this.vy *= 0.3;
+      return;
+    }
+
+    // Cazar plagas en cultivos maduros
+    const tx = Math.floor((this.x + 8) / tileSize);
+    const ty = Math.floor((this.y + 12) / tileSize);
+    if (grid.get(tx, ty) === 6 && Math.random() < 0.02) { // PLANT_BLOOM
+      this.setBubble("🐱 ¡Zas! (Cazando ratones del trigal)", 75);
+    }
+
+    // Siesta al sol
+    if (this.stateTimer <= 0) {
+      if (Math.random() < 0.26) {
+        this.state = 'sleeping';
+        this.stateTimer = 120 + Math.floor(Math.random() * 110);
+        this.setBubble("🐱 zzz... (Siesta calientita al sol)", 110);
+        this.vx = 0;
+        this.vy = 0;
+        return;
+      }
+
+      this.stateTimer = 60 + Math.floor(Math.random() * 70);
+      const angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * this.speed;
+      this.vy = Math.sin(angle) * this.speed;
+      this.direction = this.vx > 0 ? 'right' : 'left';
+      if (Math.random() < 0.2) {
+        const catSounds = ["🐱 Miau", "🐱 ¡Miau miau!", "🐱 Prrr", "🐱 Miau~"];
+        this.setBubble(catSounds[Math.floor(Math.random() * catSounds.length)], 60);
+      }
+    }
   }
 
   updateDog(allNpcs) {
@@ -451,6 +518,115 @@ export class Animal {
         ctx.fillRect(13, 5, 1, 2);
       }
 
+      ctx.restore();
+    }
+    // =========================================================================
+    // 🐱 GATO MINISH CAP (ÁGIL, COLA ONDULANTE, OREJAS PUNTIAGUDAS Y BIGOTES)
+    // =========================================================================
+    else if (this.type === 'cat') {
+      const tailWag = Math.round(Math.sin(now * 0.02) * 2);
+      const earTwitch = (legCycle % 2 === 1) ? 1 : 0;
+      const out = '#3a200a';
+
+      ctx.save();
+      if (!isFacingRight) {
+        ctx.translate(16, 0);
+        ctx.scale(-1, 1);
+      }
+
+      if (this.state === 'sleeping') {
+        // Gato acurrucado durmiendo al sol
+        ctx.fillStyle = out;
+        ctx.fillRect(3, 8, 10, 5);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(4, 8, 8, 4);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(5, 7, 6, 2);
+        // Colita enroscada
+        ctx.fillStyle = out;
+        ctx.fillRect(2, 9, 2, 3);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(2, 9, 1, 2);
+        // Orejitas
+        ctx.fillStyle = out;
+        ctx.fillRect(10, 6, 2, 2);
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(10, 7, 1, 1);
+      } else {
+        // Cola esbelta curvada hacia arriba ondulando
+        ctx.fillStyle = out;
+        ctx.fillRect(0, 3 + tailWag, 2, 5);
+        ctx.fillRect(1, 2 + tailWag, 2, 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(1, 3 + tailWag, 1, 4);
+
+        // Patitas ágiles
+        if (!this.inWater) {
+          const p1 = (legCycle === 0 || legCycle === 1) ? 1 : -1;
+          const p2 = -p1;
+          ctx.fillStyle = out;
+          ctx.fillRect(4, 11 + p1, 2, 3);
+          ctx.fillRect(9, 11 + p2, 2, 3);
+          ctx.fillStyle = '#fef08a'; // Pezuñas blancas
+          ctx.fillRect(4, 13 + p1, 2, 1);
+          ctx.fillRect(9, 13 + p2, 2, 1);
+        }
+
+        // Cuerpo estilizado (Naranja / atigrado)
+        ctx.fillStyle = out;
+        ctx.fillRect(3, 6, 9, 5);
+        ctx.fillStyle = '#b45309'; // Sombra vientre
+        ctx.fillRect(4, 8, 7, 3);
+        ctx.fillStyle = '#d97706'; // Tono medio
+        ctx.fillRect(4, 7, 7, 2);
+        ctx.fillStyle = '#f59e0b'; // Lomo iluminado
+        ctx.fillRect(5, 6, 6, 2);
+        // Franjas atigradas
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(6, 6, 1, 3);
+        ctx.fillRect(8, 6, 1, 3);
+
+        // Cabeza felina redonda
+        ctx.fillStyle = out;
+        ctx.fillRect(9, 3, 6, 5);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(10, 4, 4, 4);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(10, 3, 4, 2);
+        ctx.fillStyle = '#fef08a'; // Pecho y morro blanco
+        ctx.fillRect(12, 5, 3, 3);
+
+        // Orejas triangulares puntiagudas
+        ctx.fillStyle = out;
+        ctx.fillRect(9, 1 + earTwitch, 2, 3);
+        ctx.fillRect(13, 1 + earTwitch, 2, 3);
+        ctx.fillStyle = '#f472b6'; // Interior rosado
+        ctx.fillRect(10, 2 + earTwitch, 1, 2);
+        ctx.fillRect(13, 2 + earTwitch, 1, 2);
+
+        // Ojos felinos esmeralda con pupila vertical
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(11, 4, 2, 2);
+        ctx.fillStyle = '#0f172a'; // Pupila fina
+        ctx.fillRect(12, 4, 1, 2);
+
+        // Naricita rosada y bigotes
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(14, 6, 1, 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(14, 5, 2, 1);
+        ctx.fillRect(14, 7, 2, 1);
+      }
+
+      ctx.restore();
+    }
+
+    // Corona dorada de Alfa de la Manada / Civilización Animal
+    if (this.isAlpha) {
+      ctx.save();
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('👑', 8, -12);
       ctx.restore();
     }
 

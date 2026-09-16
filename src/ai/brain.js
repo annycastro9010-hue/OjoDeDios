@@ -8,21 +8,26 @@ const ERA_NAMES = {
   colombia: ['El Brayan', 'Don Mario', 'Doña Gloria', 'Patrullero Gómez', 'Comandante Tiro-Loco', 'Doctor Promesas', 'Yesid', 'Yurani', 'El Chévere', 'Mi Cabo', 'Don Chepe', 'Kevin', 'Albeiro', 'La Mona']
 };
 
+const FALLBACK_NAMES = ['Adán', 'Eva', 'Juancho', 'Mateo', 'Sara', 'Camilo', 'Lucía', 'David', 'Pedro', 'Rosa'];
+
 const TRAITS = [
-  { id: 'devoto', name: 'Devoto Místico', desc: 'Fascinado por los milagros divinos. Reza ante la lluvia y los rayos.' },
-  { id: 'curioso', name: 'Curioso / Sabio', desc: 'Desea aprender cómo funciona el mundo, investigar y construir.' },
-  { id: 'constructor', name: 'Constructor', desc: 'Le apasiona talar madera, picar piedra y levantar hogares para su clan.' },
-  { id: 'ambicioso', name: 'Próspero', desc: 'Trabaja sin descanso para acumular bienes y hacer crecer el reino.' },
-  { id: 'cobarde', name: 'Cauto', desc: 'Evita peligros, bestias y fuego para proteger a los suyos.' },
-  { id: 'piadoso', name: 'Pacífico', desc: 'Evita conflictos y busca la armonía en la comunidad.' },
-  { id: 'rebusque', name: 'Del Rebusque', desc: 'Le busca la comba al palo para ganarse el diario honradamente.' },
-  { id: 'bochinchero', name: 'Bochinchero', desc: 'Se sabe todos los chismes y secretos del vecindario.' },
-  { id: 'rebelde', name: 'Rebelde Trochero', desc: 'No le copia a los retenes ni a los comparendos.' }
+  { id: 'gallardo', name: 'Gallardo / Valiente', desc: 'No le teme a bestias ni catástrofes; se planta con coraje, defiende a los suyos y combate el peligro.' },
+  { id: 'asustadizo', name: 'Asustadizo / Miedoso', desc: 'Salta ante el menor trueno o sombra, corre despavorido pero alerta a los demás de peligros.' },
+  { id: 'mistico', name: 'Místico / Teólogo', desc: 'Interpreta la voluntad de Dios, funda ritos sagrados, reza en los altares y propaga la fe.' },
+  { id: 'innovador', name: 'Curioso / Innovador', desc: 'Aprende rápido, investiga secretos de la naturaleza y acelera los descubrimientos.' },
+  { id: 'devoto', name: 'Devoto Fiel', desc: 'Fascinado por los milagros divinos. Reza ante la lluvia, los rayos y las bendiciones.' },
+  { id: 'constructor', name: 'Constructor', desc: 'Le apasiona talar madera, picar piedra y levantar hogares y templos para su clan.' },
+  { id: 'ambicioso', name: 'Próspero', desc: 'Trabaja sin descanso para acumular bienes, comerciar y hacer crecer el reino.' },
+  { id: 'piadoso', name: 'Pacífico', desc: 'Evita conflictos, cuida a los enfermos y busca la armonía en la comunidad.' },
+  { id: 'rebusque', name: 'Del Rebusque', desc: 'Le busca la comba al palo para ganarse el diario honradamente en cualquier era.' },
+  { id: 'bochinchero', name: 'Bochinchero', desc: 'Se sabe todos los chismes, romances y secretos del vecindario y los pregona.' },
+  { id: 'holgazan', name: 'Holgazán / Perezoso', desc: 'Ama echarse siestas largas bajo la sombra de los árboles o junto a las fogatas.' },
+  { id: 'rebelde', name: 'Rebelde Trochero', desc: 'No le copia a los retenes, ni a los comparendos ni a los mandatos injustos.' }
 ];
 
 export class NPCBrain {
   constructor(type, eraId = 'biblical') {
-    const namesList = ERA_NAMES[eraId] || FIRST_NAMES;
+    const namesList = ERA_NAMES[eraId] || FALLBACK_NAMES;
     this.name = namesList[Math.floor(Math.random() * namesList.length)];
     this.trait = TRAITS[Math.floor(Math.random() * TRAITS.length)];
 
@@ -34,6 +39,19 @@ export class NPCBrain {
     this.wisdom = 10 + Math.floor(Math.random() * 20); // Conocimiento / Aprendizaje
     this.curiosity = 50 + Math.floor(Math.random() * 50); // Deseo de aprender y explorar
     
+    // Emociones Dinámicas y Expresiones Flotantes
+    this.emotion = 'calm'; // 'calm', 'scared', 'valiant', 'inspired', 'joyful', 'exhausted', 'sleeping', 'enraged'
+    this.emotionTimer = 0;
+    this.emotionIcon = ''; // Emoticono flotante sobre la cabeza (🦁, 😱, ✨, 💤, 🍞, etc.)
+    this.isResting = false;
+
+    // Memorias Espaciales de Supervivencia
+    this.memories = {
+      waterSpots: [],  // fuentes de agua conocidas
+      dangerSpots: [], // zonas de peligro recordadas
+      foodSpots: []    // huertos o graneros
+    };
+
     // Evolución y Rango
     this.level = 1;
     this.experience = 0;
@@ -55,6 +73,12 @@ export class NPCBrain {
     this.thoughtTimer = 60 + Math.floor(Math.random() * 90);
     this.bubbleText = ""; // Texto corto que flota sobre su cabeza
     this.bubbleTimer = 0;
+  }
+
+  setEmotion(emotion, icon, duration = 140) {
+    this.emotion = emotion;
+    this.emotionIcon = icon;
+    this.emotionTimer = duration;
   }
 
   calculateTitle(type) {
@@ -106,35 +130,86 @@ export class NPCBrain {
     }
   }
 
-  // Reacción ante eventos divinos y del entorno
+  // Reacción ante eventos divinos y del entorno según personalidad
   onDivineEvent(eventType, intensity = 1) {
     if (eventType === 'earthquake') {
-      this.fear = 100;
-      this.faith = Math.min(100, this.faith + 30);
-      const quakes = [
-        "😱 ¡LA VIRGEN SANTÍSIMA! ¡SE CAE EL RANCHO!",
-        "🚨 ¡UN TERREMOTO! ¡AGÁRRENSE DEL POSTE!",
-        "📺 ¡SALVEN EL TELEVISOR Y LA NEVERA!",
-        "🥑 ¡MIS AGUACATES NOOOO!",
-        "💥 ¡SE RAJÓ EL PISO, CORRAN PA' LA TROCHA!",
-        "🙏 ¡DIOS MÍO APIÁDATE DE NUESTRO BARRIO!"
-      ];
-      this.setThoughtBubble(quakes[Math.floor(Math.random() * quakes.length)], 160);
-    } else if (eventType === 'lightning') {
-      this.fear = Math.min(100, this.fear + 35);
-      this.faith = Math.min(100, this.faith + 20);
-      if (this.trait.id === 'devoto') {
-        this.setThoughtBubble("⚡ ¡El Creador ha hablado desde las alturas!", 150);
+      if (this.trait.id === 'gallardo') {
+        this.fear = 25;
+        this.faith = Math.min(100, this.faith + 15);
+        this.setEmotion('valiant', '🦁', 220);
+        const valiantQuakes = [
+          "🦁 ¡Calma todos! ¡Protejan a los niños y apóyense en mí!",
+          "🦁 ¡La tierra tiembla pero mi espíritu no vacila!",
+          "🦁 ¡Rápido, verifiquen que las chozas no colapsen sobre las familias!"
+        ];
+        this.setThoughtBubble(valiantQuakes[Math.floor(Math.random() * valiantQuakes.length)], 180);
+      } else if (this.trait.id === 'asustadizo') {
+        this.fear = 100;
+        this.faith = Math.min(100, this.faith + 40);
+        this.setEmotion('scared', '😱', 260);
+        this.setThoughtBubble("😱 ¡LA TIERRA SE PARTE EN DOS! ¡CORRAN POR SUS VIDAS!", 190);
+      } else if (this.trait.id === 'mistico' || this.trait.id === 'devoto') {
+        this.faith = 100;
+        this.fear = 55;
+        this.setEmotion('inspired', '✨', 220);
+        this.setThoughtBubble("✨ ¡El rugido del Creador resuena en las profundidades de la roca!", 180);
       } else {
-        this.setThoughtBubble("😱 ¡Casi me parte un rayo!", 140);
+        this.fear = 85;
+        this.faith = Math.min(100, this.faith + 25);
+        this.setEmotion('scared', '😱', 180);
+        const quakes = [
+          "😱 ¡LA VIRGEN SANTÍSIMA! ¡SE CAE EL RANCHO!",
+          "🚨 ¡UN TERREMOTO! ¡AGÁRRENSE DEL POSTE!",
+          "📺 ¡SALVEN EL TELEVISOR Y LA NEVERA!",
+          "🥑 ¡MIS AGUACATES NOOOO!",
+          "💥 ¡SE RAJÓ EL PISO, CORRAN PA' LA TROCHA!",
+          "🙏 ¡DIOS MÍO APIÁDATE DE NUESTRO BARRIO!"
+        ];
+        this.setThoughtBubble(quakes[Math.floor(Math.random() * quakes.length)], 160);
+      }
+    } else if (eventType === 'lightning') {
+      if (this.trait.id === 'gallardo') {
+        this.fear = 20;
+        this.faith = Math.min(100, this.faith + 15);
+        this.setEmotion('valiant', '⚡', 180);
+        this.setThoughtBubble("⚡ ¡Poder divino! Si hay fuego iré a sofocarlo.", 150);
+      } else if (this.trait.id === 'asustadizo') {
+        this.fear = 100;
+        this.faith = Math.min(100, this.faith + 30);
+        this.setEmotion('scared', '😱', 240);
+        this.setThoughtBubble("😱 ¡SANTÍSIMA TRINIDAD! ¡ESE TRUENO CASI ME DESINTEGRA!", 170);
+      } else if (this.trait.id === 'mistico' || this.trait.id === 'devoto') {
+        this.faith = Math.min(100, this.faith + 35);
+        this.fear = 30;
+        this.setEmotion('inspired', '✨', 200);
+        this.setThoughtBubble("⚡ ¡El Creador ha escrito con fuego en el cielo!", 160);
+      } else {
+        this.fear = Math.min(100, this.fear + 40);
+        this.faith = Math.min(100, this.faith + 20);
+        this.setEmotion('scared', '😱', 160);
+        this.setThoughtBubble("😱 ¡Casi me parte un rayo celeste!", 140);
       }
     } else if (eventType === 'rain') {
       this.faith = Math.min(100, this.faith + 15);
-      this.fear = Math.max(0, this.fear - 10);
-      this.setThoughtBubble("🌧️ Bendita lluvia celestial para los cultivos", 130);
+      this.fear = Math.max(0, this.fear - 15);
+      this.setEmotion('joyful', '🌧️', 160);
+      this.setThoughtBubble("🌧️ ¡Bendita lluvia celestial para los campos y ríos!", 140);
     } else if (eventType === 'saw_possession') {
+      this.faith = Math.min(100, this.faith + 30);
+      this.setEmotion('inspired', '✨', 220);
+      this.setThoughtBubble("✨ ¡Aura divina! ¡Dios mismo ha caminado entre nosotros!", 180);
+    } else if (eventType === 'bless_mana') {
+      this.needs.hunger = 0;
+      this.needs.health = 100;
+      this.satisfaction = 100;
       this.faith = Math.min(100, this.faith + 25);
-      this.setThoughtBubble("✨ ¿Acaso ese aldeano tiene el aura de Dios?", 160);
+      this.setEmotion('joyful', '🍞', 180);
+      this.setThoughtBubble("🍞 ¡Maná del cielo! ¡El Creador sació nuestra hambre!", 160);
+    } else if (eventType === 'cat_purr') {
+      this.fear = Math.max(0, this.fear - 25);
+      this.energy = Math.min(100, this.energy + 8);
+      this.setEmotion('calm', '💖', 120);
+      this.setThoughtBubble("🐱 Mmm... este minino ronroneando me quita todo el estrés.", 100);
     }
   }
 
@@ -148,6 +223,15 @@ export class NPCBrain {
       }
     }
 
+    // Contador de emoción activa
+    if (this.emotionTimer > 0) {
+      this.emotionTimer--;
+      if (this.emotionTimer <= 0) {
+        this.emotion = 'calm';
+        this.emotionIcon = '';
+      }
+    }
+
     this.thoughtTimer--;
     if (this.thoughtTimer <= 0) {
       this.thoughtTimer = 180 + Math.floor(Math.random() * 180);
@@ -156,7 +240,26 @@ export class NPCBrain {
 
     // Regulación de emociones con el tiempo
     if (this.fear > 5) this.fear -= 0.05;
-    if (this.energy < 100 && npc.state === 'wandering') this.energy += 0.03;
+
+    // --- ENERGÍA, FATIGA Y DESCANSO REPARADOR ---
+    if (this.isResting) {
+      // Recuperar energía rápidamente y sanar
+      this.energy = Math.min(100, this.energy + 0.35);
+      this.needs.health = Math.min(100, this.needs.health + 0.08);
+      this.setEmotion('sleeping', '💤', 40);
+      if (this.energy >= 92) {
+        this.isResting = false;
+        this.setEmotion('joyful', '⚡', 100);
+        this.setThoughtBubble("⚡ ¡Repuse todas mis fuerzas! ¡A seguir trabajando!", 130);
+      }
+    } else {
+      // Si la energía cae críticamente (<20%), el personaje se rinde a una siesta
+      if (this.energy < 20) {
+        this.isResting = true;
+        this.setEmotion('sleeping', '💤', 220);
+        this.setThoughtBubble("💤 Rendido de cansancio... durmiendo para reponer energía.", 140);
+      }
+    }
 
     // --- SUPERVIVENCIA BIOLÓGICA ---
     // Aumento gradual del hambre (el racionamiento ralentiza el consumo de energía)
@@ -301,6 +404,72 @@ export class NPCBrain {
         "🪵 Necesitamos cortar más madera para la siguiente choza."
       ];
       this.setThoughtBubble(thoughts[Math.floor(Math.random() * thoughts.length)], 110);
+      return;
+    }
+
+    if (this.trait.id === 'gallardo' && Math.random() < 0.45) {
+      const gallardoThoughts = [
+        "🦁 ¡Mi pecho será el escudo de esta aldea!",
+        "🦁 Si una fiera se acerca, no retrocederé un solo paso.",
+        "🦁 El coraje se forja ante la adversidad. ¡Adelante!",
+        "🦁 Si hay fuego o derrumbe, seré el primero en ayudar."
+      ];
+      this.setThoughtBubble(gallardoThoughts[Math.floor(Math.random() * gallardoThoughts.length)], 120);
+      return;
+    }
+
+    if (this.trait.id === 'asustadizo' && Math.random() < 0.45) {
+      const scaredThoughts = [
+        "😨 ¿Escucharon ese crujido en la maleza? ¡Algo acecha!",
+        "😱 ¿Y si cae un rayo de la nada? Mejor miro al cielo...",
+        "🏃 Si pasa algo raro, seré el primero en salir corriendo.",
+        "😨 Siento que el suelo tiembla... qué miedo tan bravo."
+      ];
+      this.setThoughtBubble(scaredThoughts[Math.floor(Math.random() * scaredThoughts.length)], 110);
+      return;
+    }
+
+    if (this.trait.id === 'mistico' && Math.random() < 0.45) {
+      const mysticThoughts = [
+        "✨ Todo acto en este mundo revela los designios del Altísimo.",
+        "🕊️ En cada gota de lluvia escucho el susurro del Creador.",
+        "🏛️ Debemos mantener encendida la llama del Altar Sagrado.",
+        "✨ Anotaré estos portentos celestes en las sagradas escrituras."
+      ];
+      this.setThoughtBubble(mysticThoughts[Math.floor(Math.random() * mysticThoughts.length)], 120);
+      return;
+    }
+
+    if (this.trait.id === 'innovador' && Math.random() < 0.45) {
+      const innovThoughts = [
+        "💡 Si mezclamos arcilla con paja, los ladrillos no se rajarán.",
+        "🔬 Observando cómo el agua moja y fecunda la semilla...",
+        "⚙️ Una palanca de madera nos ahorraría la mitad del esfuerzo.",
+        "🌱 Podríamos trazar surcos para canalizar el arroyo."
+      ];
+      this.setThoughtBubble(innovThoughts[Math.floor(Math.random() * innovThoughts.length)], 120);
+      return;
+    }
+
+    if (this.trait.id === 'holgazan' && Math.random() < 0.45) {
+      const lazyThoughts = [
+        "💤 Qué delicia de sombra hace bajo este árbol frondoso...",
+        "🥱 Trabajar cansa mucho, una siestecita de 20 minutos no daña a nadie.",
+        "💤 El secreto de la longevidad es no afanarse por nada.",
+        "🌿 Mañana cosecho... o pasado mañana, el trigo no se va a ir."
+      ];
+      this.setThoughtBubble(lazyThoughts[Math.floor(Math.random() * lazyThoughts.length)], 110);
+      return;
+    }
+
+    if (this.trait.id === 'bochinchero' && Math.random() < 0.45) {
+      const gossipThoughts = [
+        "🗣️ ¡No se imaginan lo que acabo de escuchar en el río!",
+        "👀 Esos dos andan sospechosamente juntos desde ayer...",
+        "📢 ¡Tengo un chisme fresco que va a sacudir a la asamblea!",
+        "🤫 Yo no soy de hablar mal de nadie, pero fíjense bien..."
+      ];
+      this.setThoughtBubble(gossipThoughts[Math.floor(Math.random() * gossipThoughts.length)], 120);
       return;
     }
 

@@ -303,6 +303,9 @@ const btnFeedNpc = document.getElementById('btnFeedNpc');
 const btnScare = document.getElementById('btnScare');
 const btnPossessFromMind = document.getElementById('btnPossessFromMind');
 
+const mindNpcEmotion = document.getElementById('mindNpcEmotion');
+const mindRestStatus = document.getElementById('mindRestStatus');
+
 let inspectedNpc = null;
 
 function openMindPanel(npc) {
@@ -318,6 +321,25 @@ function updateMindPanelUI() {
   mindNpcName.innerText = `${b.name} (${inspectedNpc.type.toUpperCase()})`;
   mindNpcTitle.innerText = `${b.title} • Sabiduría: ${Math.round(b.wisdom)}`;
   mindNpcTrait.innerText = `Personalidad: ${b.trait.name}`;
+
+  if (mindNpcEmotion) {
+    const emoNames = {
+      calm: 'Sereno / En Paz',
+      scared: '¡Aterrorizado / Pánico!',
+      valiant: '¡Gallardo y Decidido!',
+      inspired: 'Éxtasis Místico',
+      joyful: 'Alegre y Optimista',
+      sleeping: 'Durmiendo plácidamente',
+      exhausted: 'Exhausto',
+      enraged: 'Indignado / Rebelde'
+    };
+    mindNpcEmotion.innerText = `${b.emotionIcon || '🕊️'} ${emoNames[b.emotion] || b.emotion}`;
+  }
+
+  if (mindRestStatus) {
+    mindRestStatus.style.display = b.isResting ? 'block' : 'none';
+  }
+
   if (barFaith) barFaith.style.width = `${Math.min(100, Math.round(b.faith))}%`;
   if (barHunger && b.needs) barHunger.style.width = `${Math.min(100, Math.round(b.needs.hunger))}%`;
   if (barHealth && b.needs) barHealth.style.width = `${Math.min(100, Math.round(b.needs.health))}%`;
@@ -336,10 +358,12 @@ btnBlessFaith.addEventListener('click', () => {
   if (!inspectedNpc) return;
   inspectedNpc.brain.faith = Math.min(100, inspectedNpc.brain.faith + 25);
   inspectedNpc.brain.wisdom = Math.min(100, inspectedNpc.brain.wisdom + 10);
+  inspectedNpc.brain.setEmotion('inspired', '✨', 180);
   civ.addResource('knowledge', 5);
   inspectedNpc.brain.setThoughtBubble("🕊️ ¡El Creador ha iluminado mi entendimiento!", 160);
   sound.playAscend();
   vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 30, '#ffd700');
+  recordGodAction('rain', inspectedNpc.x, inspectedNpc.y, 0.5);
   updateMindPanelUI();
   notify(`✨ Has iluminado la sabiduría de ${inspectedNpc.brain.name}`);
 });
@@ -353,9 +377,11 @@ if (btnFeedNpc) {
       b.needs.health = 100;
     }
     b.satisfaction = 100;
+    b.setEmotion('joyful', '🍞', 180);
     b.setThoughtBubble("🍞 ¡Maná del Cielo! ¡El Creador ha saciado mi hambre!", 180);
     sound.playAscend();
     vfx.addShockwave(inspectedNpc.x, inspectedNpc.y, 25, '#f59e0b');
+    recordGodAction('bless_mana', inspectedNpc.x, inspectedNpc.y, 1);
     updateMindPanelUI();
     notify(`🍞 Has saciado el hambre de ${b.name} con maná celestial`);
   });
@@ -454,12 +480,52 @@ function openGovModal() {
   if (govModal) govModal.style.display = 'block';
 }
 
+function updateReligionBadge() {
+  const relTitle = document.getElementById('religionBarTitle');
+  if (relTitle && civ.religion) {
+    relTitle.innerText = civ.religion.name.replace('Culto del ', '').replace('Orden del ', '');
+  }
+}
+
+function recordGodAction(type, worldX, worldY, intensity = 1) {
+  civ.recordGodIntervention(type, intensity, npcs, animals);
+  npcs.forEach(n => {
+    const d = Math.hypot(n.x - worldX, n.y - worldY);
+    if (d < 180) {
+      n.brain.onDivineEvent(type, intensity);
+    }
+  });
+  updateReligionBadge();
+  if (govModal && govModal.style.display === 'block') {
+    renderGovModalUI();
+  }
+}
+
 function renderGovModalUI() {
   if (!govModal) return;
   if (govModalType) govModalType.innerText = civ.governmentName;
   if (govModalLeader) govModalLeader.innerText = `Líder Supremo: ${civ.leaderName || 'Ninguno'}`;
   if (govModalHappy) govModalHappy.innerText = `${Math.round(civ.happiness)}%`;
   if (govModalUnrest) govModalUnrest.innerText = `${Math.round(civ.unrest)}%`;
+
+  // Renderizar Religión
+  const govReligName = document.getElementById('govReligName');
+  const govReligDeity = document.getElementById('govReligDeity');
+  const govReligDogma = document.getElementById('govReligDogma');
+  const govReligStats = document.getElementById('govReligStats');
+  const govDogAlpha = document.getElementById('govDogAlpha');
+  const govCatAlpha = document.getElementById('govCatAlpha');
+
+  if (govReligName && civ.religion) govReligName.innerText = `🕊️ ${civ.religion.name}`;
+  if (govReligDeity && civ.religion) govReligDeity.innerText = `Deidad: ${civ.religion.deityTitle} (${civ.religion.deityType.toUpperCase()})`;
+  if (govReligDogma && civ.religion) govReligDogma.innerText = `"${civ.religion.dogma}"`;
+  if (govReligStats && civ.religion) {
+    govReligStats.innerText = `Milagros: ${civ.religion.miraclesWitnessed} | Catástrofes: ${civ.religion.catastrophesWitnessed} | Fe: ${Math.round(civ.religion.faith)}% | Temor: ${Math.round(civ.religion.fear)}%`;
+  }
+
+  // Renderizar Sociedades Animales
+  if (govDogAlpha && civ.animalSocieties) govDogAlpha.innerText = `Líder Alfa: ${civ.animalSocieties.dogPack.alphaName}`;
+  if (govCatAlpha && civ.animalSocieties) govCatAlpha.innerText = `Gran Felino: ${civ.animalSocieties.catTribe.alphaName}`;
 
   // Renderizar Políticas
   if (govPoliciesList) {
@@ -513,6 +579,18 @@ function renderGovModalUI() {
 if (btnOpenGov) btnOpenGov.addEventListener('click', openGovModal);
 if (btnToolbarGov) btnToolbarGov.addEventListener('click', openGovModal);
 if (govClose) govClose.addEventListener('click', () => { govModal.style.display = 'none'; });
+
+const btnOpenReligion = document.getElementById('btnOpenReligion');
+if (btnOpenReligion) {
+  btnOpenReligion.addEventListener('click', () => {
+    openGovModal();
+    const religCard = document.getElementById('govReligionCard');
+    if (religCard) {
+      religCard.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+}
+
 if (btnGovElect) {
   btnGovElect.addEventListener('click', () => {
     civ.electLeader(npcs);
@@ -521,6 +599,35 @@ if (btnGovElect) {
     notify(`👑 Se convocó asamblea popular y se proclamó a ${civ.leaderName}`);
   });
 }
+
+// Control de Velocidad de Tiempo (Acelerador de la Simulación)
+let timeSpeed = 1;
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = 'transparent';
+      b.style.color = '#94a3b8';
+      b.style.fontWeight = 'normal';
+    });
+    btn.classList.add('active');
+    btn.style.background = '#0284c7';
+    btn.style.color = '#ffffff';
+    btn.style.fontWeight = 'bold';
+    timeSpeed = parseInt(btn.dataset.speed, 10);
+    if (timeSpeed === 0) {
+      notify("⏸️ Simulación en Pausa");
+    } else if (timeSpeed === 1) {
+      notify("▶️ Tiempo Normal (1x)");
+    } else if (timeSpeed === 2) {
+      notify("⏩ Tiempo Acelerado (2x)");
+    } else if (timeSpeed === 5) {
+      notify("⏭️ Evolución Rápida (5x)");
+    } else if (timeSpeed === 10) {
+      notify("⚡ Velocidad Cósmica de los Dioses (10x)");
+    }
+  });
+});
 
 // Gestión de botones de herramientas
 document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
@@ -735,7 +842,7 @@ function triggerRain() {
     grid.set(rx, ry, ELEM.WATER);
   }
   civ.addResource('food', 5);
-  npcs.forEach(n => n.brain.onDivineEvent('rain'));
+  recordGodAction('rain', (grid.width * 8) / 2, (grid.height * 8) / 2, 1);
 }
 
 // Modales y Paneles
@@ -850,13 +957,14 @@ function handlePointerAction() {
   } else if (currentTool === 'fire') {
     grid.paint(tileX, tileY, ELEM.FIRE, brushRadius);
     sound.playFire();
+    recordGodAction('fire', worldCoords.x, worldCoords.y, 0.8);
   } else if (currentTool === 'lightning') {
     grid.strikeLightning(tileX, tileY);
     sound.playThunder();
     camera.triggerShake(7, 16);
     vfx.addShockwave(worldCoords.x, worldCoords.y, 45, '#ff4400');
     notify("⚡ ¡El rayo de Dios ha sacudido la tierra!");
-    npcs.forEach(n => n.brain.onDivineEvent('lightning'));
+    recordGodAction('lightning', worldCoords.x, worldCoords.y, 1.2);
   } else if (currentTool === 'earthquake') {
     grid.triggerEarthquake(tileX, tileY, 3);
     sound.playEarthquake();
@@ -864,7 +972,7 @@ function handlePointerAction() {
     vfx.addShockwave(worldCoords.x, worldCoords.y, 65, '#ea580c');
     notify("🌋 ¡TERREMOTO TECTÓNICO! Se abren fallas abisales y las casas tambalean");
     chronicles.add("🌋 ¡TERREMOTO GRADO 8.5! Grietas tectónicas parten la tierra y cunde el pánico.", "divine");
-    npcs.forEach(n => n.brain.onDivineEvent('earthquake'));
+    recordGodAction('earthquake', worldCoords.x, worldCoords.y, 1.5);
     isMouseDown = false;
   } else if (currentTool === 'spawn_meme') {
     const memeTypes = ['police_cuadrante', 'guerrillero', 'mototaxista', 'vendedor', 'vecina_chismosa', 'alcalde'];
@@ -888,8 +996,14 @@ function handlePointerAction() {
   } else if (currentTool === 'spawn_animal') {
     const types = ['dog', 'pig'];
     const selected = types[Math.floor(Math.random() * types.length)];
-    spawnAnimal(selected, worldCoords.x, worldCoords.y);
+    const a = spawnAnimal(selected, worldCoords.x, worldCoords.y);
     notify(`🐾 Animal creado: ${selected.toUpperCase()}`);
+    isMouseDown = false;
+  } else if (currentTool === 'spawn_cat') {
+    const cat = spawnAnimal('cat', worldCoords.x, worldCoords.y);
+    sound.playPlant();
+    notify(`🐱 Ha nacido un ágil gatito: Michi #${cat.id}`);
+    chronicles.add(`🐱 ¡NUEVO FELINO! Un curioso gato maúlla, ronronea y caza plagas en la aldea.`, "birth");
     isMouseDown = false;
   } else if (currentTool === 'build_house') {
     civ.constructHouse(grid, tileX, tileY);
@@ -941,6 +1055,7 @@ function handlePointerAction() {
 function enterPossession(npc) {
   stopObserving();
   notify(`✨ ¡Descendiendo del cielo para encarnar en ${npc.brain.name}!`);
+  recordGodAction('possession', npc.x, npc.y, 1);
 
   topBar.style.display = 'none';
   bottomToolbar.style.display = 'none';
@@ -1036,66 +1151,71 @@ let frameCount = 0;
 function gameLoop() {
   frameCount++;
 
-  // 1. Simulación Celular (Agua, fuego, plantas)
-  grid.step();
+  const steps = (mode === 'possessed') ? 1 : timeSpeed;
 
-  // 1b. Evolución y Construcción Autónoma de la Civilización
-  civ.update(grid, npcs);
+  // Si no está en pausa (steps > 0), correr los pasos de simulación del mundo
+  for (let s = 0; s < steps; s++) {
+    // 1. Simulación Celular (Agua, fuego, plantas)
+    grid.step();
 
-  // 2. Control del Jugador en Posesión
-  if (mode === 'possessed' && possessedNpc) {
-    controller.update(
-      possessedNpc,
-      grid,
-      (actionType, amt) => {
-        const completed = questSystem.onAction(actionType, amt);
-        if (actionType === 'harvest') {
-          civ.addResource('food', amt);
-        } else if (actionType === 'deliver') {
-          civ.addResource('knowledge', amt * 5);
-        } else if (actionType === 'tamal' || actionType === 'sancocho') {
-          civ.addResource('food', 2);
-        } else if (actionType === 'bribe') {
-          civ.addResource('knowledge', 10);
-        }
-        updateQuestUI();
-        if (completed) {
-          notify("✨ ¡Misión completada! Tu alma ya puede ascender al cielo [Q]");
-        }
-      },
-      () => {
-        exitPossession();
-      },
-      8,
-      npcs
-    );
+    // 1b. Evolución y Construcción Autónoma de la Civilización (Humana y Animal)
+    civ.update(grid, npcs, animals);
+
+    // 2. Control del Jugador en Posesión (solo 1 vez por frame)
+    if (s === 0 && mode === 'possessed' && possessedNpc) {
+      controller.update(
+        possessedNpc,
+        grid,
+        (actionType, amt) => {
+          const completed = questSystem.onAction(actionType, amt);
+          if (actionType === 'harvest') {
+            civ.addResource('food', amt);
+          } else if (actionType === 'deliver') {
+            civ.addResource('knowledge', amt * 5);
+          } else if (actionType === 'tamal' || actionType === 'sancocho') {
+            civ.addResource('food', 2);
+          } else if (actionType === 'bribe') {
+            civ.addResource('knowledge', 10);
+          }
+          updateQuestUI();
+          if (completed) {
+            notify("✨ ¡Misión completada! Tu alma ya puede ascender al cielo [Q]");
+          }
+        },
+        () => {
+          exitPossession();
+        },
+        8,
+        npcs
+      );
+    }
+
+    // 3. Actualización de NPCs autónomos
+    for (const npc of npcs) {
+      npc.update(
+        grid,
+        npcs,
+        8,
+        (earned) => {
+          civ.addResource('food', 1);
+        },
+        () => {}
+      );
+    }
+
+    // Actualización de Fauna y Animales
+    for (const animal of animals) {
+      animal.update(grid, npcs, animals, 8);
+    }
+
+    // Sistema Social Emergente: Romance, Niños y Crianza
+    social.update(npcs, (babyX, babyY, pA, pB) => {
+      const baby = spawnNpc('child', babyX, babyY);
+      baby.parentId = pA.id;
+      sound.playAscend();
+      vfx.addShockwave(babyX, babyY, 25, '#f472b6');
+    });
   }
-
-  // 3. Actualización de NPCs autónomos
-  for (const npc of npcs) {
-    npc.update(
-      grid,
-      npcs,
-      8,
-      (earned) => {
-        civ.addResource('food', 1);
-      },
-      () => {}
-    );
-  }
-
-  // Actualización de Fauna y Animales
-  for (const animal of animals) {
-    animal.update(grid, npcs, animals, 8);
-  }
-
-  // Sistema Social Emergente: Romance, Niños y Crianza
-  social.update(npcs, (babyX, babyY, pA, pB) => {
-    const baby = spawnNpc('child', babyX, babyY);
-    baby.parentId = pA.id;
-    sound.playAscend();
-    vfx.addShockwave(babyX, babyY, 25, '#f472b6');
-  });
 
   // 4. Actualización de VFX
   vfx.update(camera);
@@ -1116,6 +1236,7 @@ function gameLoop() {
     if (statWisdom) statWisdom.innerText = Math.round(civ.knowledge);
     if (civStage) civStage.innerText = `🏛️ ${civ.stageName}`;
     if (statHappy) statHappy.innerText = `${Math.round(civ.happiness)}%`;
+    updateReligionBadge();
     if (govBarTitle) {
       govBarTitle.innerText = civ.leaderName ? `${civ.leaderName.split(' ')[0]} (${civ.governmentName.split(' ')[0]})` : civ.governmentName.split(' ')[0];
     }

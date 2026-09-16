@@ -630,6 +630,16 @@ export class GameRenderer {
         ctx.restore();
       }
 
+      // 🎭 Icono Flotante de Emoción y Estado (🦁 Gallardía, 😱 Susto/Pánico, 💤 Descanso, ✨ Éxtasis)
+      if (npc.brain && npc.brain.emotionIcon) {
+        ctx.save();
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center';
+        const emoteY = npc.y - (npc.brain.isLeader ? 15 : 6);
+        ctx.fillText(npc.brain.emotionIcon, npc.x + (npc.brain.isLeader ? 15 : 8), emoteY);
+        ctx.restore();
+      }
+
       // ⚠️ Alerta de Inanición Crítica
       if (npc.brain && npc.brain.needs && npc.brain.needs.health < 35) {
         ctx.save();

@@ -45,10 +45,22 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Colisiones de Obstáculos Sólidos:** Los muros (`BUILDING`), peñascos (`STONE`), escombros y abismos bloquean el paso físico de personajes y fauna mediante deslizamiento de eje.
 
 
-### B. Sistema de NPCs y Vida Autónoma (`src/entities/`)
+### B. Sistema de NPCs, Vida Autónoma y Emociones (`src/entities/` & `src/ai/brain.js`)
 - Cada NPC cuenta con:
   - **Inventario dinámico (`cargo`):** Puede llevar paquetes recolectados.
-  - **Rutas y economía:** Los cultivadores localizan plantas listas, las cosechan y las transportan a los puntos de entrega inyectando recursos a la comunidad.
+  - **Rutas, Trilladas y Economía:** Desgaste progresivo de terreno por pisadas continuas (`grid.recordFootstep`); caminar sobre trilladas consolidadas (`ELEM.ROAD`) otorga +20% de velocidad y reduce el gasto calórico.
+  - **Energía Vital, Fatiga y Descanso:** Las labores consumen energía. Si la energía desciende de 20%, el NPC entra en estado de descanso/sueño (`💤`) junto a fogatas o chozas, recuperando energía y salud.
+  - **Personalidades y Emociones Humanas Dinámicas:**
+    - `gallardo`: No teme a desastres; defiende niños, combate peligros y sofoca fuegos pisoteándolos con tierra (`🦁`).
+    - `asustadizo`: Pánico súbito ante fenómenos extraños (`😱`), huyendo y alertando a la comarca.
+    - `mistico`: Profetiza, reza ante milagros y consagra ritos (`✨`).
+    - `innovador`: Formula tecnologías y experimentos con materiales (`💡`).
+    - `holgazan`: Descansa a la sombra con siestas largas (`💤`).
+    - `bochinchero`: Difunde chismes y rumores vecinales (`🗣️`).
+  - **Fauna Autónoma y Especie Felina (`src/entities/animals.js`):**
+    - Perros (`dog`), Cerdos (`pig`), Caimanes (`croc`) y **Gatos (`cat`)**.
+    - Los gatos trepan, cazan ratones en trigales, toman siestas al sol y ronronean junto a los humanos (`prrr`), aliviando su miedo y fatiga.
+    - **Sociedades y Jerarquías Animales:** Elección orgánica de Líderes Alfas coronados (`👑`) para manadas caninas y dinastías felinas.
   - **Conos de visión de linterna:** Policías y patrulleros de cuadrante proyectan campos de visión angular (FOV) que persiguen o detienen a sospechosos.
   - **Roles Memificables de la Realidad:**
     - `police_cuadrante`: Patrulla la trocha, cobra "pa' la gaseosa" e inmoviliza infractores.
@@ -59,11 +71,17 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
     - `alcalde`: Saluda a las masas y reparte tamales por votos.
   - **Habilidades Activas en Modo Posesión:** El controlador mapea la tecla `ESPACIO` / botón de acción para ejecutar la habilidad única del personaje encarnado.
 
-### C. Motor de Civilización, Supervivencia y Gobierno (`src/world/civilization.js` & `src/ai/brain.js`)
-- **Supervivencia Biológica Individual:** Cada NPC gestiona indicadores en tiempo real de hambre (`hunger`), salud (`health`), sed y moral. Cuando el hambre aprieta, consumen raciones del almacén comunal; ante hambrunas prolongadas, sufren inanición.
+### C. Motor de Civilización, Religión Dinámica y Reactividad Divina (`src/world/civilization.js`)
+- **Acelerador de Tiempo Divino (0x, 1x, 2x, 5x, 10x):** Permite ejecutar múltiples subpasos de simulación física y cognitiva por cuadro manteniendo 60 FPS estables de renderizado, permitiendo que generaciones enteras evolucionen en minutos.
+- **Religión Dinámica Emergente:**
+  - Panteón vivo que muta según los actos del jugador:
+    - Actos de Gracia (Lluvia, Maná, Árboles) -> *Culto del Proveedor Celeste* (Misericordioso, festivo, devoción amorosa).
+    - Actos de Castigo (Rayos, Terremotos, Fuego) -> *Culto del Juicio Ardiente* (Dios de la Cólera, sacrificios y templos de piedra).
+    - Posesión Divina -> *Orden del Espíritu Encarnado*.
+- **Supervivencia Biológica Individual:** Cada NPC gestiona hambre (`hunger`), salud (`health`), sed y moral. Cuando el hambre aprieta, consumen raciones del almacén comunal; ante hambrunas prolongadas, sufren inanición.
 - **Economía y Graneros Comunales:** Gestión activa de madera (`WOOD`), piedra (`STONE`), comida (`FOOD`) y sabiduría (`KNOWLEDGE`). Se erigen Graneros Centrales para conservar cosechas.
 - **Árbol de Descubrimientos Científicos (10 Tecnologías):** Dominio del Fuego, Herramientas Líticas, Agricultura Primitiva, Graneros Comunales, Medicina Botánica, Canales de Irrigación, Mampostería Sólida, Código de Leyes, Templo Sagrado y Empalizadas Defensivas.
-- **Sistema Político y Elección Orgánica de Líderes:**
+- **Sistema Político, Facciones y Elección Orgánica de Líderes:**
   - 4 Formas de Gobierno vivas: *Consejo Tribal de Ancianos*, *Teocracia Sagrada*, *Monarquía y Corona Real* y *República de Ciudadanos Libres*.
   - Elección popular del Líder (representado con corona dorada 👑 sobre su sprite).
   - Decretos y Leyes activas: Racionamiento de Alimentos en crisis, Tributo de Obras Públicas, Culto Sagrado y Guardia Cívica.
