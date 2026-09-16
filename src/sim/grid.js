@@ -17,6 +17,7 @@ export class SimulationGrid {
     this.footsteps = new Uint8Array(width * height); // Pisadas acumuladas para trilladas orgánicas
     this.soundCooldown = 0;
     this.tickCount = 0;
+    this.dirty = true; // Señal de renderizado para re-hornear terreno
 
     this.buildingLocations = []; // Puntos clave (Almacén clandestino, puerto)
     this.initWorld();
@@ -36,6 +37,9 @@ export class SimulationGrid {
   set(x, y, elem, lifeVal = 0) {
     const idx = this.getIndex(x, y);
     if (idx === -1) return;
+    if (this.grid[idx] !== elem) {
+      this.dirty = true;
+    }
     this.grid[idx] = elem;
     this.life[idx] = lifeVal;
   }

@@ -76,6 +76,7 @@ export class CivilizationSystem {
 
     // Edificios construidos por los aldeanos
     this.villages = [];
+    this.constructionSites = [];
     this.buildTimer = 0;
     this.electionTimer = 0;
   }
@@ -150,13 +151,13 @@ export class CivilizationSystem {
     // Si el tributo está activo, bono a materiales
     let finalAmount = amount;
     if (this.activePolicies.tribute && (type === 'wood' || type === 'stone')) {
-      finalAmount = Math.ceil(amount * 1.25);
+      finalAmount = amount * 1.25;
     }
 
-    if (type === 'wood') this.wood += finalAmount;
-    if (type === 'stone') this.stone += finalAmount;
-    if (type === 'food') this.food += finalAmount;
-    if (type === 'knowledge') this.knowledge += finalAmount;
+    if (type === 'wood') this.wood = Math.round((this.wood + finalAmount) * 100) / 100;
+    if (type === 'stone') this.stone = Math.round((this.stone + finalAmount) * 100) / 100;
+    if (type === 'food') this.food = Math.round((this.food + finalAmount) * 100) / 100;
+    if (type === 'knowledge') this.knowledge = Math.round((this.knowledge + finalAmount) * 100) / 100;
 
     this.checkEvolution();
   }
@@ -475,19 +476,36 @@ export class CivilizationSystem {
 
     // 5. Construcción Orgánica de Edificios según Avance Tecnológico y Nivel de Civilización
     this.buildTimer++;
-    if (this.buildTimer < 150) return;
-    this.buildTimer = 0;
+    if (this.buildTimer >= 300) { // Evaluar cada ~5 segundos
+      this.buildTimer = 0;
 
-    const maxHouses = 6 + this.level * 4; // Aldea: 10 casas, Reino: 14 casas, Imperio: 18 casas
-    if (this.wood >= 18 && this.villages.filter(v => v.type === 'house').length < maxHouses) {
-      this.planBuilding(grid, npcs, 'house');
-    } else if (this.discoveries.granary && this.wood >= 25 && !this.hasBuildingType('granary')) {
-      this.planBuilding(grid, npcs, 'granary');
-    } else if (this.level >= 2 && this.stone >= 25 && !this.hasBuildingType('altar')) {
-      this.planBuilding(grid, npcs, 'altar');
-    } else if (this.level >= 3 && this.stone >= 35 && this.villages.filter(v => v.type === 'altar').length < 2) {
-      this.planBuilding(grid, npcs, 'altar');
+      // Máximo 1 obra activa a la vez (2 en imperio o nivel >= 4)
+      const maxSites = this.level >= 4 ? 2 : 1;
+      if (this.constructionSites.length < maxSites) {
+        // ¿Hay ciudadanos sin hogar?
+        const homeless = npcs.filter(n => !n.brain?.home && n.type !== 'police' && n.type !== 'boss');
+        const maxHouses = 4 + this.level * 3;
+        const currentHouses = this.villages.filter(v => v.type === 'house').length;
+
+        if (homeless.length > 0 && currentHouses < maxHouses && this.wood >= 15 && !this.isBuildingSitePlanned('house')) {
+          this.planBuilding(grid, npcs, 'house');
+        } else if (this.discoveries.granary && this.wood >= 25 && !this.hasBuildingType('granary') && !this.isBuildingSitePlanned('granary')) {
+          this.planBuilding(grid, npcs, 'granary');
+        } else if (this.level >= 2 && this.stone >= 25 && !this.hasBuildingType('altar') && !this.isBuildingSitePlanned('altar')) {
+          this.planBuilding(grid, npcs, 'altar');
+        } else if (this.level >= 3 && this.stone >= 35 && this.villages.filter(v => v.type === 'altar').length < 2 && !this.isBuildingSitePlanned('altar')) {
+          this.planBuilding(grid, npcs, 'altar');
+        }
+      }
     }
+  }
+
+  isBuildingSitePlanned(type) {
+    return this.constructionSites.some(s => s.type === type);
+  }
+
+  hasBuildingType(type) {
+    return this.villages.some(b => b.type === type);
   }
 
   // Distribución de casas: parejas e hijos comparten la misma vivienda (optimizado O(N+H))
@@ -514,7 +532,7 @@ export class CivilizationSystem {
           const partner = npcs.find(n => n.id === npc.partnerId);
           if (partner && partner.brain && !partner.brain.home) {
             partner.brain.home = npc.brain.home;
-            partner.brain.bedPosition = { x: npc.brain.home.x + 3, y: npc.brain.home.y + 2 };
+            partner.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 2 };
             houseOccupants.set(npc.brain.home, (houseOccupants.get(npc.brain.home) || 0) + 1);
           }
         }
@@ -522,7 +540,7 @@ export class CivilizationSystem {
         for (const child of npcs) {
           if (child.parentId === npc.id && child.brain && !child.brain.home) {
             child.brain.home = npc.brain.home;
-            child.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 3 };
+            child.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 2 };
             houseOccupants.set(npc.brain.home, (houseOccupants.get(npc.brain.home) || 0) + 1);
           }
         }
@@ -539,7 +557,7 @@ export class CivilizationSystem {
             x: house.x + 2 + (slot % 2),
             y: house.y + 2 + Math.floor(slot / 2)
           };
-          npc.brain.setThoughtBubble(`🏡 ¡Me he mudado a ${house.name}!`, 140);
+          npc.brain.setThoughtBubble("🏡 ¡Me he mudado a mi nuevo hogar!", 140);
           houseOccupants.set(house, count + 1);
           break;
         }
@@ -547,21 +565,29 @@ export class CivilizationSystem {
     }
   }
 
-  hasBuildingType(type) {
-    return this.villages.some(b => b.type === type);
-  }
-
   planBuilding(grid, npcs, type) {
-    const cx = Math.floor(grid.width / 2);
-    const cy = Math.floor(grid.height / 2);
+    const isStone = this.discoveries.masonry;
+    const w = (type === 'house') ? (isStone ? 6 : 5) : 5;
+    const h = (type === 'house') ? (isStone ? 5 : 4) : 5;
 
-    for (let attempts = 0; attempts < 30; attempts++) {
-      const rx = cx + Math.floor((Math.random() - 0.5) * (grid.width * 0.55));
-      const ry = cy + Math.floor((Math.random() - 0.5) * (grid.height * 0.45));
+    // Buscar una posición libre cerca de los aldeanos o del centro
+    let anchorX = Math.floor(grid.width / 2);
+    let anchorY = Math.floor(grid.height / 2);
+    if (npcs && npcs.length > 0) {
+      const avg = npcs.reduce((acc, n) => ({ x: acc.x + n.x, y: acc.y + n.y }), { x: 0, y: 0 });
+      anchorX = Math.floor(avg.x / (npcs.length * 8));
+      anchorY = Math.floor(avg.y / (npcs.length * 8));
+    }
+
+    for (let attempts = 0; attempts < 35; attempts++) {
+      const rx = anchorX + Math.floor((Math.random() - 0.5) * 36);
+      const ry = anchorY + Math.floor((Math.random() - 0.5) * 26);
+
+      if (rx < 4 || rx + w >= grid.width - 4 || ry < 4 || ry + h >= grid.height - 4) continue;
 
       let valid = true;
-      for (let dy = -1; dy <= 6; dy++) {
-        for (let dx = -1; dx <= 7; dx++) {
+      for (let dy = -1; dy <= h + 1; dy++) {
+        for (let dx = -1; dx <= w + 1; dx++) {
           const elem = grid.get(rx + dx, ry + dy);
           if (elem === ELEM.WATER || elem === ELEM.BUILDING || elem === ELEM.LAVA || elem === ELEM.STONE || elem === ELEM.CHASM) {
             valid = false;
@@ -571,97 +597,176 @@ export class CivilizationSystem {
         if (!valid) break;
       }
 
+      // No solaparse con otra obra planificada
       if (valid) {
-        if (type === 'house') {
-          this.constructHouse(grid, rx, ry);
-          this.wood = Math.max(0, this.wood - 18);
-        } else if (type === 'granary') {
-          this.constructGranary(grid, rx, ry);
-          this.wood = Math.max(0, this.wood - 25);
-        } else if (type === 'altar') {
-          this.constructAltar(grid, rx, ry);
-          this.stone = Math.max(0, this.stone - 25);
+        for (const site of this.constructionSites) {
+          if (Math.hypot(site.x - rx, site.y - ry) < 7) {
+            valid = false;
+            break;
+          }
         }
+      }
+
+      if (valid) {
+        let woodCost = 0;
+        let stoneCost = 0;
+        let subType = type;
+
+        if (type === 'house') {
+          if (isStone) {
+            subType = 'stone_house';
+            stoneCost = 20;
+            woodCost = 10;
+          } else {
+            subType = 'hut';
+            woodCost = 15;
+          }
+        } else if (type === 'granary') {
+          woodCost = 25;
+        } else if (type === 'altar') {
+          stoneCost = 25;
+        }
+
+        // Deducir recursos
+        this.wood = Math.max(0, this.wood - woodCost);
+        this.stone = Math.max(0, this.stone - stoneCost);
+
+        const site = {
+          id: 'site_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          x: rx,
+          y: ry,
+          w: w,
+          h: h,
+          type: type,
+          subType: subType,
+          progress: 0,
+          maxProgress: 100,
+          assignedWorkers: []
+        };
+
+        this.constructionSites.push(site);
+        sound.playPlant();
+        chronicles.add(`🏗️ ¡OBRA INICIADA! Los aldeanos han delimitado el terreno para construir.`, 'build');
         break;
       }
     }
   }
 
-  constructHouse(grid, bx, by) {
-    const w = 6;
-    const h = 5;
-    const isStone = this.discoveries.masonry;
+  finishConstruction(grid, site) {
+    const { x: bx, y: by, w, h, type, subType } = site;
 
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (y === 0 || y === h - 1 || x === 0 || x === w - 1) {
-          if (y === h - 1 && (x === 2 || x === 3)) {
-            grid.set(bx + x, by + y, ELEM.ROAD);
+    // Retirar de obras activas
+    this.constructionSites = this.constructionSites.filter(s => s.id !== site.id);
+
+    if (type === 'house') {
+      const isStone = subType === 'stone_house';
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (y === 0 || y === h - 1 || x === 0 || x === w - 1) {
+            if (y === h - 1 && (x === Math.floor(w / 2) || x === Math.floor(w / 2) - 1)) {
+              grid.set(bx + x, by + y, ELEM.ROAD);
+            } else {
+              grid.set(bx + x, by + y, ELEM.BUILDING);
+            }
           } else {
-            grid.set(bx + x, by + y, ELEM.BUILDING);
+            grid.set(bx + x, by + y, ELEM.ROAD);
           }
-        } else {
-          grid.set(bx + x, by + y, ELEM.ROAD);
         }
       }
+
+      for (let s = 0; s <= 2; s++) {
+        grid.set(bx + Math.floor(w / 2), by + h + s, ELEM.ROAD);
+      }
+
+      const houseObj = {
+        x: bx,
+        y: by,
+        w: w,
+        h: h,
+        type: 'house',
+        subType: subType,
+        name: isStone ? 'Casa de Piedra' : 'Choza de Madera',
+        roofColor: isStone ? 'red' : 'yellow',
+        style: isStone ? 'stone' : 'hut'
+      };
+
+      this.villages.push(houseObj);
+      grid.buildingLocations.push(houseObj);
+
+      sound.playPlant();
+      vfx.addShockwave((bx + Math.floor(w / 2)) * 8, (by + Math.floor(h / 2)) * 8, 30, isStone ? '#cbd5e1' : '#eab308');
+      chronicles.add(isStone ? `🧱 ¡CASA DE PIEDRA FINALIZADA! Mampostería sólida levantada con esfuerzo.` : `🌾 ¡CHOZA FINALIZADA! Los aldeanos han levantado su hogar con madera y paja.`, 'build');
+    } else if (type === 'granary') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (x === 0 || x === w - 1 || y === 0 || y === h - 1) {
+            grid.set(bx + x, by + y, ELEM.BUILDING);
+          } else {
+            grid.set(bx + x, by + y, ELEM.ROAD);
+          }
+        }
+      }
+      grid.set(bx + Math.floor(w / 2), by + h - 1, ELEM.ROAD);
+
+      const granaryObj = {
+        x: bx,
+        y: by,
+        w: w,
+        h: h,
+        type: 'granary',
+        name: 'Granero Comunal',
+        style: 'granary'
+      };
+
+      this.villages.push(granaryObj);
+      grid.buildingLocations.push(granaryObj);
+
+      sound.playPlant();
+      vfx.addShockwave((bx + 2) * 8, (by + 2) * 8, 35, '#22c55e');
+      chronicles.add('🌾 ¡GRANERO ERIGIDO! Almacén seguro levantado para provisiones comunitarias.', 'build');
+    } else if (type === 'altar') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (x === 0 || x === w - 1 || y === 0 || y === h - 1) {
+            grid.set(bx + x, by + y, ELEM.STONE);
+          } else if (x === Math.floor(w / 2) && y === Math.floor(h / 2)) {
+            grid.set(bx + x, by + y, ELEM.GOLD);
+          } else {
+            grid.set(bx + x, by + y, ELEM.ROAD);
+          }
+        }
+      }
+
+      const altarObj = {
+        x: bx,
+        y: by,
+        w: w,
+        h: h,
+        type: 'altar',
+        name: 'Altar a Dios',
+        style: 'altar'
+      };
+
+      this.villages.push(altarObj);
+      grid.buildingLocations.push(altarObj);
+
+      sound.playAscend();
+      vfx.addShockwave((bx + 2) * 8, (by + 2) * 8, 40, '#ffd700');
+      chronicles.add('✨ ¡TEMPLO ERIGIDO! Los devotos han consagrado un gran Altar a Dios.', 'divine');
     }
-
-    for (let s = -2; s <= 2; s++) {
-      grid.set(bx + 2, by + h + s, ELEM.ROAD);
-    }
-
-    const houseName = isStone ? 'Casa de Piedra' : 'Choza de Madera';
-    this.villages.push({ x: bx, y: by, type: 'house', name: houseName });
-    grid.buildingLocations.push({ x: bx + 1, y: by + 1, name: houseName });
-
-    sound.playPlant();
-    vfx.addShockwave((bx + 3) * 8, (by + 2) * 8, 30, '#eab308');
-    chronicles.add(`🏡 ¡NUEVA VIVIENDA! Los aldeanos han construido una ${houseName}.`, 'build');
   }
 
-  constructGranary(grid, bx, by) {
-    const w = 5;
-    const h = 5;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (x === 0 || x === w - 1 || y === 0 || y === h - 1) {
-          grid.set(bx + x, by + y, ELEM.BUILDING);
-        } else {
-          grid.set(bx + x, by + y, ELEM.ROAD);
-        }
-      }
-    }
-    // Puerta
-    grid.set(bx + 2, by + h - 1, ELEM.ROAD);
-
-    this.villages.push({ x: bx, y: by, type: 'granary', name: 'Granero Comunal' });
-    grid.buildingLocations.push({ x: bx + 1, y: by + 1, name: 'Granero Central' });
-
-    sound.playPlant();
-    vfx.addShockwave((bx + 2) * 8, (by + 2) * 8, 35, '#22c55e');
-    chronicles.add('🌾 ¡GRANERO ERIGIDO! Se ha construido un almacén seguro para la comida comunal.', 'build');
-  }
-
-  constructAltar(grid, bx, by) {
-    const size = 5;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        if (x === 0 || x === size - 1 || y === 0 || y === size - 1) {
-          grid.set(bx + x, by + y, ELEM.STONE);
-        } else if (x === 2 && y === 2) {
-          grid.set(bx + x, by + y, ELEM.GOLD);
-        } else {
-          grid.set(bx + x, by + y, ELEM.ROAD);
-        }
-      }
-    }
-
-    this.villages.push({ x: bx, y: by, type: 'altar', name: 'Altar Ceremonial' });
-    grid.buildingLocations.push({ x: bx + 1, y: by + 1, name: 'Altar a Dios' });
-
-    sound.playAscend();
-    vfx.addShockwave((bx + 2) * 8, (by + 2) * 8, 40, '#ffd700');
-    chronicles.add('✨ ¡TEMPLO ERIGIDO! Los creyentes han consagrado un gran Altar a Dios.', 'divine');
+  // Compatibilidad con invocaciones directas (ej: clicks o cheats)
+  constructHouse(grid, bx, by) {
+    this.finishConstruction(grid, {
+      id: 'direct_' + Date.now(),
+      x: bx,
+      y: by,
+      w: this.discoveries.masonry ? 6 : 5,
+      h: this.discoveries.masonry ? 5 : 4,
+      type: 'house',
+      subType: this.discoveries.masonry ? 'stone_house' : 'hut'
+    });
   }
 }
 

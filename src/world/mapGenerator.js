@@ -749,4 +749,66 @@ export class MapGenerator {
     grid.set(cx + 16, cy - 3, ELEM.FLOWER_BED);
     grid.set(cx + 25, cy - 3, ELEM.FLOWER_BED);
   }
+
+  // 7. 🌱 GÉNESIS / MUNDO VIRGEN DESDE CERO (Sin casas, sin edificios, naturaleza pura para civilizar)
+  static generateGenesis(grid, w, h, cx, cy) {
+    const radiusX = Math.floor(w * 0.44);
+    const radiusY = Math.floor(h * 0.40);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (x - cx) / radiusX;
+        const dy = (y - cy) / radiusY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const noise = Math.sin(x * 0.15) * 0.08 + Math.cos(y * 0.18) * 0.08;
+
+        if (dist + noise < 0.40) {
+          grid.set(x, y, ELEM.FERTILE_DIRT);
+        } else if (dist + noise < 0.65) {
+          grid.set(x, y, ELEM.DIRT);
+        } else if (dist + noise < 0.76) {
+          grid.set(x, y, ELEM.SAND); // Costa virgen
+        } else {
+          grid.set(x, y, ELEM.WATER); // Océano primordial
+        }
+      }
+    }
+
+    // Río natural serpenteante de agua viva
+    for (let y = 0; y < h; y++) {
+      const riverX = cx + Math.floor(Math.sin(y * 0.14) * 16 - 6);
+      for (let rx = riverX - 2; rx <= riverX + 2; rx++) {
+        if (rx >= 0 && rx < w) {
+          grid.set(rx, y, ELEM.WATER);
+        }
+      }
+      grid.set(riverX - 3, y, ELEM.FERTILE_DIRT);
+      grid.set(riverX + 3, y, ELEM.FERTILE_DIRT);
+    }
+
+    // Yacimientos de roca y cantera natural para extraer piedra
+    const quarryX = cx + 18;
+    const quarryY = cy - 12;
+    for (let dy = -3; dy <= 3; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        if (Math.hypot(dx, dy) <= 3.2) {
+          grid.set(quarryX + dx, quarryY + dy, ELEM.STONE);
+        }
+      }
+    }
+
+    // Bosque virgen de árboles frutales y maderables Minish Cap
+    for (let y = cy - 20; y <= cy + 18; y += 5) {
+      for (let x = cx - 28; x <= cx - 8; x += 5) {
+        if (Math.random() < 0.7 && grid.get(x, y) !== ELEM.WATER) {
+          grid.set(x, y, ELEM.TREE);
+        }
+      }
+    }
+
+    // Campamento virgen con fogata primitiva para calentarse
+    grid.set(cx, cy, ELEM.CAMPFIRE);
+    // Sin edificios prehechos: ¡la civilización florecerá desde cero!
+  }
 }
+

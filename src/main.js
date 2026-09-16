@@ -280,6 +280,25 @@ function setupEraWorld(era) {
 
     chronicles.add("🗡️ ¡ALDEA MINISH! Link recorre los caminos empedrados, cabañas con tejado azul, árboles volumétricos y acantilados con escaleras.", "divine");
     notify("🗡️ ¡Aldea Minish (2.5D Zelda)! Profundidad visual, árboles esféricos, huertos hundidos y acantilados transitables.");
+  } else if (era.id === 'genesis') {
+    // 🌱 GÉNESIS: Mundo Virgen desde Cero (2 colonos primitivos que aprenderán todo)
+    const c1 = spawnNpc('cultivator', midX - 4 * 8, midY, 'genesis');
+    c1.brain.name = "Arak";
+    c1.brain.title = "Pionero Primitivo";
+    c1.brain.wisdom = 10;
+    c1.brain.setThoughtBubble("🌿 Tierra virgen... Recolectaré madera y piedra para nuestro refugio.", 180);
+
+    const c2 = spawnNpc('cultivator', midX + 4 * 8, midY, 'genesis');
+    c2.brain.name = "Sora";
+    c2.brain.title = "Pionera Primitiva";
+    c2.brain.wisdom = 10;
+    c2.brain.setThoughtBubble("🔥 Cuidemos el fuego y aprendamos a sobrevivir.", 180);
+    social.blessLove(c1, c2);
+
+    spawnAnimal('dog', midX - 8 * 8, midY + 4 * 8);
+
+    chronicles.add("🌱 ¡GÉNESIS PRIMORDIAL! Los primeros colonos despiertan en un mundo virgen. Comenzarán desde cero.", "divine");
+    notify("🌱 ¡Génesis! Mundo virgen sin edificios. Los colonos aprenderán y construirán su civilización.");
   }
 
   // Elegir orgánicamente el líder de la civilización para la era
@@ -1263,10 +1282,10 @@ function gameLoop() {
       clockBadge.innerText = dayCycle.getFormattedTime();
     }
     statPop.innerText = npcs.length;
-    if (statWood) statWood.innerText = civ.wood;
-    if (statStone) statStone.innerText = civ.stone;
-    if (statFood) statFood.innerText = Math.round(civ.food);
-    if (statWisdom) statWisdom.innerText = Math.round(civ.knowledge);
+    if (statWood) statWood.innerText = Math.floor(civ.wood);
+    if (statStone) statStone.innerText = Math.floor(civ.stone);
+    if (statFood) statFood.innerText = Math.floor(civ.food);
+    if (statWisdom) statWisdom.innerText = Math.floor(civ.knowledge);
     if (civStage) civStage.innerText = `🏛️ ${civ.stageName}`;
     if (statHappy) statHappy.innerText = `${Math.round(civ.happiness)}%`;
     updateReligionBadge();

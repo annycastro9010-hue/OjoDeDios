@@ -72,5 +72,18 @@ export const ERAS = {
     questDesc: 'Recorre la gran plaza, cruza los puentes del canal hacia el molino de agua y visita el dojo de los maestros.',
     mapPreset: 'hyrule',
     themeColor: '#22c55e'
+  },
+  GENESIS: {
+    id: 'genesis',
+    name: 'Génesis (Mundo Virgen desde Cero)',
+    year: 'Año 1 - Creación',
+    icon: '🌱',
+    description: 'Naturaleza virgen sin construcciones. Los primeros colonos recolectan madera, pican piedra, descubren el fuego y aprenden a construir su civilización desde cero.',
+    roles: ['cultivator', 'child'],
+    questTitle: 'EL NACIMIENTO DE LA CIVILIZACIÓN',
+    questDesc: 'Corta árboles, reúne madera y piedra para que los colonos aprendan a construir su primera choza.',
+    mapPreset: 'genesis',
+    themeColor: '#10b981'
   }
 };
+

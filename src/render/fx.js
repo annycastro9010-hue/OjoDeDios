@@ -52,6 +52,25 @@ export class VFXSystem {
     }
   }
 
+  // Virutas de madera y chispas al martillar y construir
+  addWoodChips(x, y, count = 4) {
+    const chipColors = ['#ca8a04', '#d97706', '#92400e', '#fef08a'];
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * 2.0;
+      const spd = Math.random() * 1.5 + 0.8;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 4,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - 0.5,
+        life: 1.0,
+        decay: 0.08 + Math.random() * 0.05,
+        size: Math.random() < 0.5 ? 2 : 1.5,
+        color: chipColors[Math.floor(Math.random() * chipColors.length)]
+      });
+    }
+  }
+
   // Chispas de halo divino flotantes
   addHolySpark(x, y) {
     this.particles.push({

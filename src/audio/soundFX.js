@@ -96,6 +96,24 @@ class SoundSystem {
     } catch (e) { }
   }
 
+  playHammer() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(420 + Math.random() * 80, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.08);
+    } catch (e) { }
+  }
+
   playPossess() {
     if (this.muted) return;
     this.init();

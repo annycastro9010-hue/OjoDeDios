@@ -4,6 +4,7 @@ import { NPCBrain } from '../ai/brain.js';
 import { vfx } from '../render/fx.js';
 import { dayCycle } from '../sim/time.js';
 import { chronicles } from '../social/relations.js';
+import { civ } from '../world/civilization.js';
 
 export class NPC {
   constructor(id, type, x, y) {
@@ -273,6 +274,63 @@ export class NPC {
           ];
           this.brain.setThoughtBubble(greetings[Math.floor(Math.random() * greetings.length)], 100);
         }
+      }
+    }
+
+    // --- TAREA DE CONSTRUCCIÓN FÍSICA AUTÓNOMA ---
+    if (civ.constructionSites && civ.constructionSites.length > 0 && !this.brain?.isResting && this.type !== 'police' && this.type !== 'soldier' && this.type !== 'boss' && this.type !== 'guerrillero') {
+      const site = civ.constructionSites[0];
+      const targetPxX = (site.x + Math.floor(site.w / 2)) * tileSize;
+      const targetPxY = (site.y + Math.floor(site.h / 2)) * tileSize;
+      const distToSite = Math.hypot(this.x - targetPxX, this.y - targetPxY);
+
+      const isAssigned = site.assignedWorkers && site.assignedWorkers.includes(this.id);
+      if (isAssigned || (site.assignedWorkers && site.assignedWorkers.length < 3) || distToSite < 70) {
+        if (!isAssigned && site.assignedWorkers) site.assignedWorkers.push(this.id);
+
+        if (distToSite > 16) {
+          // Caminar hacia la obra
+          const angle = Math.atan2(targetPxY - this.y, targetPxX - this.x);
+          this.vx = Math.cos(angle) * (this.speed * 0.95);
+          this.vy = Math.sin(angle) * (this.speed * 0.95);
+          this.updateDirection();
+          if (Math.random() < 0.008) {
+            this.brain?.setThoughtBubble("🔨 Voy a la obra a colaborar en la construcción.", 80);
+          }
+        } else {
+          // En el sitio de la obra: trabajar y martillar físicamente
+          this.vx = 0;
+          this.vy = 0;
+
+          const workSpeed = (this.brain?.trait?.id === 'constructor') ? 0.35 : (this.type === 'cultivator' ? 0.22 : 0.18);
+          site.progress = Math.min(site.maxProgress, site.progress + workSpeed);
+
+          if (Math.random() < 0.1) {
+            vfx.addWoodChips(this.x + 8, this.y + 10);
+            sound.playHammer();
+          }
+
+          if (Math.random() < 0.015) {
+            const hammerThoughts = [
+              "🔨 ¡Asegurando vigas y ensamblando cimientos!",
+              "🪵 Cortando maderos a medida para la estructura...",
+              "🧱 Colocando piedras y mortero con precisión.",
+              "🌾 Tejiendo la techumbre para abrigar a nuestro pueblo."
+            ];
+            this.brain?.setThoughtBubble(hammerThoughts[Math.floor(Math.random() * hammerThoughts.length)], 80);
+          }
+
+          if (this.brain && Math.random() < 0.04) {
+            this.brain.gainExp(10, this);
+          }
+
+          if (site.progress >= site.maxProgress) {
+            civ.finishConstruction(grid, site);
+            this.brain?.gainExp(120, this);
+            this.brain?.setThoughtBubble("🎉 ¡Obra finalizada con éxito! ¡Qué gran logro!", 140);
+          }
+        }
+        return;
       }
     }
 

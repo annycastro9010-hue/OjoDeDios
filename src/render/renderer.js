@@ -3,6 +3,7 @@ import { animManager } from './animationManager.js?v=20260912_minish_sprites_v2'
 import { sprites } from './sprites.js';
 import { vfx } from './fx.js';
 import { dayCycle } from '../sim/time.js';
+import { civ } from '../world/civilization.js';
 
 // Paleta pre-calculada de 32 tonos de agua para eliminar Math.sin y strings dinámicos en el bucle
 const WATER_PALETTE = [];
@@ -582,20 +583,7 @@ export class GameRenderer {
       }
     }
 
-    // 5. Renderizar Edificios con Nombres (solo visibles)
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center';
-    for (const b of grid.buildingLocations) {
-      if (b.showName === false || !b.name) continue;
-      const bCenterX = b.x * ts + (b.w ? (b.w * ts) / 2 : 12);
-      const bY = b.y * ts;
-      if (bCenterX < minPxX || bCenterX > maxPxX || bY < minPxY || bY > maxPxY) continue;
-      // Sombra de texto
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-      ctx.fillText(b.name, bCenterX + 1, bY - 4 + 1);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(b.name, bCenterX, bY - 4);
-    }
+    // 5. Los edificios se reconocen visualmente por su arquitectura pixel-art única (sin textos flotantes feos)
 
     // 6. Renderizado Unificado con Ordenación Y (Y-Sorting para Profundidad 2.5D Real)
     // Agrupa NPCs, Animales y Copas de Árboles dentro de pantalla
@@ -768,13 +756,25 @@ export class GameRenderer {
   renderEraLandmarks(ctx, grid, eraId, minPxX = -Infinity, maxPxX = Infinity, minPxY = -Infinity, maxPxY = Infinity) {
     const ts = this.tileSize;
 
+    // 🏗️ Sitios en Construcción Activos (Obras físicas de los aldeanos con andamios y materiales)
+    if (civ && civ.constructionSites) {
+      for (const site of civ.constructionSites) {
+        const sx = site.x * ts;
+        const sy = site.y * ts;
+        if (sx >= minPxX - 70 && sx <= maxPxX + 70 && sy >= minPxY - 70 && sy <= maxPxY + 70) {
+          this.drawConstructionSite(ctx, site, ts);
+        }
+      }
+    }
+
     for (const b of grid.buildingLocations) {
       const bx = b.x * ts;
       const by = b.y * ts;
       if (bx < minPxX - 70 || bx > maxPxX + 70 || by < minPxY - 70 || by > maxPxY + 70) continue;
+      const bName = b.name || '';
 
       // ☮️ AÑOS 70: ESCENARIO MUSICAL DE BOB MARLEY & FESTIVAL
-      if (b.name.includes("Escenario de Bob Marley")) {
+      if (bName.includes("Escenario de Bob Marley")) {
         ctx.save();
         // Tarima de concierto de madera noble
         ctx.fillStyle = '#b45309';
@@ -1172,13 +1172,28 @@ export class GameRenderer {
         this.drawMonumentalGate(ctx, bx, by);
       }
 
+      // 🌾 CHOZA PRIMITIVA DE MADERA Y PAJA (Génesis / Tribus)
+      else if (b.style === 'hut' || b.subType === 'hut' || bName.includes('Choza')) {
+        this.drawPrimitiveHut(ctx, b, ts);
+      }
+
+      // 🌾 GRANERO COMUNAL / SILO ELEVADO CON GRANO
+      else if (b.style === 'granary' || b.type === 'granary' || bName.includes('Granero')) {
+        this.drawGranary(ctx, b, ts);
+      }
+
+      // ✨ ALTAR SACRO / TEMPLO DE PIEDRA Y ORO
+      else if (b.style === 'altar' || b.type === 'altar' || bName.includes('Altar a Dios')) {
+        this.drawSacredAltar(ctx, b, ts);
+      }
+
       // 🌊 MOLINO DE AGUA CON RUEDA HIDRÁULICA GIRATORIA
-      else if (b.name.includes("Molino de Agua") || b.style === 'watermill') {
+      else if (bName.includes("Molino de Agua") || b.style === 'watermill') {
         this.drawMinishHouse(ctx, b, ts);
         this.drawWaterWheel(ctx, bx + (b.w ? b.w * ts : 48) - 3, by + 12);
       }
 
-      // 🏡 CASAS CON TEJADOS CURVOS MINISH CAP (Rojo, Azul, Amarillo, Verde, Púrpura, Mansión)
+      // 🏡 CASAS CON TEJADOS CURVOS MINISH CAP (Rojo, Azul, Amarillo, Verde, Púrpura, Mansión, Piedra)
       else if (b.roofColor || b.style || (b.w && b.h)) {
         this.drawMinishHouse(ctx, b, ts);
       }
@@ -1250,24 +1265,43 @@ export class GameRenderer {
       return;
     }
 
-    // 2. Fachada de la casa: Estuco blanco crema con vigas de roble
+    // 2. Fachada de la casa: Sillería de piedra (Stone) o Estuco blanco con vigas (Normal)
     const wallY = by + Math.floor(bh * 0.44);
     const wallH = (by + bh) - wallY;
 
-    // Pared de estuco
-    ctx.fillStyle = '#fdfbf7';
-    ctx.fillRect(bx + 2, wallY, bw - 4, wallH);
-    ctx.fillStyle = '#e8dfd0'; // Sombra inferior
-    ctx.fillRect(bx + 2, wallY + wallH - 3, bw - 4, 3);
+    if (b.style === 'stone' || b.subType === 'stone_house' || (b.name && b.name.includes('Piedra'))) {
+      // Fachada de cantería y bloques de piedra tallada
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(bx + 2, wallY, bw - 4, wallH);
+      ctx.fillStyle = '#64748b'; // Sombra inferior
+      ctx.fillRect(bx + 2, wallY + wallH - 3, bw - 4, 3);
+      // Hiladas de bloques de sillería
+      for (let sy = wallY + 3; sy < wallY + wallH - 2; sy += 4) {
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(bx + 3, sy, bw - 6, 1);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(bx + 3, sy + 1, bw - 6, 1);
+      }
+      // Piedras de esquina (sillares)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(bx + 2, wallY, 3, wallH);
+      ctx.fillRect(bx + bw - 5, wallY, 3, wallH);
+    } else {
+      // Pared de estuco
+      ctx.fillStyle = '#fdfbf7';
+      ctx.fillRect(bx + 2, wallY, bw - 4, wallH);
+      ctx.fillStyle = '#e8dfd0'; // Sombra inferior
+      ctx.fillRect(bx + 2, wallY + wallH - 3, bw - 4, 3);
 
-    // Vigas de madera verticales y horizontales (Timber framing Minish Cap)
-    ctx.fillStyle = '#6b3310';
-    ctx.fillRect(bx + 2, wallY, 2, wallH); // Viga izq
-    ctx.fillRect(bx + bw - 4, wallY, 2, wallH); // Viga der
-    ctx.fillRect(bx + 2, wallY + wallH - 2, bw - 4, 2); // Rodapié
-    ctx.fillStyle = '#854d0e';
-    ctx.fillRect(bx + 3, wallY, 1, wallH);
-    ctx.fillRect(bx + bw - 3, wallY, 1, wallH);
+      // Vigas de madera verticales y horizontales (Timber framing Minish Cap)
+      ctx.fillStyle = '#6b3310';
+      ctx.fillRect(bx + 2, wallY, 2, wallH); // Viga izq
+      ctx.fillRect(bx + bw - 4, wallY, 2, wallH); // Viga der
+      ctx.fillRect(bx + 2, wallY + wallH - 2, bw - 4, 2); // Rodapié
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(bx + 3, wallY, 1, wallH);
+      ctx.fillRect(bx + bw - 3, wallY, 1, wallH);
+    }
 
     // Puerta de madera de roble arqueada
     const doorW = 10;
@@ -1474,6 +1508,396 @@ export class GameRenderer {
       ctx.fillStyle = '#ea580c';
       ctx.fillRect(x + 4, y + 4, 4, 5);
     }
+    ctx.restore();
+  }
+
+  // 🏗️ Renderizado del Sitio en Construcción Activo (Zanja, Estacas, Andamios, Materiales y Mini-Barra)
+  drawConstructionSite(ctx, site, ts) {
+    const bx = site.x * ts;
+    const by = site.y * ts;
+    const bw = (site.w || 5) * ts;
+    const bh = (site.h || 4) * ts;
+    const progress = Math.min(100, Math.max(0, site.progress || 0));
+
+    ctx.save();
+
+    // 1. Despeje de terreno y zanja de cimentación
+    ctx.fillStyle = '#573312';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#3f2208';
+    ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
+
+    // 2. Estacas de demarcación de obra en las esquinas con cuerda tensada
+    const drawStake = (sx, sy) => {
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(sx - 1, sy - 5, 2, 6);
+      ctx.fillStyle = '#fef08a'; // Cuerda amarrada
+      ctx.fillRect(sx - 1, sy - 3, 2, 1);
+    };
+    drawStake(bx, by);
+    drawStake(bx + bw, by);
+    drawStake(bx, by + bh);
+    drawStake(bx + bw, by + bh);
+
+    // Cuerdas perimetrales
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([2, 2]);
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.setLineDash([]);
+
+    // 3. Montones de materiales al borde de la obra
+    // Troncos y tablas de madera cortada apilada
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(bx - 6, by + 4, 5, 2);
+    ctx.fillRect(bx - 6, by + 7, 5, 2);
+    ctx.fillRect(bx - 5, by + 2, 4, 2);
+    ctx.fillStyle = '#fde047'; // Anillos de los troncos cortados
+    ctx.fillRect(bx - 6, by + 4, 1, 2);
+    ctx.fillRect(bx - 6, by + 7, 1, 2);
+
+    // Bloques de piedra tallada
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(bx + bw + 2, by + bh - 6, 4, 4);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(bx + bw + 2, by + bh - 6, 4, 1);
+
+    // 4. Progreso de la estructura según el porcentaje completado
+    if (progress >= 20) {
+      // Postes y pilares de andamio verticales
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(bx + 2, by + 2, 2, bh - 4);
+      ctx.fillRect(bx + bw - 4, by + 2, 2, bh - 4);
+      ctx.fillRect(bx + Math.floor(bw / 2) - 1, by + 2, 2, bh - 4);
+    }
+    if (progress >= 45) {
+      // Vigas maestras horizontales del armazón
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(bx + 2, by + 2, bw - 4, 2);
+      ctx.fillRect(bx + 2, by + Math.floor(bh * 0.5), bw - 4, 2);
+      // Riostras diagonales en cruz
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(bx + 3, by + 3);
+      ctx.lineTo(bx + bw - 3, by + bh - 3);
+      ctx.moveTo(bx + bw - 3, by + 3);
+      ctx.lineTo(bx + 3, by + bh - 3);
+      ctx.stroke();
+    }
+    if (progress >= 70) {
+      // Cabrios del tejado en V invertida
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(bx, by + 2);
+      ctx.lineTo(bx + bw / 2, by - 6);
+      ctx.lineTo(bx + bw, by + 2);
+      ctx.stroke();
+      // Media techumbre colocada
+      ctx.fillStyle = (site.subType === 'hut') ? 'rgba(234, 179, 8, 0.65)' : 'rgba(220, 38, 38, 0.65)';
+      ctx.beginPath();
+      ctx.moveTo(bx + 2, by + 2);
+      ctx.lineTo(bx + bw / 2, by - 5);
+      ctx.lineTo(bx + bw * 0.7, by);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 5. Mini-barra de progreso estilo Minish Cap (sutil, limpia, sin texto)
+    const barW = Math.min(28, bw + 6);
+    const barH = 4;
+    const barX = bx + bw / 2 - barW / 2;
+    const barY = by - 10;
+
+    // Fondo negro translúcido con borde dorado suave
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 0.75;
+    ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+    // Relleno de progreso
+    const fillW = Math.floor((barW * progress) / 100);
+    if (fillW > 0) {
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(barX, barY, fillW, barH);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(barX, barY, fillW, 1);
+    }
+
+    // Mini icono de martillo animado
+    const bob = Math.sin(this.waterTime * 8) * 1.5;
+    ctx.font = '7px sans-serif';
+    ctx.fillText('🔨', barX - 8, barY + 4 + bob);
+
+    ctx.restore();
+  }
+
+  // 🌾 Choza Primitiva de Madera y Paja (Génesis / Tribu Primitiva)
+  drawPrimitiveHut(ctx, b, ts) {
+    const bx = b.x * ts;
+    const by = b.y * ts;
+    const bw = (b.w || 5) * ts;
+    const bh = (b.h || 4) * ts;
+
+    ctx.save();
+
+    // 1. Sombra arrojada de tierra
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(bx + bw / 2, by + bh + 1, bw / 2 + 3, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Paredes de troncos horizontales apilados (Madera rústica)
+    const wallY = by + Math.floor(bh * 0.42);
+    const wallH = (by + bh) - wallY;
+
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(bx + 2, wallY, bw - 4, wallH);
+
+    for (let ly = wallY; ly < wallY + wallH - 1; ly += 3) {
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(bx + 2, ly, bw - 4, 2);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(bx + 2, ly + 2, bw - 4, 1);
+    }
+
+    // Postes de esquina
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(bx + 1, wallY - 2, 3, wallH + 2);
+    ctx.fillRect(bx + bw - 4, wallY - 2, 3, wallH + 2);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(bx + 2, wallY - 2, 1, wallH + 2);
+    ctx.fillRect(bx + bw - 3, wallY - 2, 1, wallH + 2);
+
+    // 3. Puerta de tablones rústicos
+    const dW = 7;
+    const dH = 10;
+    const dX = bx + Math.floor(bw / 2) - Math.floor(dW / 2);
+    const dY = by + bh - dH;
+    ctx.fillStyle = '#271005';
+    ctx.fillRect(dX - 1, dY - 1, dW + 2, dH + 1);
+    ctx.fillStyle = '#5c2d12';
+    ctx.fillRect(dX, dY, dW, dH);
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(dX + dW - 2, dY + 5, 1, 2);
+
+    // 4. Tejado rústico cónico de paja dorada / juncos secos (Thatched Roof)
+    const rX = bx - 2;
+    const rY = by - 8;
+    const rW = bw + 4;
+    const rH = Math.floor(bh * 0.58) + 6;
+
+    ctx.fillStyle = '#713f12';
+    ctx.beginPath();
+    ctx.moveTo(rX + rW / 2, rY - 2);
+    ctx.lineTo(rX + rW + 1, rY + rH + 1);
+    ctx.lineTo(rX - 1, rY + rH + 1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ca8a04';
+    ctx.beginPath();
+    ctx.moveTo(rX + rW / 2, rY);
+    ctx.lineTo(rX + rW, rY + rH);
+    ctx.lineTo(rX, rY + rH);
+    ctx.closePath();
+    ctx.fill();
+
+    for (let ty = rY + 4; ty < rY + rH; ty += 4) {
+      const rowPct = (ty - rY) / rH;
+      const curW = rW * rowPct;
+      const curX = (rX + rW / 2) - curW / 2;
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(curX, ty, curW, 3);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(curX, ty, curW, 1);
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(curX, ty + 2, curW, 1);
+    }
+
+    // Remate superior de paja
+    ctx.fillStyle = '#713f12';
+    ctx.fillRect(rX + rW / 2 - 2, rY - 3, 4, 3);
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(rX + rW / 2 - 1, rY - 5, 2, 3);
+
+    // Montoncito de leña al costado
+    ctx.fillStyle = '#5c2d12';
+    ctx.fillRect(bx + bw + 1, by + bh - 5, 4, 2);
+    ctx.fillRect(bx + bw + 1, by + bh - 3, 4, 2);
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(bx + bw + 1, by + bh - 5, 1, 2);
+    ctx.fillRect(bx + bw + 1, by + bh - 3, 1, 2);
+
+    ctx.restore();
+  }
+
+  // 🌾 Granero Comunal Elevado sobre Pilares (Silo de Grano)
+  drawGranary(ctx, b, ts) {
+    const bx = b.x * ts;
+    const by = b.y * ts;
+    const bw = (b.w || 5) * ts;
+    const bh = (b.h || 5) * ts;
+
+    ctx.save();
+
+    // 1. Sombra
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(bx + bw / 2, by + bh + 1, bw / 2 + 2, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Pilares de madera sobre los que se eleva el granero
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(bx + 4, by + bh - 7, 3, 8);
+    ctx.fillRect(bx + bw - 7, by + bh - 7, 3, 8);
+    ctx.fillRect(bx + bw / 2 - 1, by + bh - 6, 3, 7);
+
+    // 3. Plataforma del granero
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(bx + 1, by + bh - 8, bw - 2, 3);
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(bx + 1, by + bh - 8, bw - 2, 1);
+
+    // 4. Silo de madera
+    const bodyY = by + 6;
+    const bodyH = (by + bh - 8) - bodyY;
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(bx + 3, bodyY, bw - 6, bodyH);
+
+    // Cinchas de hierro
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(bx + 3, bodyY + 4, bw - 6, 2);
+    ctx.fillRect(bx + 3, bodyY + bodyH - 5, bw - 6, 2);
+
+    // 5. Puerta trampilla con escalerilla
+    const dW = 8; const dH = 11;
+    const dX = bx + bw / 2 - dW / 2;
+    const dY = by + bh - 8 - dH;
+    ctx.fillStyle = '#291104';
+    ctx.fillRect(dX, dY, dW, dH);
+    ctx.fillStyle = '#5c2d12';
+    ctx.fillRect(dX + 1, dY + 1, dW - 2, dH - 2);
+
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(dX + 1, by + bh - 8, 1, 9);
+    ctx.fillRect(dX + dW - 2, by + bh - 8, 1, 9);
+    for (let ly = by + bh - 7; ly < by + bh; ly += 2) {
+      ctx.fillRect(dX + 1, ly, dW - 2, 1);
+    }
+
+    // 6. Caperuza cónica de paja
+    const rY = by - 8;
+    const rH = 15;
+    ctx.fillStyle = '#ca8a04';
+    ctx.beginPath();
+    ctx.moveTo(bx + bw / 2, rY);
+    ctx.lineTo(bx + bw + 2, rY + rH);
+    ctx.lineTo(bx - 2, rY + rH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(bx + bw / 2, rY);
+    ctx.lineTo(bx + bw / 2 + 5, rY + rH);
+    ctx.lineTo(bx + bw / 2 - 2, rY + rH);
+    ctx.closePath();
+    ctx.fill();
+
+    // 7. Sacos de grano de trigo cosechado
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(bx - 3, by + bh - 6, 5, 6);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(bx - 2, by + bh - 5, 3, 4);
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(bx + bw - 1, by + bh - 5, 4, 5);
+
+    ctx.restore();
+  }
+
+  // ✨ Altar Sagrado Ceremonial (Columnas Clásicas y Fuego Sagrado)
+  drawSacredAltar(ctx, b, ts) {
+    const bx = b.x * ts;
+    const by = b.y * ts;
+    const bw = (b.w || 5) * ts;
+    const bh = (b.h || 5) * ts;
+
+    ctx.save();
+
+    // 1. Sombra sacra
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(bx + bw / 2, by + bh + 1, bw / 2 + 3, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Gradas escalonadas de piedra noble pulida
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(bx, by + bh - 6, bw, 6);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(bx, by + bh - 6, bw, 1.5);
+
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(bx + 3, by + bh - 10, bw - 6, 5);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(bx + 3, by + bh - 10, bw - 6, 1.5);
+
+    // 3. Alfombra ceremonial azul/púrpura
+    ctx.fillStyle = '#6366f1';
+    ctx.fillRect(bx + bw / 2 - 3, by + bh - 10, 6, 10);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(bx + bw / 2 - 3, by + bh - 10, 6, 1);
+
+    // 4. Cuatro Columnas Sagradas en las esquinas
+    const drawPillar = (px, py) => {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(px, py - 12, 4, 14);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px, py - 12, 1, 14);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(px - 1, py - 13, 6, 2);
+      ctx.fillRect(px - 1, py + 1, 6, 2);
+    };
+    drawPillar(bx + 4, by + bh - 10);
+    drawPillar(bx + bw - 8, by + bh - 10);
+    drawPillar(bx + 4, by + 6);
+    drawPillar(bx + bw - 8, by + 6);
+
+    // 5. Entablamento superior conectando las columnas
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(bx + 3, by - 8, bw - 6, 3);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(bx + 3, by - 8, bw - 6, 1);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(bx + bw / 2 - 4, by - 7, 8, 1);
+
+    // 6. Pedestal Central y Pebetero de Fuego Sagrado
+    const pedX = bx + bw / 2 - 4;
+    const pedY = by + bh / 2 - 4;
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(pedX, pedY, 8, 6);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(pedX + 1, pedY - 3, 6, 3);
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(pedX + 2, pedY - 4, 4, 1);
+
+    // Fuego Divino con halo parpadeante
+    const flameBob = Math.sin(this.waterTime * 14) * 1.5;
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+    ctx.beginPath();
+    ctx.arc(pedX + 4, pedY - 6, 7 + flameBob * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(pedX + 4, pedY - 5 + flameBob * 0.5, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(pedX + 4, pedY - 6 + flameBob * 0.5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
