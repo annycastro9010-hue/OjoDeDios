@@ -73,9 +73,14 @@ export class NPC {
     // Si está poseído por el jugador, los controles WASD manejan el movimiento
     if (this.isPossessed) return;
 
-    // Actualización de mente y pensamientos autónomos
-    const nearbyPolice = allNpcs.find(n => (n.type === 'police' || n.type === 'soldier') && n.id !== this.id && this.distTo(n) < 60);
-    this.brain.update(this, !!nearbyPolice, false);
+    // Actualización de mente y pensamientos autónomos (optimizado: revisión periódica)
+    if (this.policeCheckTimer === undefined) this.policeCheckTimer = this.id % 20;
+    this.policeCheckTimer++;
+    if (this.policeCheckTimer >= 20 || (this.brain && this.brain.fear > 50)) {
+      this.policeCheckTimer = 0;
+      this.hasNearbyPolice = allNpcs.some(n => (n.type === 'police' || n.type === 'soldier') && n.id !== this.id && this.distTo(n) < 60);
+    }
+    this.brain.update(this, !!this.hasNearbyPolice, false);
 
     this.animTimer++;
     if (this.animTimer > 12) {

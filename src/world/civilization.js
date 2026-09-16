@@ -466,8 +466,12 @@ export class CivilizationSystem {
     // Comprobar evolución histórica periódicamente
     this.checkEvolution();
 
-    // 4. Asignación Orgánica de Hogares a Familias y Ciudadanos
-    this.assignHomesToCitizens(npcs);
+    // 4. Asignación Orgánica de Hogares a Familias y Ciudadanos (cada 60 frames = 1 seg)
+    this.homeAssignTimer = (this.homeAssignTimer || 0) + 1;
+    if (this.homeAssignTimer >= 60) {
+      this.homeAssignTimer = 0;
+      this.assignHomesToCitizens(npcs);
+    }
 
     // 5. Construcción Orgánica de Edificios según Avance Tecnológico y Nivel de Civilización
     this.buildTimer++;
@@ -486,10 +490,19 @@ export class CivilizationSystem {
     }
   }
 
-  // Distribución de casas: parejas e hijos comparten la misma vivienda
+  // Distribución de casas: parejas e hijos comparten la misma vivienda (optimizado O(N+H))
   assignHomesToCitizens(npcs) {
     const houses = this.villages.filter(v => v.type === 'house');
     if (houses.length === 0 || !npcs || npcs.length === 0) return;
+
+    // Conteo previo de ocupantes por vivienda
+    const houseOccupants = new Map();
+    for (const h of houses) houseOccupants.set(h, 0);
+    for (const npc of npcs) {
+      if (npc.brain?.home && houseOccupants.has(npc.brain.home)) {
+        houseOccupants.set(npc.brain.home, houseOccupants.get(npc.brain.home) + 1);
+      }
+    }
 
     for (const npc of npcs) {
       if (!npc.brain) continue;
@@ -502,28 +515,32 @@ export class CivilizationSystem {
           if (partner && partner.brain && !partner.brain.home) {
             partner.brain.home = npc.brain.home;
             partner.brain.bedPosition = { x: npc.brain.home.x + 3, y: npc.brain.home.y + 2 };
+            houseOccupants.set(npc.brain.home, (houseOccupants.get(npc.brain.home) || 0) + 1);
           }
         }
         // Asignar misma casa a sus hijos
-        const children = npcs.filter(n => n.parentId === npc.id && n.brain && !n.brain.home);
-        for (const child of children) {
-          child.brain.home = npc.brain.home;
-          child.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 3 };
+        for (const child of npcs) {
+          if (child.parentId === npc.id && child.brain && !child.brain.home) {
+            child.brain.home = npc.brain.home;
+            child.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 3 };
+            houseOccupants.set(npc.brain.home, (houseOccupants.get(npc.brain.home) || 0) + 1);
+          }
         }
         continue;
       }
 
       // Si no tiene casa, buscar una casa con espacio (máximo 4 ocupantes)
       for (const house of houses) {
-        const occupants = npcs.filter(n => n.brain?.home === house);
-        if (occupants.length < 4) {
+        const count = houseOccupants.get(house) || 0;
+        if (count < 4) {
           npc.brain.home = house;
-          const slot = occupants.length;
+          const slot = count;
           npc.brain.bedPosition = {
             x: house.x + 2 + (slot % 2),
             y: house.y + 2 + Math.floor(slot / 2)
           };
           npc.brain.setThoughtBubble(`🏡 ¡Me he mudado a ${house.name}!`, 140);
+          houseOccupants.set(house, count + 1);
           break;
         }
       }

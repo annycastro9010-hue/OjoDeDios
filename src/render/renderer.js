@@ -4,6 +4,13 @@ import { sprites } from './sprites.js';
 import { vfx } from './fx.js';
 import { dayCycle } from '../sim/time.js';
 
+// Paleta pre-calculada de 32 tonos de agua para eliminar Math.sin y strings dinámicos en el bucle
+const WATER_PALETTE = [];
+for (let i = 0; i < 32; i++) {
+  const wave = Math.sin((i / 32) * Math.PI * 2) * 14;
+  WATER_PALETTE.push(`rgb(36, ${Math.round(145 + wave)}, ${Math.round(235 + wave)})`);
+}
+
 export class GameRenderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -32,14 +39,25 @@ export class GameRenderer {
     // Aplicar transformación de cámara (Zoom y Posición)
     camera.applyTransform(ctx);
 
-    // 2. Renderizar Cuadrícula Celular Temática
+    // 2. Renderizar Cuadrícula Celular Temática con VIEWPORT CULLING
     const w = grid.width;
     const h = grid.height;
     const ts = this.tileSize;
     const treeCanopies = []; // Registrar copas elevadas de árboles para pase Y-Sort
 
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
+    // VIEWPORT CULLING: Calcular límites visibles en celdas de la simulación
+    const topLeft = camera.screenToWorld(0, 0);
+    const bottomRight = camera.screenToWorld(this.canvas.width, this.canvas.height);
+    const margin = 4; // Margen de celdas para bordes y sombras
+    const startTileX = Math.max(0, Math.floor(topLeft.x / ts) - margin);
+    const endTileX = Math.min(w - 1, Math.ceil(bottomRight.x / ts) + margin);
+    const startTileY = Math.max(0, Math.floor(topLeft.y / ts) - margin);
+    const endTileY = Math.min(h - 1, Math.ceil(bottomRight.y / ts) + margin);
+
+    const waterPhase = Math.floor(this.waterTime * 8);
+
+    for (let y = startTileY; y <= endTileY; y++) {
+      for (let x = startTileX; x <= endTileX; x++) {
         const elem = grid.get(x, y);
         if (elem === ELEM.EMPTY) continue;
 
@@ -49,8 +67,8 @@ export class GameRenderer {
         // A. AGUA SEGÚN ERA
         // A. AGUA MINISH CAP (AZUL LUMINOSO CON RELIEVE Y ONDAS)
         if (elem === ELEM.WATER) {
-          const wave = Math.sin(x * 0.45 + this.waterTime) * 14;
-          ctx.fillStyle = `rgb(36, ${145 + Math.floor(wave)}, ${235 + Math.floor(wave)})`;
+          const waveIdx = (x * 3 + waterPhase) & 31;
+          ctx.fillStyle = WATER_PALETTE[waveIdx];
           ctx.fillRect(px, py, ts, ts);
 
           // Destello y espuma de agua
@@ -547,41 +565,51 @@ export class GameRenderer {
       }
     }
 
-    // 3. Renderizar Estructuras y Decorados Temáticos Icónicos de la Era
-    this.renderEraLandmarks(ctx, grid, eraId);
+    // Límites en píxeles para descarte (culling) de entidades y decorados fuera de pantalla
+    const minPxX = topLeft.x - 48;
+    const maxPxX = bottomRight.x + 48;
+    const minPxY = topLeft.y - 48;
+    const maxPxY = bottomRight.y + 48;
+
+    // 3. Renderizar Estructuras y Decorados Temáticos Icónicos de la Era (descartando fuera de pantalla)
+    this.renderEraLandmarks(ctx, grid, eraId, minPxX, maxPxX, minPxY, maxPxY);
 
     // 4. Renderizar Conos de Visión de Policías y Patrullas
     for (const npc of npcs) {
-      if (npc.type === 'police' || npc.type === 'police_cuadrante') {
+      if ((npc.type === 'police' || npc.type === 'police_cuadrante') &&
+          npc.x >= minPxX && npc.x <= maxPxX && npc.y >= minPxY && npc.y <= maxPxY) {
         sprites.drawVisionCone(ctx, npc.x, npc.y, npc.direction);
       }
     }
 
-    // 5. Renderizar Edificios con Nombres
+    // 5. Renderizar Edificios con Nombres (solo visibles)
     ctx.font = 'bold 8px sans-serif';
     ctx.textAlign = 'center';
     for (const b of grid.buildingLocations) {
       if (b.showName === false || !b.name) continue;
       const bCenterX = b.x * ts + (b.w ? (b.w * ts) / 2 : 12);
+      const bY = b.y * ts;
+      if (bCenterX < minPxX || bCenterX > maxPxX || bY < minPxY || bY > maxPxY) continue;
       // Sombra de texto
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-      ctx.fillText(b.name, bCenterX + 1, b.y * ts - 4 + 1);
+      ctx.fillText(b.name, bCenterX + 1, bY - 4 + 1);
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(b.name, bCenterX, b.y * ts - 4);
+      ctx.fillText(b.name, bCenterX, bY - 4);
     }
 
     // 6. Renderizado Unificado con Ordenación Y (Y-Sorting para Profundidad 2.5D Real)
-    // Agrupa NPCs, Animales y Copas de Árboles para que los objetos detrás se oculten naturalmente
+    // Agrupa NPCs, Animales y Copas de Árboles dentro de pantalla
     const renderList = [];
 
     for (const npc of npcs) {
+      if (npc.x < minPxX || npc.x > maxPxX || npc.y < minPxY || npc.y > maxPxY) continue;
       renderList.push({ type: 'npc', sortY: npc.y + 13, item: npc });
     }
     for (const animal of animals) {
+      if (animal.x < minPxX || animal.x > maxPxX || animal.y < minPxY || animal.y > maxPxY) continue;
       renderList.push({ type: 'animal', sortY: animal.y + 12, item: animal });
     }
     for (const tree of treeCanopies) {
-      // El punto de clasificación es la base del tronco (y + 7)
       renderList.push({ type: 'tree', sortY: tree.y + 7, item: tree });
     }
 
@@ -736,13 +764,14 @@ export class GameRenderer {
     camera.restoreTransform(ctx);
   }
 
-  // 🏛️ Renderizado de Estructuras y Decorados Temáticos Icónicos por Era
-  renderEraLandmarks(ctx, grid, eraId) {
+  // 🏛️ Renderizado de Estructuras y Decorados Temáticos Icónicos por Era (con descarte de visión)
+  renderEraLandmarks(ctx, grid, eraId, minPxX = -Infinity, maxPxX = Infinity, minPxY = -Infinity, maxPxY = Infinity) {
     const ts = this.tileSize;
 
     for (const b of grid.buildingLocations) {
       const bx = b.x * ts;
       const by = b.y * ts;
+      if (bx < minPxX - 70 || bx > maxPxX + 70 || by < minPxY - 70 || by > maxPxY + 70) continue;
 
       // ☮️ AÑOS 70: ESCENARIO MUSICAL DE BOB MARLEY & FESTIVAL
       if (b.name.includes("Escenario de Bob Marley")) {

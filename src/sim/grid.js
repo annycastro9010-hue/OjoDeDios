@@ -1,6 +1,12 @@
 import { ELEM, ELEM_PROPS } from './elements.js';
 import { sound } from '../audio/soundFX.js';
 
+// Tablas estáticas reutilizables para evitar asignaciones de memoria (Zero-GC)
+const CARDINAL_DX = [1, -1, 0, 0];
+const CARDINAL_DY = [0, 0, 1, -1];
+const FIRE_DX = [1, -1, 0, 0, 1, -1];
+const FIRE_DY = [0, 0, 1, -1, -1, -1];
+
 export class SimulationGrid {
   constructor(width = 140, height = 90) {
     this.width = width;
@@ -10,6 +16,7 @@ export class SimulationGrid {
     this.updated = new Uint8Array(width * height);
     this.footsteps = new Uint8Array(width * height); // Pisadas acumuladas para trilladas orgánicas
     this.soundCooldown = 0;
+    this.tickCount = 0;
 
     this.buildingLocations = []; // Puntos clave (Almacén clandestino, puerto)
     this.initWorld();
@@ -287,6 +294,7 @@ export class SimulationGrid {
 
   // Actualización de física celular (60 FPS)
   step() {
+    this.tickCount++;
     this.updated.fill(0);
     if (this.soundCooldown > 0) this.soundCooldown--;
 
@@ -305,20 +313,15 @@ export class SimulationGrid {
         const elem = this.grid[idx];
         if (elem === ELEM.EMPTY) continue;
 
+        const rOffset = (x * 7 + y * 13 + this.tickCount) & 3;
+
         // ================= 1. AGUA (Comportamiento Cenital / Isótropo) =================
         if (elem === ELEM.WATER) {
-          // Vecinos cardinales en 4 direcciones (N, S, E, O)
-          const neighbors = [
-            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
-          ];
-          // Desordenar para evitar cualquier sesgo direccional
-          for (let i = neighbors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
-          }
-
           let handled = false;
-          for (const [nx, ny] of neighbors) {
+          for (let k = 0; k < 4; k++) {
+            const dir = (rOffset + k) & 3;
+            const nx = x + CARDINAL_DX[dir];
+            const ny = y + CARDINAL_DY[dir];
             if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
             const target = this.get(nx, ny);
 
@@ -343,7 +346,10 @@ export class SimulationGrid {
           if (handled) continue;
 
           // Hidrata tierra seca adyacente para convertirla en tierra fértil de cultivo
-          for (const [nx, ny] of neighbors) {
+          for (let k = 0; k < 4; k++) {
+            const dir = (rOffset + k) & 3;
+            const nx = x + CARDINAL_DX[dir];
+            const ny = y + CARDINAL_DY[dir];
             if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
             if (this.get(nx, ny) === ELEM.DIRT && Math.random() < 0.08) {
               this.set(nx, ny, ELEM.FERTILE_DIRT);
@@ -352,7 +358,10 @@ export class SimulationGrid {
 
           // Expansión fluida superficial únicamente a celdas vacías inmediatas (sin gravedad hacia el sur)
           if (Math.random() < 0.15) {
-            for (const [nx, ny] of neighbors) {
+            for (let k = 0; k < 4; k++) {
+              const dir = (rOffset + k) & 3;
+              const nx = x + CARDINAL_DX[dir];
+              const ny = y + CARDINAL_DY[dir];
               if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
               if (this.get(nx, ny) === ELEM.EMPTY) {
                 this.set(nx, ny, ELEM.WATER);
@@ -365,16 +374,11 @@ export class SimulationGrid {
 
         // ================= 2. LAVA / MAGMA (Comportamiento Cenital) =================
         else if (elem === ELEM.LAVA) {
-          const neighbors = [
-            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
-          ];
-          for (let i = neighbors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
-          }
-
           let solidified = false;
-          for (const [nx, ny] of neighbors) {
+          for (let k = 0; k < 4; k++) {
+            const dir = (rOffset + k) & 3;
+            const nx = x + CARDINAL_DX[dir];
+            const ny = y + CARDINAL_DY[dir];
             if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
             const target = this.get(nx, ny);
 
@@ -397,7 +401,10 @@ export class SimulationGrid {
 
           // Flujo viscoso lento hacia celdas vacías (isótropo, sin caer hacia abajo)
           if (Math.random() < 0.08) {
-            for (const [nx, ny] of neighbors) {
+            for (let k = 0; k < 4; k++) {
+              const dir = (rOffset + k) & 3;
+              const nx = x + CARDINAL_DX[dir];
+              const ny = y + CARDINAL_DY[dir];
               if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
               if (this.get(nx, ny) === ELEM.EMPTY) {
                 this.set(nx, ny, ELEM.LAVA);
@@ -422,11 +429,12 @@ export class SimulationGrid {
           this.life[idx] = life;
 
           // Propagar a vecinos inflamables (incluyendo troncos de madera)
-          const neighbors = [
-            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1],
-            [x + 1, y - 1], [x - 1, y - 1]
-          ];
-          for (const [nx, ny] of neighbors) {
+          const fOffset = (x * 5 + y * 11 + this.tickCount) % 6;
+          for (let k = 0; k < 6; k++) {
+            const dir = (fOffset + k) % 6;
+            const nx = x + FIRE_DX[dir];
+            const ny = y + FIRE_DY[dir];
+            if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) continue;
             const ne = this.get(nx, ny);
             if (ne === ELEM.PLANT || ne === ELEM.PLANT_BLOOM || ne === ELEM.SEED) {
               if (Math.random() < 0.25) {
@@ -475,8 +483,11 @@ export class SimulationGrid {
         // ================= 6. CRECIMIENTO BOTÁNICO =================
         else if (elem === ELEM.SEED) {
           const below = this.get(x, y + 1);
-          const sides = [this.get(x - 1, y), this.get(x + 1, y), below];
-          const hasWater = sides.some(s => s === ELEM.WATER || s === ELEM.FERTILE_DIRT);
+          const left = this.get(x - 1, y);
+          const right = this.get(x + 1, y);
+          const hasWater = (left === ELEM.WATER || left === ELEM.FERTILE_DIRT ||
+                            right === ELEM.WATER || right === ELEM.FERTILE_DIRT ||
+                            below === ELEM.WATER || below === ELEM.FERTILE_DIRT);
 
           if (hasWater) {
             this.life[idx] += 1;
