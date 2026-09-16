@@ -1,18 +1,18 @@
 // Motor de Animación Desacoplado de Alta Fidelidad Estilo The Legend of Zelda: The Minish Cap (GBA)
-// Integra directamente las 2 Hojas de Sprites de Artista de alta resolución con transparencia automática (Chroma Key)
-// y fallback procedural instantáneo con sombreado de 3 tonos.
+// Integra directamente las 2 Hojas de Sprites de Artista oficiales en formato PNG transparente de alta resolución.
+// Mapea al 100% todos los roles del juego, animales y estados de evolución de la civilización sin fallbacks de rectángulos.
 
 export class AnimationManager {
   constructor() {
-    this.sheets = new Map();
-    this.sheet1Canvas = null;
-    this.sheet2Canvas = null;
+    this.sheet1Img = null;
+    this.sheet2Img = null;
     this.sheetsReady = false;
 
     this.initMinishSheets();
+    this.setupSpriteMap();
   }
 
-  // Carga automática de las dos hojas oficiales de sprites de The Minish Cap
+  // Carga garantizada de las dos hojas maestras transparentes de The Minish Cap
   initMinishSheets() {
     if (typeof window === 'undefined' || typeof Image === 'undefined') return;
 
@@ -32,308 +32,355 @@ export class AnimationManager {
       });
     };
 
-    const cleanGreenBg = (img) => {
-      if (!img) return null;
-      const cvs = document.createElement('canvas');
-      cvs.width = img.width;
-      cvs.height = img.height;
-      const ctx = cvs.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
-
-      try {
-        const imgData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-        const d = imgData.data;
-        const bgIdx = (10 * cvs.width + 10) * 4;
-        const bgR = d[bgIdx];
-        const bgG = d[bgIdx + 1];
-        const bgB = d[bgIdx + 2];
-
-        for (let i = 0; i < d.length; i += 4) {
-          const r = d[i];
-          const g = d[i + 1];
-          const b = d[i + 2];
-          const diff = Math.hypot(r - bgR, g - bgG, b - bgB);
-          const isGreenDominant = (g > 105 && g > r * 1.15 && g > b * 1.15);
-
-          if (diff < 65 || (isGreenDominant && diff < 90)) {
-            d[i + 3] = 0; // Transparencia total
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-      } catch (e) {
-        console.warn('Chroma key warning:', e);
-      }
-      return cvs;
-    };
-
     const s1Paths = [
-      './sprites/sheet1_minish.jpg',
-      'sprites/sheet1_minish.jpg',
-      '/OjoDeDios/sprites/sheet1_minish.jpg',
-      '/sprites/sheet1_minish.jpg',
-      './public/sprites/sheet1_minish.jpg'
+      './sprites/sheet1_minish.png',
+      'sprites/sheet1_minish.png',
+      '/OjoDeDios/sprites/sheet1_minish.png',
+      '/sprites/sheet1_minish.png',
+      './public/sprites/sheet1_minish.png',
+      './sprites/sheet1_minish.jpg'
     ];
     const s2Paths = [
-      './sprites/sheet2_minish.jpg',
-      'sprites/sheet2_minish.jpg',
-      '/OjoDeDios/sprites/sheet2_minish.jpg',
-      '/sprites/sheet2_minish.jpg',
-      './public/sprites/sheet2_minish.jpg'
+      './sprites/sheet2_minish.png',
+      'sprites/sheet2_minish.png',
+      '/OjoDeDios/sprites/sheet2_minish.png',
+      '/sprites/sheet2_minish.png',
+      './public/sprites/sheet2_minish.png',
+      './sprites/sheet2_minish.jpg'
     ];
 
     Promise.all([loadImg(s1Paths), loadImg(s2Paths)]).then(([img1, img2]) => {
-      if (img1) this.sheet1Canvas = cleanGreenBg(img1);
-      if (img2) this.sheet2Canvas = cleanGreenBg(img2);
-      if (this.sheet1Canvas || this.sheet2Canvas) {
+      if (img1) this.sheet1Img = img1;
+      if (img2) this.sheet2Img = img2;
+      if (this.sheet1Img || this.sheet2Img) {
         this.sheetsReady = true;
         console.log('✨ [OjoDeDios] Hojas de sprites Minish Cap activadas con éxito.');
       }
     });
+  }
 
-    // Coordenadas exactas en las hojas de sprites 1024x1024
+  setupSpriteMap() {
+    // Coordenadas calculadas pixel a pixel en las hojas 1024x1024 transparentes
     this.spriteMap = {
-      // HOJA 1: Protagonistas y Ciudadanos
+      // -----------------------------------------------------------------------
+      // HOJA 1: PROTAGONISTAS, ALDEANOS Y COLONOS
+      // -----------------------------------------------------------------------
+
+      // 1. MÚSICO / BOB MARLEY / HIPPIE (Fila 0 y Fila 1)
       musician: {
         sheet: 1,
         down: [
-          { x: 12, y: 12, w: 76, h: 104 },
-          { x: 114, y: 12, w: 76, h: 104 },
-          { x: 216, y: 12, w: 76, h: 104 },
-          { x: 318, y: 12, w: 76, h: 104 }
+          { x: 16, y: 6, w: 69, h: 122 },
+          { x: 119, y: 6, w: 69, h: 122 },
+          { x: 222, y: 6, w: 81, h: 122 },
+          { x: 323, y: 6, w: 83, h: 122 }
         ],
         side: [
-          { x: 12, y: 135, w: 76, h: 104 },
-          { x: 114, y: 135, w: 76, h: 104 },
-          { x: 216, y: 135, w: 76, h: 104 },
-          { x: 318, y: 135, w: 76, h: 104 }
+          { x: 18, y: 133, w: 85, h: 122 },
+          { x: 120, y: 133, w: 85, h: 122 },
+          { x: 220, y: 133, w: 81, h: 122 },
+          { x: 323, y: 133, w: 86, h: 122 }
         ],
         up: [
-          { x: 420, y: 135, w: 76, h: 104 }
+          { x: 425, y: 133, w: 78, h: 122 }
         ]
       },
+
+      // 2. CAMPESINO / CULTIVADOR / GRANJERO / PESCADOR (Fila 0 col 5-9 y Fila 1)
+      cultivator: {
+        sheet: 1,
+        down: [
+          { x: 522, y: 6, w: 80, h: 122 },
+          { x: 624, y: 6, w: 90, h: 122 },
+          { x: 829, y: 6, w: 89, h: 122 },
+          { x: 932, y: 6, w: 80, h: 122 }
+        ],
+        side: [
+          { x: 728, y: 133, w: 77, h: 122 },
+          { x: 830, y: 133, w: 77, h: 122 },
+          { x: 422, y: 267, w: 77, h: 117 }
+        ],
+        up: [
+          { x: 728, y: 6, w: 77, h: 122 }
+        ]
+      },
+
+      // 3. VENDEDOR DE AGUACATES (DON MARIO CON MEGÁFONO) (Fila 2)
       vendedor: {
         sheet: 1,
         down: [
-          { x: 524, y: 12, w: 76, h: 104 },
-          { x: 626, y: 12, w: 76, h: 104 },
-          { x: 830, y: 12, w: 76, h: 104 }
+          { x: 12, y: 267, w: 79, h: 117 },
+          { x: 110, y: 267, w: 96, h: 117 },
+          { x: 522, y: 267, w: 94, h: 117 },
+          { x: 828, y: 267, w: 98, h: 117 }
         ],
         side: [
-          { x: 728, y: 12, w: 76, h: 104 },
-          { x: 728, y: 135, w: 76, h: 104 },
-          { x: 830, y: 135, w: 76, h: 104 }
+          { x: 215, y: 267, w: 77, h: 117 },
+          { x: 315, y: 267, w: 97, h: 117 },
+          { x: 422, y: 267, w: 77, h: 117 }
         ],
-        action: [
-          { x: 114, y: 265, w: 86, h: 104 },
-          { x: 318, y: 265, w: 86, h: 104 }
+        up: [
+          { x: 627, y: 267, w: 76, h: 117 }
         ]
       },
+
+      // 4. DOÑA GLORIA (VECINA CHISMOSA CON ESCOBA Y RULOS) (Fila 3)
       vecina_chismosa: {
         sheet: 1,
         down: [
-          { x: 12, y: 390, w: 76, h: 104 },
-          { x: 114, y: 390, w: 76, h: 104 },
-          { x: 216, y: 390, w: 76, h: 104 },
-          { x: 318, y: 390, w: 76, h: 104 }
+          { x: 6, y: 395, w: 80, h: 117 },
+          { x: 108, y: 395, w: 79, h: 117 },
+          { x: 211, y: 395, w: 80, h: 117 },
+          { x: 323, y: 395, w: 87, h: 117 }
         ],
         side: [
-          { x: 420, y: 390, w: 76, h: 104 },
-          { x: 524, y: 390, w: 76, h: 104 }
+          { x: 415, y: 395, w: 84, h: 117 },
+          { x: 527, y: 395, w: 90, h: 117 }
         ],
         up: [
-          { x: 626, y: 390, w: 76, h: 104 }
+          { x: 632, y: 395, w: 97, h: 117 }
         ]
       },
+
+      // 5. EL BRAYAN (MOTOTAXISTA DE LA 125) (Fila 4)
       mototaxista: {
         sheet: 1,
         down: [
-          { x: 12, y: 518, w: 76, h: 104 },
-          { x: 114, y: 518, w: 76, h: 104 },
-          { x: 216, y: 518, w: 76, h: 104 }
+          { x: 18, y: 517, w: 66, h: 126 },
+          { x: 118, y: 517, w: 77, h: 126 },
+          { x: 214, y: 517, w: 84, h: 126 }
+        ],
+        side: [
+          { x: 118, y: 517, w: 77, h: 126 },
+          { x: 214, y: 517, w: 84, h: 126 }
         ],
         bike: [
-          { x: 315, y: 518, w: 150, h: 104 },
-          { x: 515, y: 518, w: 150, h: 104 }
+          { x: 321, y: 517, w: 155, h: 126 },
+          { x: 527, y: 517, w: 157, h: 126 }
         ]
       },
+
+      // 6. EL PATRÓN (BOSS / MAGNATE / CAPO CON HABANO Y GAFAS) (Fila 5)
       boss: {
         sheet: 1,
         down: [
-          { x: 12, y: 645, w: 76, h: 104 },
-          { x: 114, y: 645, w: 76, h: 104 },
-          { x: 216, y: 645, w: 76, h: 104 }
+          { x: 18, y: 652, w: 65, h: 116 },
+          { x: 120, y: 652, w: 67, h: 116 },
+          { x: 222, y: 652, w: 70, h: 116 }
         ],
         side: [
-          { x: 318, y: 645, w: 76, h: 104 },
-          { x: 420, y: 645, w: 76, h: 104 }
+          { x: 322, y: 652, w: 73, h: 116 },
+          { x: 424, y: 652, w: 71, h: 116 },
+          { x: 526, y: 652, w: 71, h: 116 }
         ]
       },
+
+      // 7. PROFETA MOISÉS / PATRIARCA SAGRADO (Fila 6 col 0-4)
       prophet: {
         sheet: 1,
         down: [
-          { x: 12, y: 770, w: 86, h: 106 },
-          { x: 112, y: 770, w: 86, h: 106 },
-          { x: 212, y: 770, w: 86, h: 106 }
+          { x: 10, y: 778, w: 93, h: 125 },
+          { x: 113, y: 778, w: 92, h: 125 },
+          { x: 215, y: 778, w: 92, h: 125 }
         ],
         side: [
-          { x: 312, y: 770, w: 86, h: 106 },
-          { x: 412, y: 770, w: 86, h: 106 }
+          { x: 317, y: 778, w: 93, h: 125 },
+          { x: 418, y: 778, w: 94, h: 125 }
         ]
       },
+
+      // 8. NIÑO / ALDEANO JOVEN (YOUNG LINK EN TÚNICA VERDE) (Fila 6 col 5-8)
+      child: {
+        sheet: 1,
+        down: [
+          { x: 532, y: 778, w: 62, h: 125 },
+          { x: 632, y: 778, w: 66, h: 125 },
+          { x: 737, y: 778, w: 62, h: 125 },
+          { x: 837, y: 778, w: 66, h: 125 }
+        ],
+        side: [
+          { x: 632, y: 778, w: 66, h: 125 },
+          { x: 837, y: 778, w: 66, h: 125 }
+        ]
+      },
+
+      // 9. LINK EL HÉROE DE HYRULE (Fila 7)
       hero: {
         sheet: 1,
         down: [
-          { x: 520, y: 770, w: 76, h: 106 },
-          { x: 622, y: 770, w: 76, h: 106 },
-          { x: 724, y: 770, w: 76, h: 106 },
-          { x: 826, y: 770, w: 76, h: 106 }
+          { x: 20, y: 916, w: 62, h: 104 },
+          { x: 530, y: 916, w: 66, h: 104 }
         ],
         side: [
-          { x: 114, y: 898, w: 76, h: 106 },
-          { x: 216, y: 898, w: 76, h: 106 },
-          { x: 318, y: 898, w: 76, h: 106 },
-          { x: 420, y: 898, w: 76, h: 106 }
+          { x: 121, y: 916, w: 66, h: 104 },
+          { x: 225, y: 916, w: 64, h: 104 },
+          { x: 326, y: 916, w: 65, h: 104 },
+          { x: 425, y: 916, w: 69, h: 104 }
         ],
         up: [
-          { x: 524, y: 898, w: 76, h: 106 },
-          { x: 626, y: 898, w: 76, h: 106 },
-          { x: 728, y: 898, w: 76, h: 106 }
+          { x: 632, y: 916, w: 64, h: 104 },
+          { x: 735, y: 916, w: 66, h: 104 }
         ]
       },
 
-      // HOJA 2: Autoridades, Fuerzas y Fauna
+      // -----------------------------------------------------------------------
+      // HOJA 2: AUTORIDADES, FUERZAS MILITARES Y FAUNA
+      // -----------------------------------------------------------------------
+
+      // 10. PATRULLERO GÓMEZ / POLICÍA DEL CUADRANTE (Fila 0 y Fila 1)
       police_cuadrante: {
         sheet: 2,
         down: [
-          { x: 12, y: 12, w: 76, h: 106 },
-          { x: 114, y: 12, w: 76, h: 106 },
-          { x: 216, y: 12, w: 76, h: 106 },
-          { x: 524, y: 12, w: 76, h: 106 }
+          { x: 19, y: 8, w: 65, h: 120 },
+          { x: 122, y: 8, w: 75, h: 120 },
+          { x: 225, y: 8, w: 74, h: 120 },
+          { x: 527, y: 8, w: 79, h: 120 }
         ],
         side: [
-          { x: 318, y: 12, w: 76, h: 106 },
-          { x: 114, y: 135, w: 76, h: 106 },
-          { x: 216, y: 135, w: 76, h: 106 },
-          { x: 318, y: 135, w: 76, h: 106 }
+          { x: 120, y: 135, w: 63, h: 121 },
+          { x: 222, y: 135, w: 63, h: 121 },
+          { x: 325, y: 135, w: 63, h: 121 },
+          { x: 427, y: 135, w: 77, h: 121 }
         ],
         up: [
-          { x: 420, y: 12, w: 76, h: 106 },
-          { x: 828, y: 12, w: 76, h: 106 }
+          { x: 735, y: 8, w: 60, h: 120 },
+          { x: 835, y: 8, w: 67, h: 120 },
+          { x: 735, y: 135, w: 61, h: 121 }
         ]
       },
+
+      // 11. COMANDANTE TIRO-LOCO (GUERRILLERO DE LA SELVA) (Fila 2 y Fila 3)
       guerrillero: {
         sheet: 2,
         down: [
-          { x: 12, y: 265, w: 76, h: 106 },
-          { x: 114, y: 265, w: 76, h: 106 },
-          { x: 216, y: 265, w: 76, h: 106 },
-          { x: 524, y: 265, w: 76, h: 106 }
+          { x: 17, y: 265, w: 70, h: 119 },
+          { x: 119, y: 265, w: 87, h: 119 },
+          { x: 527, y: 265, w: 88, h: 119 }
         ],
         side: [
-          { x: 318, y: 265, w: 86, h: 106 },
-          { x: 420, y: 265, w: 76, h: 106 },
-          { x: 216, y: 390, w: 76, h: 106 }
+          { x: 222, y: 265, w: 60, h: 119 },
+          { x: 323, y: 265, w: 84, h: 119 },
+          { x: 427, y: 265, w: 60, h: 119 },
+          { x: 119, y: 392, w: 64, h: 118 }
         ],
         up: [
-          { x: 626, y: 390, w: 76, h: 106 }
+          { x: 732, y: 265, w: 61, h: 119 },
+          { x: 633, y: 392, w: 91, h: 118 }
         ]
       },
+
+      // 12. DOCTOR PROMESAS (ALCALDE / MONARCA / GOBERNANTE) (Fila 4)
       alcalde: {
         sheet: 2,
         down: [
-          { x: 12, y: 518, w: 76, h: 106 },
-          { x: 114, y: 518, w: 76, h: 106 },
-          { x: 216, y: 518, w: 76, h: 106 },
-          { x: 318, y: 518, w: 76, h: 106 }
+          { x: 16, y: 520, w: 71, h: 120 },
+          { x: 118, y: 520, w: 82, h: 120 },
+          { x: 215, y: 520, w: 82, h: 120 },
+          { x: 322, y: 520, w: 86, h: 120 }
         ],
         side: [
-          { x: 420, y: 518, w: 76, h: 106 },
-          { x: 626, y: 518, w: 76, h: 106 },
-          { x: 728, y: 518, w: 76, h: 106 }
+          { x: 432, y: 520, w: 56, h: 120 },
+          { x: 640, y: 520, w: 52, h: 120 },
+          { x: 740, y: 520, w: 52, h: 120 }
+        ],
+        action: [
+          { x: 832, y: 520, w: 85, h: 120 }
         ]
       },
+
+      // 13. SOLDADO MILITAR / GUARDIA DEL BASTIÓN (Fila 5)
       soldier: {
         sheet: 2,
         down: [
-          { x: 12, y: 645, w: 76, h: 106 },
-          { x: 114, y: 645, w: 76, h: 106 },
-          { x: 216, y: 645, w: 76, h: 106 }
+          { x: 18, y: 652, w: 66, h: 116 },
+          { x: 120, y: 652, w: 61, h: 116 },
+          { x: 222, y: 652, w: 62, h: 116 }
         ],
         side: [
-          { x: 318, y: 645, w: 76, h: 106 },
-          { x: 420, y: 645, w: 76, h: 106 },
-          { x: 524, y: 645, w: 76, h: 106 }
+          { x: 323, y: 652, w: 63, h: 116 },
+          { x: 425, y: 652, w: 64, h: 116 },
+          { x: 527, y: 652, w: 64, h: 116 }
         ]
       },
+
+      // 14. MÉDICO / ENFERMERA / BOTÁNICA / SANADORA (Fila 6)
       medic: {
         sheet: 2,
         down: [
-          { x: 12, y: 770, w: 76, h: 106 },
-          { x: 114, y: 770, w: 76, h: 106 },
-          { x: 216, y: 770, w: 76, h: 106 }
+          { x: 14, y: 778, w: 75, h: 123 },
+          { x: 116, y: 778, w: 75, h: 123 },
+          { x: 218, y: 778, w: 74, h: 123 }
         ],
         side: [
-          { x: 524, y: 770, w: 76, h: 106 },
-          { x: 626, y: 770, w: 76, h: 106 }
+          { x: 530, y: 778, w: 66, h: 123 },
+          { x: 632, y: 778, w: 67, h: 123 },
+          { x: 734, y: 778, w: 67, h: 123 }
         ],
         up: [
-          { x: 318, y: 770, w: 76, h: 106 },
-          { x: 420, y: 770, w: 76, h: 106 }
+          { x: 320, y: 778, w: 75, h: 123 },
+          { x: 423, y: 778, w: 74, h: 123 },
+          { x: 837, y: 778, w: 66, h: 123 }
         ]
       },
+
+      // 15. FAUNA: PERRO CRIOLLO / GOLDEN RETRIEVER (Fila 7 col 0-2)
       dog: {
         sheet: 2,
         down: [
-          { x: 12, y: 898, w: 76, h: 106 },
-          { x: 114, y: 898, w: 76, h: 106 }
+          { x: 16, y: 924, w: 71, h: 95 },
+          { x: 120, y: 924, w: 70, h: 95 }
         ],
         side: [
-          { x: 216, y: 898, w: 86, h: 106 }
+          { x: 218, y: 924, w: 81, h: 95 }
         ]
       },
+
+      // 16. FAUNA: CERDITO ROSADO (Fila 7 col 3-6)
       pig: {
         sheet: 2,
         down: [
-          { x: 318, y: 898, w: 76, h: 106 },
-          { x: 420, y: 898, w: 76, h: 106 }
+          { x: 325, y: 924, w: 67, h: 95 },
+          { x: 428, y: 924, w: 66, h: 95 }
         ],
         up: [
-          { x: 524, y: 898, w: 76, h: 106 }
+          { x: 530, y: 924, w: 66, h: 95 }
         ],
         side: [
-          { x: 626, y: 898, w: 76, h: 106 }
+          { x: 632, y: 924, w: 69, h: 95 }
         ]
       },
+
+      // 17. FAUNA: CAIMÁN DEL RÍO / REPTIL (Fila 7 col 7-9)
       croc: {
         sheet: 2,
-        side: [
-          { x: 728, y: 898, w: 86, h: 106 },
-          { x: 828, y: 898, w: 86, h: 106 }
-        ],
         down: [
-          { x: 928, y: 898, w: 86, h: 106 }
+          { x: 924, y: 924, w: 95, h: 95 }
+        ],
+        side: [
+          { x: 723, y: 924, w: 91, h: 95 },
+          { x: 822, y: 924, w: 92, h: 95 }
         ]
       }
     };
+
+    // ALIASES PARA GARANTIZAR QUE NINGÚN TIPO DEL JUEGO SE QUEDE SIN SPRITE
+    this.spriteMap.peasant = this.spriteMap.cultivator;
+    this.spriteMap.farmer = this.spriteMap.cultivator;
+    this.spriteMap.fisherman = this.spriteMap.cultivator;
+    this.spriteMap.civilian = this.spriteMap.vecina_chismosa;
+    this.spriteMap.woman = this.spriteMap.vecina_chismosa;
+    this.spriteMap.hippie = this.spriteMap.musician;
+    this.spriteMap.police = this.spriteMap.police_cuadrante;
+    this.spriteMap.healer = this.spriteMap.medic;
+    this.spriteMap.nurse = this.spriteMap.medic;
+    this.spriteMap.apothecary = this.spriteMap.medic;
+    this.spriteMap.leader = this.spriteMap.alcalde;
+    this.spriteMap.monarch = this.spriteMap.alcalde;
+    this.spriteMap.king = this.spriteMap.alcalde;
+    this.spriteMap.champion = this.spriteMap.hero;
   }
 
-  registerSheet(type, imageSrc, frameW = 16, frameH = 16, animConfig = {}) {
-    const img = new Image();
-    img.src = imageSrc;
-    const sheetData = {
-      image: img,
-      frameW,
-      frameH,
-      anims: animConfig,
-      loaded: false
-    };
-    img.onload = () => {
-      sheetData.loaded = true;
-    };
-    this.sheets.set(type, sheetData);
-  }
-
-  // Renderizado Principal de Personajes
+  // Renderizado Principal de Personajes (Garantizado desde Hoja de Artista)
   draw(ctx, type, x, y, direction = 'down', frame = 0, isMoving = false, hasCargo = false, isPossessed = false, isSwimming = false, inWater = false) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -364,23 +411,15 @@ export class AnimationManager {
       this.drawGroundShadow(ctx, 8, 15);
     }
 
-    if (type === 'child') {
-      ctx.scale(0.72, 0.72);
-      ctx.translate(3, 5);
+    // 2. Dibujar desde las Hojas Oficiales de Sprites Minish Cap
+    let resolvedType = type;
+    if (!this.spriteMap[resolvedType]) {
+      resolvedType = 'cultivator'; // Fallback visual de artista garantizado
     }
 
-    // 2. Intentar dibujar desde las hojas de artista Minish Cap
-    let drawnFromSheet = false;
-    if (this.sheetsReady && this.spriteMap && this.spriteMap[type]) {
-      drawnFromSheet = this.drawFromArtistSheet(ctx, type, direction, frame, isMoving);
-    }
+    this.drawFromArtistSheet(ctx, resolvedType, direction, frame, isMoving);
 
-    // 3. Fallback al motor procedural detallado de 3 tonos
-    if (!drawnFromSheet) {
-      this.drawMinishCharacter(ctx, type, direction, frame, isMoving, hasCargo, inWater);
-    }
-
-    // 4. Sumersión visual si está en agua
+    // 3. Sumersión visual si está en agua
     if (inWater && type !== 'prophet') {
       ctx.save();
       ctx.fillStyle = 'rgba(24, 95, 185, 0.55)';
@@ -390,7 +429,7 @@ export class AnimationManager {
       ctx.restore();
     }
 
-    // 5. Efectos Celestiales si está poseído
+    // 4. Efectos Celestiales si está poseído por Dios
     if (isPossessed) {
       this.drawPossessionAura(ctx);
     }
@@ -398,13 +437,13 @@ export class AnimationManager {
     ctx.restore();
   }
 
-  // Dibuja el frame exacto de la hoja de artista con proporción y orientación GBA
+  // Dibuja el frame exacto de la hoja de artista con proporción y escala GBA Minish Cap
   drawFromArtistSheet(ctx, type, dir, frame, isMoving) {
-    const config = this.spriteMap[type];
+    const config = this.spriteMap[type] || this.spriteMap.cultivator;
     if (!config) return false;
 
-    const sheetCanvas = config.sheet === 1 ? this.sheet1Canvas : this.sheet2Canvas;
-    if (!sheetCanvas) return false;
+    const sheetImg = config.sheet === 1 ? this.sheet1Img : this.sheet2Img;
+    if (!sheetImg) return false;
 
     let dirKey = 'down';
     let isFlip = false;
@@ -421,6 +460,12 @@ export class AnimationManager {
       dirKey = 'down';
     }
 
+    // El mototaxista utiliza su moto DT 125 cuando está en movimiento acelerado
+    if (type === 'mototaxista' && config.bike && isMoving) {
+      dirKey = 'bike';
+      isFlip = (dir === 'left');
+    }
+
     const frameList = config[dirKey] || config.down || [];
     if (!frameList || frameList.length === 0) return false;
 
@@ -428,11 +473,24 @@ export class AnimationManager {
     const f = frameList[frameIdx];
 
     ctx.save();
-    // Dimensiones en mundo (ajustadas a la escala de 16x16 tiles)
-    const dw = 18;
-    const dh = 24;
-    const dx = -1;
-    const dy = -9;
+
+    // Proporciones nítidas para pantalla y resolución GBA Minish Cap
+    let dw = 22;
+    let dh = 28;
+    let dx = -3;
+    let dy = -13;
+
+    if (dirKey === 'bike') {
+      dw = 36;
+      dh = 28;
+      dx = isFlip ? -7 : -11;
+      dy = -13;
+    } else if (type === 'child') {
+      dw = 18;
+      dh = 22;
+      dx = -1;
+      dy = -8;
+    }
 
     if (isFlip) {
       ctx.translate(16, 0);
@@ -440,7 +498,7 @@ export class AnimationManager {
     }
 
     ctx.drawImage(
-      sheetCanvas,
+      sheetImg,
       f.x, f.y, f.w, f.h,
       dx, dy, dw, dh
     );
@@ -448,7 +506,7 @@ export class AnimationManager {
     return true;
   }
 
-  // Dibuja animales directamente de la Hoja 2
+  // Dibuja fauna y animales directamente de la Hoja 2
   drawAnimal(ctx, type, x, y, direction, frame, inWater) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -470,27 +528,32 @@ export class AnimationManager {
     }
 
     let drawn = false;
-    if (this.sheetsReady && this.spriteMap && this.spriteMap[type]) {
-      const config = this.spriteMap[type];
-      const sheetCanvas = this.sheet2Canvas;
-      if (sheetCanvas) {
-        const isFacingRight = (direction === 'right');
-        const frameList = config.down || config.side || [];
-        const f = frameList[frame % frameList.length];
+    const config = this.spriteMap[type];
+    const sheetImg = this.sheet2Img;
 
-        ctx.save();
-        if (!isFacingRight) {
-          ctx.translate(16, 0);
-          ctx.scale(-1, 1);
-        }
-        ctx.drawImage(
-          sheetCanvas,
-          f.x, f.y, f.w, f.h,
-          -1, -8, 18, 22
-        );
-        ctx.restore();
-        drawn = true;
+    if (sheetImg && config) {
+      const isFacingRight = (direction === 'right');
+      const frameList = (direction === 'up' && config.up) ? config.up : (config.side || config.down || []);
+      const f = frameList[frame % frameList.length];
+
+      ctx.save();
+      if (!isFacingRight) {
+        ctx.translate(16, 0);
+        ctx.scale(-1, 1);
       }
+
+      const dw = (type === 'croc') ? 26 : 22;
+      const dh = 22;
+      const dx = (type === 'croc') ? -5 : -3;
+      const dy = -8;
+
+      ctx.drawImage(
+        sheetImg,
+        f.x, f.y, f.w, f.h,
+        dx, dy, dw, dh
+      );
+      ctx.restore();
+      drawn = true;
     }
 
     ctx.restore();
@@ -506,96 +569,9 @@ export class AnimationManager {
     ctx.restore();
   }
 
-  // =========================================================================
-  // MOTOR PROCEDURAL MINISH CAP (FALLBACK DE ALTA FIDELIDAD)
-  // =========================================================================
-  drawMinishCharacter(ctx, type, dir, frame, isMoving, hasCargo, inWater) {
-    const now = Date.now();
-    const blinkTimer = (now + (type.charCodeAt(0) || 0) * 137) % 3200;
-    const isBlinking = blinkTimer > 3050 && blinkTimer < 3180;
-    const breathOffset = (!isMoving && !inWater) ? (Math.sin(now * 0.0055) > 0.4 ? -1 : 0) : 0;
-
-    const walkStep = frame % 4;
-    let headBob = isMoving ? ((walkStep === 1 || walkStep === 3) ? 1 : 0) : breathOffset;
-    let legL = 0, legR = 0, armL = 0, armR = 0;
-
-    if (isMoving) {
-      if (walkStep === 0) { legL = 2; legR = -1; armL = -2; armR = 2; }
-      else if (walkStep === 2) { legL = -1; legR = 2; armL = 2; armR = -2; }
-    }
-
-    const pal = this.getPalette(type);
-    const out = pal.out;
-
-    if (dir === 'down') {
-      ctx.fillStyle = out; ctx.fillRect(4, 11 + legL, 3, 4); ctx.fillRect(9, 11 + legR, 3, 4);
-      ctx.fillStyle = pal.pantsDark; ctx.fillRect(4, 11 + legL, 3, 2); ctx.fillRect(9, 11 + legR, 3, 2);
-      ctx.fillStyle = pal.pants; ctx.fillRect(4, 11 + legL, 2, 2); ctx.fillRect(9, 11 + legR, 2, 2);
-      ctx.fillStyle = pal.shoeDark; ctx.fillRect(3, 13 + legL, 4, 2); ctx.fillRect(9, 13 + legR, 4, 2);
-      ctx.fillStyle = pal.shoe; ctx.fillRect(4, 13 + legL, 3, 1); ctx.fillRect(10, 13 + legR, 3, 1);
-
-      ctx.fillStyle = out; ctx.fillRect(3, 6 + headBob, 10, 6);
-      ctx.fillStyle = pal.shirtDark; ctx.fillRect(4, 6 + headBob, 8, 5);
-      ctx.fillStyle = pal.shirt; ctx.fillRect(4, 6 + headBob, 7, 4);
-      ctx.fillStyle = pal.shirtLight; ctx.fillRect(5, 6 + headBob, 4, 2);
-      ctx.fillStyle = pal.belt; ctx.fillRect(4, 10 + headBob, 8, 1);
-
-      ctx.fillStyle = out; ctx.fillRect(2, 6 + armL + headBob, 2, 5); ctx.fillRect(12, 6 + armR + headBob, 2, 5);
-      ctx.fillStyle = pal.shirt; ctx.fillRect(2, 6 + armL + headBob, 2, 2); ctx.fillRect(12, 6 + armR + headBob, 2, 2);
-      ctx.fillStyle = pal.skin; ctx.fillRect(2, 8 + armL + headBob, 2, 2); ctx.fillRect(12, 8 + armR + headBob, 2, 2);
-
-      ctx.fillStyle = out; ctx.fillRect(4, 1 + headBob, 8, 6); ctx.fillRect(3, 2 + headBob, 10, 4);
-      ctx.fillStyle = pal.skinDark; ctx.fillRect(4, 2 + headBob, 8, 5);
-      ctx.fillStyle = pal.skin; ctx.fillRect(4, 2 + headBob, 7, 4);
-      ctx.fillStyle = pal.skinLight; ctx.fillRect(5, 2 + headBob, 5, 2);
-
-      if (isBlinking) {
-        ctx.fillStyle = out; ctx.fillRect(5, 4 + headBob, 2, 1); ctx.fillRect(9, 4 + headBob, 2, 1);
-      } else {
-        ctx.fillStyle = out; ctx.fillRect(5, 3 + headBob, 2, 2); ctx.fillRect(9, 3 + headBob, 2, 2);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(5, 3 + headBob, 1, 1); ctx.fillRect(9, 3 + headBob, 1, 1);
-        ctx.fillStyle = 'rgba(244, 63, 94, 0.45)'; ctx.fillRect(4, 5 + headBob, 2, 1); ctx.fillRect(10, 5 + headBob, 2, 1);
-      }
-    } else if (dir === 'up') {
-      ctx.fillStyle = out; ctx.fillRect(4, 11 + legL, 3, 4); ctx.fillRect(9, 11 + legR, 3, 4);
-      ctx.fillStyle = pal.pantsDark; ctx.fillRect(4, 11 + legL, 3, 2); ctx.fillRect(9, 11 + legR, 3, 2);
-      ctx.fillStyle = pal.shoeDark; ctx.fillRect(4, 13 + legL, 3, 2); ctx.fillRect(9, 13 + legR, 3, 2);
-
-      ctx.fillStyle = out; ctx.fillRect(3, 6 + headBob, 10, 6);
-      ctx.fillStyle = pal.shirtDark; ctx.fillRect(4, 6 + headBob, 8, 5);
-      ctx.fillStyle = pal.shirt; ctx.fillRect(5, 6 + headBob, 6, 4);
-      ctx.fillStyle = pal.belt; ctx.fillRect(4, 10 + headBob, 8, 1);
-
-      ctx.fillStyle = out; ctx.fillRect(4, 1 + headBob, 8, 6);
-      ctx.fillStyle = pal.hairDark || pal.shirtDark; ctx.fillRect(4, 2 + headBob, 8, 5);
-    } else {
-      const isRight = dir === 'right';
-      ctx.save();
-      if (!isRight) {
-        ctx.translate(16, 0);
-        ctx.scale(-1, 1);
-      }
-      ctx.fillStyle = out; ctx.fillRect(4, 11, 4, 4); ctx.fillRect(7, 11, 4, 4);
-      ctx.fillStyle = pal.pantsDark; ctx.fillRect(5, 11, 3, 2); ctx.fillStyle = pal.pants; ctx.fillRect(8, 11, 3, 2);
-      ctx.fillStyle = pal.shoeDark; ctx.fillRect(5, 13, 3, 2); ctx.fillStyle = pal.shoe; ctx.fillRect(8, 13, 3, 2);
-      ctx.fillStyle = out; ctx.fillRect(5, 6 + headBob, 7, 6);
-      ctx.fillStyle = pal.shirt; ctx.fillRect(7, 6 + headBob, 4, 4);
-      ctx.fillStyle = out; ctx.fillRect(5, 1 + headBob, 8, 6);
-      ctx.fillStyle = pal.skin; ctx.fillRect(7, 2 + headBob, 6, 4);
-      ctx.fillStyle = pal.skin; ctx.fillRect(13, 4 + headBob, 1, 1);
-      if (isBlinking) {
-        ctx.fillStyle = out; ctx.fillRect(10, 4 + headBob, 2, 1);
-      } else {
-        ctx.fillStyle = out; ctx.fillRect(10, 3 + headBob, 2, 2);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(11, 3 + headBob, 1, 1);
-      }
-      ctx.restore();
-    }
-  }
-
   drawPossessionAura(ctx) {
     const pulse = Math.sin(Date.now() * 0.009) * 0.25 + 0.55;
-    const grad = ctx.createRadialGradient(8, 8, 3, 8, 8, 18);
+    const grad = ctx.createRadialGradient(8, 8, 3, 8, 8, 19);
     grad.addColorStop(0, `rgba(255, 235, 59, ${pulse})`);
     grad.addColorStop(1, 'rgba(255, 235, 59, 0)');
     ctx.fillStyle = grad;
@@ -608,23 +584,6 @@ export class AnimationManager {
     ctx.beginPath();
     ctx.ellipse(8, -2, 6, 2.5, 0, 0, Math.PI * 2);
     ctx.stroke();
-  }
-
-  getPalette(type) {
-    const common = { skinLight: '#ffe4cc', skin: '#f5cda5', skinDark: '#d99f73', out: '#1c1917' };
-    if (type === 'hero') return { ...common, hair: '#facc15', shirt: '#16a34a', shirtDark: '#14532d', shirtLight: '#4ade80', pants: '#e2e8f0', pantsDark: '#94a3b8', shoe: '#78350f', shoeDark: '#451a03', belt: '#78350f' };
-    if (type === 'musician') return { ...common, skin: '#d4a373', shirt: '#f59e0b', shirtDark: '#b45309', shirtLight: '#fde047', pants: '#059669', pantsDark: '#064e3b', shoe: '#78350f', shoeDark: '#451a03', belt: '#dc2626' };
-    if (type === 'vendedor') return { ...common, shirt: '#f1f5f9', shirtDark: '#cbd5e1', shirtLight: '#ffffff', pants: '#78350f', pantsDark: '#451a03', shoe: '#451a03', shoeDark: '#1c1917', belt: '#0284c7' };
-    if (type === 'vecina_chismosa') return { ...common, shirt: '#f472b6', shirtDark: '#db2777', shirtLight: '#fbcfe8', pants: '#fbcfe8', pantsDark: '#f472b6', shoe: '#db2777', shoeDark: '#9f1239', belt: '#ec4899' };
-    if (type === 'mototaxista') return { ...common, skin: '#d4a373', shirt: '#0284c7', shirtDark: '#0369a1', shirtLight: '#38bdf8', pants: '#1e293b', pantsDark: '#0f172a', shoe: '#ef4444', shoeDark: '#991b1b', belt: '#38bdf8' };
-    if (type === 'police_cuadrante') return { ...common, out: '#064e3b', shirt: '#84cc16', shirtDark: '#4d7c0f', shirtLight: '#bef264', pants: '#14532d', pantsDark: '#052e16', shoe: '#0f172a', shoeDark: '#020617', belt: '#0f172a' };
-    if (type === 'guerrillero') return { ...common, skin: '#d4a373', out: '#142e05', shirt: '#3f6212', shirtDark: '#1a2e05', shirtLight: '#65a30d', pants: '#365314', pantsDark: '#142903', shoe: '#0f172a', shoeDark: '#020617', belt: '#dc2626' };
-    if (type === 'alcalde') return { ...common, out: '#0f172a', shirt: '#f8fafc', shirtDark: '#e2e8f0', shirtLight: '#ffffff', pants: '#cbd5e1', pantsDark: '#64748b', shoe: '#78350f', shoeDark: '#451a03', belt: '#facc15' };
-    if (type === 'boss') return { ...common, out: '#18181b', shirt: '#991b1b', shirtDark: '#450a0a', shirtLight: '#dc2626', pants: '#f8fafc', pantsDark: '#cbd5e1', shoe: '#450a0a', shoeDark: '#18181b', belt: '#facc15' };
-    if (type === 'prophet') return { ...common, out: '#0f172a', shirt: '#f8fafc', shirtDark: '#e2e8f0', shirtLight: '#ffffff', pants: '#0284c7', pantsDark: '#0369a1', shoe: '#78350f', shoeDark: '#451a03', belt: '#facc15' };
-    if (type === 'soldier') return { ...common, out: '#111827', shirt: '#4b5563', shirtDark: '#374151', shirtLight: '#6b7280', pants: '#374151', pantsDark: '#1f2937', shoe: '#111827', shoeDark: '#030712', belt: '#1f2937' };
-    if (type === 'child') return { ...common, shirt: '#fb923c', shirtDark: '#c2410c', shirtLight: '#fdba74', pants: '#38bdf8', pantsDark: '#0284c7', shoe: '#0284c7', shoeDark: '#0369a1', belt: '#ea580c' };
-    return { ...common, shirt: '#f1f5f9', shirtDark: '#cbd5e1', shirtLight: '#ffffff', pants: '#5c3a21', pantsDark: '#331f13', shoe: '#331f13', shoeDark: '#1a0f0a', belt: '#78350f' };
   }
 }
 

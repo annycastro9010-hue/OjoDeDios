@@ -172,7 +172,7 @@ export class CivilizationSystem {
     return false;
   }
 
-  checkEvolution() {
+  checkEvolution(npcs = [], currentEra = null) {
     // 1. Herramientas Líticas
     if (!this.discoveries.tools && this.knowledge >= 15 && this.wood >= 20) {
       this.discoveries.tools = true;
@@ -230,6 +230,7 @@ export class CivilizationSystem {
     }
 
     // Evolución de la Época de la Civilización (Basada en Conocimiento, Materiales y Años Transcurridos)
+    let evolved = false;
     if (this.level === 1 && (this.knowledge >= 40 && this.wood >= 40 || dayCycle.year >= 3)) {
       this.level = 2;
       this.stageName = 'Aldea Floreciente';
@@ -237,6 +238,7 @@ export class CivilizationSystem {
         this.governmentType = 'theocracy';
         this.governmentName = 'Teocracia Sagrada del Pueblo';
       }
+      evolved = true;
       sound.playAscend();
       chronicles.add(`👑 ¡EVOLUCIÓN HISTÓRICA (Año ${dayCycle.year})! La tribu primitiva ha florecido en una Aldea Organizada con gobierno propio.`, 'evolution');
     } else if (this.level === 2 && (this.knowledge >= 90 && this.stone >= 50 || dayCycle.year >= 8)) {
@@ -246,20 +248,109 @@ export class CivilizationSystem {
         this.governmentType = 'monarchy';
         this.governmentName = 'Monarquía y Corona Real';
       }
+      evolved = true;
       sound.playAscend();
       chronicles.add(`🏰 ¡EVOLUCIÓN SUPREMA (Año ${dayCycle.year})! La aldea se corona como un Reino Próspero con leyes y cortes reales.`, 'evolution');
     } else if (this.level === 3 && (this.knowledge >= 140 && this.villages.length >= 4 || dayCycle.year >= 15)) {
       this.level = 4;
       this.stageName = 'Gran Imperio Dinástico';
       this.governmentName = 'Imperio Imperial de las Tierras Sagradas';
+      evolved = true;
       sound.playAscend();
       chronicles.add(`🏛️ ¡ERA IMPERIAL (Año ${dayCycle.year})! El reino se consolida como un Gran Imperio Dinástico con múltiples ciudades y calzadas.`, 'evolution');
     } else if (this.level === 4 && (this.knowledge >= 200 || dayCycle.year >= 25)) {
       this.level = 5;
       this.stageName = 'Civilización Cósmica de los Dioses';
       this.governmentName = 'Panteón Armónico de la Creación';
+      evolved = true;
       sound.playAscend();
       chronicles.add(`✨ ¡EDAD DE ORO CÓSMICA (Año ${dayCycle.year})! Los mortales han alcanzado la iluminación suprema en comunión con el Creador.`, 'evolution');
+    }
+
+    if (evolved && npcs && npcs.length > 0) {
+      this.evolvePopulation(npcs, currentEra);
+    }
+  }
+
+  // Evolución Visual y Funcional de los Personajes según el Avance de la Civilización
+  evolvePopulation(npcs, currentEra = null) {
+    if (!npcs || npcs.length === 0) return;
+
+    // 1. Elección y Vestidura del Líder de la Civilización
+    this.electLeader(npcs);
+    const leader = npcs.find(n => n.brain && n.brain.isLeader);
+    if (leader) {
+      if (this.level >= 3 && leader.type !== 'hero') {
+        leader.type = 'alcalde'; // Doctor Promesas con banda presidencial y guayabera
+        leader.brain.title = (this.governmentType === 'monarchy') ? 'Su Majestad Real' : 'Presidente del Consejo';
+        leader.brain.setThoughtBubble('👑 ¡Gobierno con rectitud para el florecimiento de mi pueblo!', 200);
+      } else if (this.level === 2) {
+        leader.type = 'prophet'; // Moisés con báculo sagrado
+        leader.brain.title = 'Sumo Sacerdote Patriarca';
+        leader.brain.setThoughtBubble('🕊️ ¡Los cielos guían los pasos de nuestra aldea!', 180);
+      }
+    }
+
+    // 2. Especialización Temática de Aldeanos
+    let healersCount = npcs.filter(n => n.type === 'medic' || n.type === 'healer').length;
+    let guardsCount = npcs.filter(n => n.type === 'soldier' || n.type === 'police_cuadrante').length;
+    let bardsCount = npcs.filter(n => n.type === 'musician').length;
+    let merchantsCount = npcs.filter(n => n.type === 'vendedor').length;
+    let messengersCount = npcs.filter(n => n.type === 'mototaxista').length;
+
+    for (const n of npcs) {
+      if (n.brain && n.brain.isLeader) continue;
+      if (n.type === 'child') continue;
+
+      // Nivel 2+: Comercio con Aguacates y Cosechas (Don Mario con Megáfono)
+      if (this.level >= 2 && (this.discoveries.granary || this.discoveries.agriculture) && merchantsCount < 2 && n.type === 'cultivator') {
+        n.type = 'vendedor';
+        n.brain.title = 'Mercader de Cosechas';
+        n.brain.setThoughtBubble('🥑 ¡A la orden los frutos frescos de la huerta comunal!', 180);
+        merchantsCount++;
+      }
+
+      // Nivel 2+: Medicina Botánica (Enfermera/Médico con Capia de Cruz Roja)
+      if (this.discoveries.herbalism && healersCount < 2 && (n.type === 'cultivator' || n.type === 'peasant')) {
+        n.type = 'medic';
+        n.brain.title = 'Sanadora Botánica Real';
+        n.brain.setThoughtBubble('🌿 Sanando enfermos y curando heridas con hierbas sagradas.', 180);
+        healersCount++;
+      }
+
+      // Nivel 3+: Murallas y Orden -> Soldados y Guardias
+      if (this.level >= 3 && this.discoveries.defense_wall && guardsCount < 3 && n.type === 'cultivator') {
+        n.type = 'soldier';
+        n.brain.title = 'Guardia del Bastión Real';
+        n.brain.setThoughtBubble('🛡️ ¡Nadie perturbará la paz del reino!', 180);
+        guardsCount++;
+      }
+
+      // Nivel 3+: Bardo Músico (Bob Marley con Guitarra)
+      if (this.level >= 3 && bardsCount < 1 && n.type === 'cultivator') {
+        n.type = 'musician';
+        n.brain.title = 'Trovador de la Paz y la Alegría';
+        n.brain.setThoughtBubble('🎵 ¡La música une a los pueblos bajo el mismo cielo!', 180);
+        bardsCount++;
+      }
+
+      // Nivel 4+: Heraldo Imperial Veloz (El Brayan en DT 125)
+      if (this.level >= 4 && messengersCount < 1 && n.type === 'cultivator') {
+        n.type = 'mototaxista';
+        n.brain.title = 'Heraldo Imperial Veloz';
+        n.brain.setThoughtBubble('⚡ ¡Despacho imperial urgente! ¡Abran paso en la trocha!', 180);
+        messengersCount++;
+      }
+
+      // Nivel 5: Héroe Mítico de Leyenda (Link con Espada Maestra)
+      if (this.level >= 5 && !npcs.some(x => x.type === 'hero')) {
+        if (n.type === 'cultivator' || n.type === 'soldier') {
+          n.type = 'hero';
+          n.brain.title = 'Campeón Mítico de Hyrule';
+          n.brain.name = 'Link el Elegido';
+          n.brain.setThoughtBubble('🗡️ ¡El valor sagrado protege a todos los seres vivos!', 220);
+        }
+      }
     }
   }
 
@@ -462,7 +553,7 @@ export class CivilizationSystem {
     }
 
     // Comprobar evolución histórica periódicamente
-    this.checkEvolution();
+    this.checkEvolution(npcs, currentEra);
 
     // 4. Asignación Orgánica de Hogares a Familias y Ciudadanos (cada 60 frames = 1 seg)
     this.homeAssignTimer = (this.homeAssignTimer || 0) + 1;

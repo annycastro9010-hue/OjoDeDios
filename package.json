@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "jpeg-js": "^0.4.4",
     "vite": "^5.4.2"
   }
 }

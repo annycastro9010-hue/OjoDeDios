@@ -670,6 +670,35 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
   });
 });
 
+// ⏳ Avance Rápido del Tiempo y Evolución Dinámica de la Civilización
+export function advanceCivilizationTime(years = 3) {
+  dayCycle.year += years;
+  civ.addResource('knowledge', 30 * years);
+  civ.addResource('wood', 25 * years);
+  civ.addResource('stone', 20 * years);
+  civ.addResource('food', 35 * years);
+  civ.checkEvolution(npcs, currentEra);
+  civ.evolvePopulation(npcs, currentEra);
+
+  sound.playAscend();
+  vfx.addShockwave(canvas.width / 2, canvas.height / 2, 40, '#ffd700');
+  notify(`⏳ ¡SALTO TEMPORAL (+${years} Años)! Año ${dayCycle.year} • ${civ.stageName}`);
+}
+
+const btnAdvanceTime = document.getElementById('btnAdvanceTime');
+if (btnAdvanceTime) {
+  btnAdvanceTime.addEventListener('click', () => {
+    advanceCivilizationTime(3);
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.key.toLowerCase() === 't') {
+    advanceCivilizationTime(3);
+  }
+});
+
 // Gestión de botones de herramientas
 document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
   btn.addEventListener('click', () => {
