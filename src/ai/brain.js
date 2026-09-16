@@ -333,9 +333,9 @@ export class NPCBrain {
     }
 
     // --- SED HUMANA ---
-    this.needs.thirst = Math.min(100, this.needs.thirst + 0.012);
-    if (this.needs.thirst > 65 && Math.random() < 0.01) {
-      this.setThoughtBubble("💧 Tengo la garganta seca, buscaré agua fresca.", 90);
+    this.needs.thirst = Math.min(100, this.needs.thirst + 0.008);
+    if (this.needs.thirst > 70 && Math.random() < 0.002 && (!this.thoughtBubble || this.thoughtTimer <= 0)) {
+      this.setThoughtBubble("💧 Buscando un poco de agua fresca...", 80);
     }
 
     // --- SUPERVIVENCIA BIOLÓGICA ---

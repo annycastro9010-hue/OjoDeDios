@@ -228,37 +228,51 @@ export class NPC {
         return;
       }
 
-      // 3. Necesidad de Beber Agua: si tiene sed alta (>60) y no es de noche
-      if (this.brain.needs && this.brain.needs.thirst > 60) {
-        // Buscar agua cercana para beber
-        let waterX = -1;
-        let waterY = -1;
-        for (let dy = -4; dy <= 4; dy++) {
-          for (let dx = -4; dx <= 4; dx++) {
-            if (grid.get(curTileX + dx, curTileY + dy) === ELEM.WATER) {
-              waterX = curTileX + dx;
-              waterY = curTileY + dy;
-              break;
-            }
-          }
-          if (waterX !== -1) break;
-        }
-
-        if (waterX !== -1) {
-          const distToWater = Math.hypot((waterX * tileSize) - this.x, (waterY * tileSize) - this.y);
-          if (distToWater > 16) {
-            const angle = Math.atan2((waterY * tileSize) - this.y, (waterX * tileSize) - this.x);
-            this.vx = Math.cos(angle) * this.speed;
-            this.vy = Math.sin(angle) * this.speed;
-            this.updateDirection();
-          } else {
-            // Beber agua
+      // 3. Saciar Sed Orgánica (ríos, pozos, costas o cántaro del hogar)
+      if (this.brain.needs && this.brain.needs.thirst > 50) {
+        let drank = false;
+        if (this.brain.home || (civ && civ.food > 5)) {
+          if (Math.random() < 0.04) {
             this.brain.needs.thirst = 0;
             this.brain.needs.health = Math.min(100, this.brain.needs.health + 5);
-            this.brain.setThoughtBubble("💧 ¡Glup, glup! Agua fresca de manantial.", 100);
-            sound.playWaterSplash();
+            drank = true;
           }
-          return;
+        }
+
+        if (!drank) {
+          // Buscar agua o pozo en un radio más amplio
+          let waterX = -1;
+          let waterY = -1;
+          for (let dy = -7; dy <= 7; dy++) {
+            for (let dx = -7; dx <= 7; dx++) {
+              const el = grid.get(curTileX + dx, curTileY + dy);
+              if (el === ELEM.WATER || el === ELEM.WELL) {
+                waterX = curTileX + dx;
+                waterY = curTileY + dy;
+                break;
+              }
+            }
+            if (waterX !== -1) break;
+          }
+
+          if (waterX !== -1) {
+            const distToWater = Math.hypot((waterX * tileSize) - this.x, (waterY * tileSize) - this.y);
+            if (distToWater <= 22) {
+              this.brain.needs.thirst = 0;
+              this.brain.needs.health = Math.min(100, this.brain.needs.health + 5);
+              this.brain.setThoughtBubble("💧 ¡Glup, glup! Agua fresca de manantial.", 90);
+              sound.playWaterSplash();
+            } else {
+              const angle = Math.atan2((waterY * tileSize) - this.y, (waterX * tileSize) - this.x);
+              this.vx = Math.cos(angle) * this.speed;
+              this.vy = Math.sin(angle) * this.speed;
+              this.updateDirection();
+              return;
+            }
+          } else if (this.brain.needs.thirst > 85) {
+            // Beber de la cantimplora de viaje
+            this.brain.needs.thirst = 0;
+          }
         }
       }
 
@@ -278,7 +292,7 @@ export class NPC {
     }
 
     // --- TAREA DE CONSTRUCCIÓN FÍSICA AUTÓNOMA ---
-    if (civ.constructionSites && civ.constructionSites.length > 0 && !this.brain?.isResting && this.type !== 'police' && this.type !== 'soldier' && this.type !== 'boss' && this.type !== 'guerrillero') {
+    if (civ.constructionSites && civ.constructionSites.length > 0 && !this.brain?.isResting && this.type !== 'police' && this.type !== 'soldier' && this.type !== 'child') {
       const site = civ.constructionSites[0];
       const targetPxX = (site.x + Math.floor(site.w / 2)) * tileSize;
       const targetPxY = (site.y + Math.floor(site.h / 2)) * tileSize;

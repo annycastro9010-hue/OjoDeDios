@@ -32,7 +32,8 @@ export class SocialSystem {
     if (this.stepTimer < 180) return; // Cada 3 segundos evaluar dinámicas sociales
     this.stepTimer = 0;
 
-    const adults = npcs.filter(n => n.type === 'cultivator' || n.type === 'boss');
+    // Cualquier aldeano o habitante adulto puede entablar relaciones sociales
+    const adults = npcs.filter(n => n.type !== 'child' && (n.brain?.ageYears || 18) >= 16);
 
     for (let i = 0; i < adults.length; i++) {
       for (let j = i + 1; j < adults.length; j++) {
@@ -40,7 +41,7 @@ export class SocialSystem {
         const b = adults[j];
 
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        if (dist < 40) {
+        if (dist < 55) {
           this.interact(a, b, onSpawnBaby);
         }
       }

@@ -451,17 +451,14 @@ export class CivilizationSystem {
       this.electLeader(npcs);
     }
 
-    // 3. Generación autónoma de recursos por trabajo de la población y sabios
-    const cultivators = npcs.filter(n => n.type === 'cultivator' || n.type === 'child');
-    if (cultivators.length > 0 && Math.random() < 0.15) {
-      this.addResource('food', 0.25 * cultivators.length);
-      this.addResource('wood', 0.18 * cultivators.length);
-      this.addResource('stone', 0.12 * cultivators.length);
-    }
-
-    const thinkers = npcs.filter(n => n.brain && (n.brain.trait?.id === 'curioso' || n.brain.wisdom >= 50));
-    if (thinkers.length > 0 && Math.random() < 0.25) {
-      this.addResource('knowledge', 0.20 * thinkers.length);
+    // 3. Generación autónoma y desarrollo vivo de la civilización:
+    // Todos los habitantes (campesinos, artesanos, comerciantes, vecinos) trabajan, aprenden y aportan
+    if (npcs.length > 0 && Math.random() < 0.18) {
+      this.addResource('food', 0.25 * npcs.length);
+      this.addResource('wood', 0.20 * npcs.length);
+      this.addResource('stone', 0.15 * npcs.length);
+      // Sabiduría acumulada: por trabajo diario, inventos, conversaciones y años vividos
+      this.addResource('knowledge', 0.22 * npcs.length);
     }
 
     // Comprobar evolución histórica periódicamente
@@ -471,12 +468,12 @@ export class CivilizationSystem {
     this.homeAssignTimer = (this.homeAssignTimer || 0) + 1;
     if (this.homeAssignTimer >= 60) {
       this.homeAssignTimer = 0;
-      this.assignHomesToCitizens(npcs);
+      this.assignHomesToCitizens(npcs, grid);
     }
 
     // 5. Construcción Orgánica de Edificios según Avance Tecnológico y Nivel de Civilización
     this.buildTimer++;
-    if (this.buildTimer >= 300) { // Evaluar cada ~5 segundos
+    if (this.buildTimer >= 200) { // Evaluar periódicamente
       this.buildTimer = 0;
 
       // Máximo 1 obra activa a la vez (2 en imperio o nivel >= 4)
@@ -509,8 +506,20 @@ export class CivilizationSystem {
   }
 
   // Distribución de casas: parejas e hijos comparten la misma vivienda (optimizado O(N+H))
-  assignHomesToCitizens(npcs) {
-    const houses = this.villages.filter(v => v.type === 'house');
+  assignHomesToCitizens(npcs, grid = null) {
+    let houses = this.villages.filter(v => v.type === 'house');
+
+    // Registrar casas habitables preexistentes del mapa si aún no están en villages
+    if (grid && grid.buildingLocations) {
+      for (const b of grid.buildingLocations) {
+        if ((b.w && b.h && (b.roofColor || b.style)) || (b.name && (b.name.includes('Hogar') || b.name.includes('Cabaña') || b.name.includes('Casa') || b.name.includes('Mansión') || b.name.includes('Tienda') || b.name.includes('Puesto')))) {
+          if (!houses.some(h => Math.abs(h.x - b.x) < 3 && Math.abs(h.y - b.y) < 3)) {
+            houses.push({ x: b.x, y: b.y, w: b.w || 6, h: b.h || 5, type: 'house', name: b.name || 'Hogar' });
+          }
+        }
+      }
+    }
+
     if (houses.length === 0 || !npcs || npcs.length === 0) return;
 
     // Conteo previo de ocupantes por vivienda
@@ -579,17 +588,17 @@ export class CivilizationSystem {
       anchorY = Math.floor(avg.y / (npcs.length * 8));
     }
 
-    for (let attempts = 0; attempts < 35; attempts++) {
-      const rx = anchorX + Math.floor((Math.random() - 0.5) * 36);
-      const ry = anchorY + Math.floor((Math.random() - 0.5) * 26);
-
-      if (rx < 4 || rx + w >= grid.width - 4 || ry < 4 || ry + h >= grid.height - 4) continue;
+    for (let attempts = 0; attempts < 60; attempts++) {
+      const spreadX = attempts < 25 ? 36 : Math.floor(grid.width * 0.7);
+      const spreadY = attempts < 25 ? 26 : Math.floor(grid.height * 0.6);
+      const rx = Math.max(4, Math.min(grid.width - w - 4, anchorX + Math.floor((Math.random() - 0.5) * spreadX)));
+      const ry = Math.max(4, Math.min(grid.height - h - 4, anchorY + Math.floor((Math.random() - 0.5) * spreadY)));
 
       let valid = true;
-      for (let dy = -1; dy <= h + 1; dy++) {
-        for (let dx = -1; dx <= w + 1; dx++) {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
           const elem = grid.get(rx + dx, ry + dy);
-          if (elem === ELEM.WATER || elem === ELEM.BUILDING || elem === ELEM.LAVA || elem === ELEM.STONE || elem === ELEM.CHASM) {
+          if (elem === ELEM.WATER || elem === ELEM.BUILDING || elem === ELEM.LAVA || elem === ELEM.CHASM) {
             valid = false;
             break;
           }
@@ -608,6 +617,13 @@ export class CivilizationSystem {
       }
 
       if (valid) {
+        // Despejar maleza y plantas del terreno de obra
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            grid.set(rx + dx, ry + dy, ELEM.DIRT);
+          }
+        }
+
         let woodCost = 0;
         let stoneCost = 0;
         let subType = type;

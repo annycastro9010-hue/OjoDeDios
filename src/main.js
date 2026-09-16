@@ -1202,10 +1202,8 @@ function gameLoop() {
     // 1. Simulación Celular (Agua, fuego, plantas)
     grid.step();
 
-    // 1b. Evolución y Construcción Autónoma de la Civilización (Humana y Animal) - 1 vez por frame
-    if (s === 0) {
-      civ.update(grid, npcs, animals);
-    }
+    // 1b. Evolución y Construcción Autónoma de la Civilización (Humana y Animal)
+    civ.update(grid, npcs, animals);
 
     // 2. Control del Jugador en Posesión (solo 1 vez por frame)
     if (s === 0 && mode === 'possessed' && possessedNpc) {
@@ -1254,15 +1252,13 @@ function gameLoop() {
       animal.update(grid, npcs, animals, 8);
     }
 
-    // Sistema Social Emergente: Romance, Niños y Crianza (1 vez por frame)
-    if (s === 0) {
-      social.update(npcs, (babyX, babyY, pA, pB) => {
-        const baby = spawnNpc('child', babyX, babyY);
-        baby.parentId = pA.id;
-        sound.playAscend();
-        vfx.addShockwave(babyX, babyY, 25, '#f472b6');
-      });
-    }
+    // Sistema Social Emergente: Romance, Niños y Crianza Generacional
+    social.update(npcs, (babyX, babyY, pA, pB) => {
+      const baby = spawnNpc('child', babyX, babyY);
+      baby.parentId = pA.id;
+      sound.playAscend();
+      vfx.addShockwave(babyX, babyY, 25, '#f472b6');
+    });
   }
 
   // 4. Actualización de VFX
