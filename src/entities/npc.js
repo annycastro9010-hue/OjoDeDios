@@ -2,6 +2,8 @@ import { ELEM } from '../sim/elements.js';
 import { sound } from '../audio/soundFX.js';
 import { NPCBrain } from '../ai/brain.js';
 import { vfx } from '../render/fx.js';
+import { dayCycle } from '../sim/time.js';
+import { chronicles } from '../social/relations.js';
 
 export class NPC {
   constructor(id, type, x, y) {
@@ -174,6 +176,97 @@ export class NPC {
       if (grid.get(aheadX, aheadY) === ELEM.WATER) {
         this.vx = -this.vx * 0.8;
         this.vy = -this.vy * 0.8;
+      }
+    }
+
+    // --- RUTINA CIRCADIANO HUMANA: IR A CASA O DORMIR ---
+    const currentPhase = dayCycle.getRoutinePhase();
+    if (this.brain) {
+      // 1. Si es de noche o hora de dormir y tiene casa asignada
+      if (currentPhase === 'sleeping') {
+        if (this.brain.home) {
+          const targetX = (this.brain.bedPosition?.x || (this.brain.home.x + 2)) * tileSize;
+          const targetY = (this.brain.bedPosition?.y || (this.brain.home.y + 2)) * tileSize;
+          const distToBed = Math.hypot(this.x - targetX, this.y - targetY);
+
+          if (distToBed > 12) {
+            // Caminar hacia la choza / cama
+            const angle = Math.atan2(targetY - this.y, targetX - this.x);
+            this.vx = Math.cos(angle) * (this.speed * 0.9);
+            this.vy = Math.sin(angle) * (this.speed * 0.9);
+            this.updateDirection();
+            if (Math.random() < 0.003) {
+              this.brain.setThoughtBubble("🌙 De vuelta a casa a dormir con la familia...", 90);
+            }
+          } else {
+            // Ya está en casa durmiendo plácidamente
+            this.brain.isResting = true;
+            this.vx = 0;
+            this.vy = 0;
+            return;
+          }
+        } else {
+          // Sin casa: duerme donde esté
+          this.brain.isResting = true;
+          this.vx = 0;
+          this.vy = 0;
+          return;
+        }
+      }
+
+      // 2. Si está despierto pero descansando de siesta previa
+      if (this.brain.isResting && currentPhase !== 'sleeping') {
+        this.vx = 0;
+        this.vy = 0;
+        return;
+      }
+
+      // 3. Necesidad de Beber Agua: si tiene sed alta (>60) y no es de noche
+      if (this.brain.needs && this.brain.needs.thirst > 60) {
+        // Buscar agua cercana para beber
+        let waterX = -1;
+        let waterY = -1;
+        for (let dy = -4; dy <= 4; dy++) {
+          for (let dx = -4; dx <= 4; dx++) {
+            if (grid.get(curTileX + dx, curTileY + dy) === ELEM.WATER) {
+              waterX = curTileX + dx;
+              waterY = curTileY + dy;
+              break;
+            }
+          }
+          if (waterX !== -1) break;
+        }
+
+        if (waterX !== -1) {
+          const distToWater = Math.hypot((waterX * tileSize) - this.x, (waterY * tileSize) - this.y);
+          if (distToWater > 16) {
+            const angle = Math.atan2((waterY * tileSize) - this.y, (waterX * tileSize) - this.x);
+            this.vx = Math.cos(angle) * this.speed;
+            this.vy = Math.sin(angle) * this.speed;
+            this.updateDirection();
+          } else {
+            // Beber agua
+            this.brain.needs.thirst = 0;
+            this.brain.needs.health = Math.min(100, this.brain.needs.health + 5);
+            this.brain.setThoughtBubble("💧 ¡Glup, glup! Agua fresca de manantial.", 100);
+            sound.playWaterSplash();
+          }
+          return;
+        }
+      }
+
+      // 4. Saludo Vecinal Humano espontáneo al cruzarse en caminos
+      if (Math.random() < 0.005) {
+        const neighbor = allNpcs.find(n => n.id !== this.id && this.distTo(n) < 32);
+        if (neighbor && neighbor.brain) {
+          const greetings = [
+            `¡Buenos días, ${neighbor.brain.name}!`,
+            `¡Hola vecino ${neighbor.brain.name}! ¿Cómo va la cosecha?`,
+            `¡Buenas tardes, ${neighbor.brain.name}! Que Dios te bendiga.`,
+            `¡Qué calor hace hoy, ${neighbor.brain.name}!`
+          ];
+          this.brain.setThoughtBubble(greetings[Math.floor(Math.random() * greetings.length)], 100);
+        }
       }
     }
 

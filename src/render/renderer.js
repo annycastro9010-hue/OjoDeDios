@@ -2,6 +2,7 @@ import { ELEM, ELEM_PROPS } from '../sim/elements.js';
 import { animManager } from './animationManager.js?v=20260912_minish_sprites_v2';
 import { sprites } from './sprites.js';
 import { vfx } from './fx.js';
+import { dayCycle } from '../sim/time.js';
 
 export class GameRenderer {
   constructor(canvas) {
@@ -684,6 +685,26 @@ export class GameRenderer {
     // 5. Renderizar Efectos Visuales VFX (Vórtice mágico, ondas de choque, chispas)
     vfx.render(ctx);
 
+    // 💡 Ventanas cálidas iluminadas por la noche en hogares y chozas (Efecto Minish Cap)
+    if (dayCycle.isNight()) {
+      for (const b of grid.buildingLocations) {
+        if (b.name && (b.name.includes('Choza') || b.name.includes('Casa') || b.name.includes('Altar'))) {
+          const bx = b.x * ts;
+          const by = b.y * ts;
+          ctx.save();
+          // Brillo de luz de vela/farol en ventana
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(bx + 10, by + 4, 3, 3);
+          // Halo cálido suave
+          ctx.fillStyle = 'rgba(254, 240, 138, 0.18)';
+          ctx.beginPath();
+          ctx.arc(bx + 11.5, by + 5.5, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
     // 5. Retícula Divina del Mouse (Solo en Modo Dios)
     if (!possessedNpc && mouseWorldPos) {
       const targetTileX = Math.floor(mouseWorldPos.x / ts);
@@ -703,6 +724,13 @@ export class GameRenderer {
         ctx.fillText('👁️ SELECCIONAR PARA POSEER', targetTileX * ts + ts / 2, targetTileY * ts - r - 6);
       }
       ctx.restore();
+    }
+
+    // 🌅 FILTRO ATMOSFÉRICO CIRCADIANO DÍA / ATARDECER / NOCHE (Estilo Minish Cap)
+    const amb = dayCycle.getAmbientOverlay();
+    if (amb && amb.a > 0.01) {
+      ctx.fillStyle = `rgba(${amb.r}, ${amb.g}, ${amb.b}, ${amb.a.toFixed(3)})`;
+      ctx.fillRect(-camera.x - 200, -camera.y - 200, this.canvas.width * 3, this.canvas.height * 3);
     }
 
     camera.restoreTransform(ctx);

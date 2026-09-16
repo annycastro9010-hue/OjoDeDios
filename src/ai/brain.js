@@ -1,4 +1,5 @@
 import { civ } from '../world/civilization.js';
+import { dayCycle } from '../sim/time.js';
 
 const ERA_NAMES = {
   biblical: ['Adán', 'Eva', 'Caín', 'Abel', 'Enoc', 'Sara', 'Noé', 'Abraham', 'Miriam', 'Elías', 'Mateo', 'Salomón'],
@@ -45,6 +46,18 @@ export class NPCBrain {
     this.emotionIcon = ''; // Emoticono flotante sobre la cabeza (🦁, 😱, ✨, 💤, 🍞, etc.)
     this.isResting = false;
 
+    // --- CICLO DE VIDA HUMANA REAL ---
+    this.ageYears = (type === 'child') ? 7 + Math.floor(Math.random() * 5) : 22 + Math.floor(Math.random() * 25);
+    this.birthdayTimer = 0;
+    
+    // Rutina Circadiana Humana ('waking', 'working', 'eating', 'socializing', 'going_home', 'sleeping')
+    this.routineState = 'working';
+    this.routineDesc = 'Comenzando la jornada laboral';
+
+    // Hogar y Residencia
+    this.home = null; // { x, y, name } asignado por civilization
+    this.bedPosition = null; // Coordenadas exactas para dormir en casa
+
     // Memorias Espaciales de Supervivencia
     this.memories = {
       waterSpots: [],  // fuentes de agua conocidas
@@ -63,7 +76,7 @@ export class NPCBrain {
     this.needs = {
       hunger: 10 + Math.floor(Math.random() * 20), // 0 a 100
       health: 100,                                 // 0 a 100
-      thirst: 0                                    // 0 a 100
+      thirst: 5 + Math.floor(Math.random() * 15)   // 0 a 100
     };
     this.satisfaction = 80;                        // Satisfacción con gobierno y vida (0 a 100)
     this.isLeader = false;
@@ -241,8 +254,61 @@ export class NPCBrain {
     // Regulación de emociones con el tiempo
     if (this.fear > 5) this.fear -= 0.05;
 
-    // --- ENERGÍA, FATIGA Y DESCANSO REPARADOR ---
-    if (this.isResting) {
+    // --- ENVEJECIMIENTO HUMANO GRADUAL ---
+    this.birthdayTimer++;
+    if (this.birthdayTimer >= 4500) { // Cada varios minutos de simulación cumple un año
+      this.birthdayTimer = 0;
+      this.ageYears++;
+      if (this.ageYears === 18 && npc.type === 'child') {
+        npc.type = 'cultivator';
+        this.title = this.calculateTitle('cultivator');
+        this.setThoughtBubble("🎉 ¡He cumplido 18 años! Ya soy un adulto con oficio.", 180);
+      }
+    }
+
+    // --- CICLO Y RUTINA DIARIA HUMANA (SEGÚN HORA SOLAR) ---
+    const phase = dayCycle.getRoutinePhase();
+    this.routineState = phase;
+
+    if (phase === 'sleeping') {
+      this.routineDesc = this.home ? `Durmiendo en ${this.home.name}` : 'Descansando bajo las estrellas';
+      this.isResting = true;
+      this.energy = Math.min(100, this.energy + 0.4);
+      this.needs.health = Math.min(100, this.needs.health + 0.1);
+      this.setEmotion('sleeping', '💤', 30);
+    } else if (phase === 'waking') {
+      this.routineDesc = 'Despertando y estirándose';
+      if (this.isResting) {
+        this.isResting = false;
+        this.setEmotion('calm', '🌅', 60);
+        if (Math.random() < 0.02) {
+          this.setThoughtBubble("🌅 Qué buen descanso. Hora de empezar el día.", 120);
+        }
+      }
+    } else if (phase === 'working_morning') {
+      this.routineDesc = 'Jornada laboral matutina';
+      this.isResting = false;
+    } else if (phase === 'lunch_break') {
+      this.routineDesc = 'Pausa para el almuerzo y charla';
+      this.isResting = false;
+      if (this.needs.hunger > 30 && civ && civ.consumeFood(1)) {
+        this.needs.hunger = Math.max(0, this.needs.hunger - 40);
+        this.satisfaction = Math.min(100, this.satisfaction + 8);
+        this.energy = Math.min(100, this.energy + 15);
+        if (Math.random() < 0.02) {
+          this.setThoughtBubble("🍲 Almuerzo caliente con la comunidad.", 110);
+        }
+      }
+    } else if (phase === 'working_afternoon') {
+      this.routineDesc = 'Labores de la tarde';
+      this.isResting = false;
+    } else if (phase === 'evening_leisure') {
+      this.routineDesc = 'Regresando a casa y vida social';
+      this.isResting = false;
+    }
+
+    // --- ENERGÍA, FATIGA Y DESCANSO ESPONTÁNEO (SIESTA) ---
+    if (this.isResting && phase !== 'sleeping') {
       // Recuperar energía rápidamente y sanar
       this.energy = Math.min(100, this.energy + 0.35);
       this.needs.health = Math.min(100, this.needs.health + 0.08);
@@ -250,20 +316,25 @@ export class NPCBrain {
       if (this.energy >= 92) {
         this.isResting = false;
         this.setEmotion('joyful', '⚡', 100);
-        this.setThoughtBubble("⚡ ¡Repuse todas mis fuerzas! ¡A seguir trabajando!", 130);
+        this.setThoughtBubble("⚡ ¡Repuse todas mis fuerzas! ¡A seguir!", 130);
       }
-    } else {
-      // Si la energía cae críticamente (<20%), el personaje se rinde a una siesta
-      if (this.energy < 20) {
+    } else if (!this.isResting && phase !== 'sleeping') {
+      if (this.energy < 15) {
         this.isResting = true;
         this.setEmotion('sleeping', '💤', 220);
-        this.setThoughtBubble("💤 Rendido de cansancio... durmiendo para reponer energía.", 140);
+        this.setThoughtBubble("💤 Rendido de cansancio... tomando una siestecita.", 140);
       }
+    }
+
+    // --- SED HUMANA ---
+    this.needs.thirst = Math.min(100, this.needs.thirst + 0.012);
+    if (this.needs.thirst > 65 && Math.random() < 0.01) {
+      this.setThoughtBubble("💧 Tengo la garganta seca, buscaré agua fresca.", 90);
     }
 
     // --- SUPERVIVENCIA BIOLÓGICA ---
     // Aumento gradual del hambre (el racionamiento ralentiza el consumo de energía)
-    const hungerRate = (civ && civ.activePolicies.rationing) ? 0.014 : 0.022;
+    const hungerRate = (civ && civ.activePolicies.rationing) ? 0.012 : 0.018;
     this.needs.hunger = Math.min(100, this.needs.hunger + hungerRate);
 
     // Alimentación: cuando el hambre supera 55, consume del inventario comunal
@@ -525,18 +596,46 @@ export class NPCBrain {
       return;
     }
 
-    // Pensamiento sobre Racionamiento activo
-    if (civ && civ.activePolicies.rationing && Math.random() < 0.3) {
-      this.setThoughtBubble("🥣 Apretarse el cinturón con las raciones de comida...", 100);
+    // Pensamientos según la fase del día y vida hogareña
+    const phase = dayCycle.getRoutinePhase();
+    if (phase === 'sleeping' && Math.random() < 0.6) {
+      const sleepThoughts = [
+        "💤 Zzz... descansando plácidamente en mi hogar.",
+        "💤 Mañana será un día productivo...",
+        "💤 En la calidez de mi cama recupero fuerzas.",
+        "💤 El silencio de la noche abriga a nuestra aldea."
+      ];
+      this.setThoughtBubble(sleepThoughts[Math.floor(Math.random() * sleepThoughts.length)], 100);
+      return;
+    }
+
+    if (phase === 'evening_leisure' && Math.random() < 0.5) {
+      const eveningThoughts = [
+        "🍲 Qué bueno es regresar a casa después de una jornada dura.",
+        "👨‍👩‍👧 Cenando y compartiendo anécdotas con mi familia.",
+        "✨ Las estrellas brillan hermosas sobre las chozas del pueblo.",
+        "🏡 Nada se compara con el calor de mi propio hogar."
+      ];
+      this.setThoughtBubble(eveningThoughts[Math.floor(Math.random() * eveningThoughts.length)], 120);
+      return;
+    }
+
+    if (phase === 'lunch_break' && Math.random() < 0.5) {
+      const lunchThoughts = [
+        "🍲 Hora del almuerzo comunitario, buen provecho a todos.",
+        "🥖 Qué rico compartir la comida con los vecinos.",
+        "☕ Una pausa para charlar antes de volver al trabajo."
+      ];
+      this.setThoughtBubble(lunchThoughts[Math.floor(Math.random() * lunchThoughts.length)], 110);
       return;
     }
 
     const randomThoughts = [
       "El fuego de la fogata mantiene calientes a los niños.",
-      "Espero que tengamos buena pesca hoy.",
-      "La piedra del monte es dura y servirá para los cimientos.",
-      "Aprendiendo cada día a dominar la tierra...",
-      "Cuidar a la comunidad es asegurar nuestro mañana."
+      "Espero que tengamos buena pesca y cosecha hoy.",
+      "La piedra del monte es dura y servirá para los cimientos de nuevas casas.",
+      "Aprendiendo cada día a cuidar a mi familia y a la comunidad.",
+      "Cuidar a la comunidad es asegurar el porvenir de nuestros hijos."
     ];
     this.setThoughtBubble(randomThoughts[Math.floor(Math.random() * randomThoughts.length)], 90);
   }

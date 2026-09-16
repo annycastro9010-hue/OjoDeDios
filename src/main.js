@@ -12,6 +12,7 @@ import { Animal } from './entities/animals.js?v=20260912_minish_sprites_v2';
 import { social, chronicles } from './social/relations.js';
 import { ERAS } from './world/eras.js';
 import { civ } from './world/civilization.js';
+import { dayCycle } from './sim/time.js';
 
 // Inicialización de lienzo
 const canvas = document.getElementById('gameCanvas');
@@ -338,6 +339,25 @@ function updateMindPanelUI() {
 
   if (mindRestStatus) {
     mindRestStatus.style.display = b.isResting ? 'block' : 'none';
+  }
+
+  // Datos de Vida Humana
+  const mindNpcAge = document.getElementById('mindNpcAge');
+  const mindNpcRoutine = document.getElementById('mindNpcRoutine');
+  const mindNpcHome = document.getElementById('mindNpcHome');
+  const mindNpcFamily = document.getElementById('mindNpcFamily');
+
+  if (mindNpcAge) mindNpcAge.innerText = `🎂 Edad: ${b.ageYears || 24} años`;
+  if (mindNpcRoutine) mindNpcRoutine.innerText = `🕒 Rutina: ${b.routineDesc || 'En actividad diaria'}`;
+  if (mindNpcHome) mindNpcHome.innerText = `🏡 Hogar: ${b.home ? b.home.name : 'Nómada (Sin casa asignada)'}`;
+  if (mindNpcFamily) {
+    let famText = 'Soltero / Sin hijos';
+    const partner = inspectedNpc.partnerId ? npcs.find(n => n.id === inspectedNpc.partnerId) : null;
+    const childCount = npcs.filter(n => n.parentId === inspectedNpc.id).length;
+    if (partner && childCount > 0) famText = `En pareja con ${partner.brain.name} • ${childCount} hijo(s)`;
+    else if (partner) famText = `En pareja con ${partner.brain.name}`;
+    else if (childCount > 0) famText = `${childCount} hijo(s)`;
+    mindNpcFamily.innerText = `❤️ Familia: ${famText}`;
   }
 
   if (barFaith) barFaith.style.width = `${Math.min(100, Math.round(b.faith))}%`;
@@ -1155,6 +1175,9 @@ function gameLoop() {
 
   // Si no está en pausa (steps > 0), correr los pasos de simulación del mundo
   for (let s = 0; s < steps; s++) {
+    // 0. Ciclo Circadiano Día/Noche
+    dayCycle.step(1);
+
     // 1. Simulación Celular (Agua, fuego, plantas)
     grid.step();
 
@@ -1229,6 +1252,10 @@ function gameLoop() {
 
   // 7. Actualización de Estadísticas cada 25 frames
   if (frameCount % 25 === 0 && mode === 'god') {
+    const clockBadge = document.getElementById('celestialClockBadge');
+    if (clockBadge) {
+      clockBadge.innerText = dayCycle.getFormattedTime();
+    }
     statPop.innerText = npcs.length;
     if (statWood) statWood.innerText = civ.wood;
     if (statStone) statStone.innerText = civ.stone;

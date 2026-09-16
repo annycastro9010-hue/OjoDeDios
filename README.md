@@ -20,6 +20,23 @@ Juega como Dios: manipula la física celular de los elementos (tierra, agua, sem
 * **💘 Amor (Flecha de Cupido):** Haz click en un aldeano y luego en otro para flecharlos y unirlos en matrimonio/romance.
 * **⚔️ Cizaña (Discordia Divina):** Haz click en dos aldeanos para sembrar el odio y convertirlos en enemigos mortales que se agarran a puñetazos.
 * **🪵 Madera y 🏡 Choza:** Coloca madera para los artesanos o levanta los cimientos de un nuevo hogar.
+* **🌅 Ciclo Circadiano Día/Noche y Reloj Celestial (`☀️ 08:00 AM • Día 1`):**
+  - El sol y la luna viajan cíclicamente marcando las 24 horas del día.
+  - Iluminación atmosférica en tiempo real estilo Minish Cap: amanecer cálido, día cristalino, atardecer dorado en la "golden hour" y noche profunda azulada con luz de luna.
+  - Durante la noche, las ventanas de las chozas y casas se iluminan con acogedores faroles y velas amarillas.
+* **🕒 Vida Normal y Rutinas Diarias de los Habitantes:**
+  - **Amanecer (05:30 - 07:30):** Despiertan, se estiran, salen a tomar agua fresca de ríos y manantiales para calmar la sed.
+  - **Jornada Matutina (07:30 - 12:30):** Se desplazan a sus puestos de labor (labranza, pesca, patrulla, venta ambulante, investigación).
+  - **Pausa del Almuerzo (12:30 - 14:30):** Descansan para comer sopa caliente en familia o con los vecinos, charlar y reponer energía.
+  - **Tarde Laboral y Recreo (14:30 - 18:00):** Labores de carpintería, recolección de piedra y visitas al altar.
+  - **Atardecer y Vida Social (18:00 - 20:30):** Paseos bajo las estrellas, tertulias vecinales y saludos espontáneos.
+  - **Noche y Sueño en el Hogar (20:30 - 05:30):** Regresan a sus chozas (`homeLocation`) para dormir bajo techo en sus camas junto a su pareja e hijos.
+* **🏡 Hogares, Familias y Asignación de Casas:**
+  - La civilización asigna automáticamente las chozas y casas construidas a los ciudadanos sin techo.
+  - Las parejas unidas por amor y sus hijos comparten el mismo hogar y duermen bajo el mismo techo.
+* **🎂 Edad y Ciclo Vital Humano:**
+  - Los habitantes cumplen años de forma progresiva, pasando de la niñez correteando a jóvenes trabajadores y adultos maduros.
+  - El panel mental (`🧠 Mente`) muestra la edad en años, la rutina que están haciendo en ese instante, su hogar asignado y los integrantes de su familia.
 * **⏳ Acelerador de Tiempo Divino (0x a 10x):**
   - Controles interactivos en la barra celestial: **⏸️ Pausa**, **▶️ 1x (Normal)**, **⏩ 2x (Acelerado)**, **⏭️ 5x (Evolución Rápida)** y **⚡ 10x (Velocidad Cósmica)**.
   - A velocidades altas, las generaciones se suceden rápidamente: los niños crecen, las cosechas brotan, las religiones mutan y las trilladas se abren solas.

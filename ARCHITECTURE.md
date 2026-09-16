@@ -31,7 +31,8 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
 
 ## 2. Componentes del Sistema
 
-### A. Simulación Celular Reactiva (`src/sim/`)
+### A. Simulación Celular Reactiva y Ciclo Temporal (`src/sim/`)
+- **`time.js` (`DayNightCycle`):** Reloj circadiano que simula las 24 horas del día con cálculo de luz ambiental (amanecer, día, atardecer y noche con luna) y fases de rutina humana (`waking`, `working_morning`, `lunch_break`, `working_afternoon`, `evening_leisure`, `sleeping`).
 - **`elements.js`:** Registra cada elemento con sus banderas (`isSolid`, `isLiquid`, `flammable`, densidad y paleta de color).
   - Incluye `ELEM.CHASM` (fallas abisales que parten el suelo) y `ELEM.RUBBLE` (escombros generados por colapso estructural).
 - **`grid.js`:** Utiliza `Uint8Array` contiguos en memoria para representar el mapa.
@@ -45,8 +46,11 @@ Uno de los mayores problemas al combinar un simulador masivo como *WorldBox* con
   - **Colisiones de Obstáculos Sólidos:** Los muros (`BUILDING`), peñascos (`STONE`), escombros y abismos bloquean el paso físico de personajes y fauna mediante deslizamiento de eje.
 
 
-### B. Sistema de NPCs, Vida Autónoma y Emociones (`src/entities/` & `src/ai/brain.js`)
+### B. Sistema de NPCs, Vida Humana Normal y Emociones (`src/entities/` & `src/ai/brain.js`)
 - Cada NPC cuenta con:
+  - **Ciclo de Vida y Edad (`ageYears`):** Cumplimiento progresivo de años en el mundo; transición natural de infante a adulto productivo.
+  - **Rutina Circadiana:** Al amanecer se levantan y beben agua; durante la mañana trabajan en sus oficios; a mediodía pausan para almorzar sopa caliente con vecinos; por la tarde realizan tareas comunales; y al caer la noche regresan a su choza familiar (`homeLocation`) a dormir en sus camas.
+  - **Hogares y Familias:** La civilización asigna automáticamente chozas a las parejas e hijos para convivir bajo el mismo techo.
   - **Inventario dinámico (`cargo`):** Puede llevar paquetes recolectados.
   - **Rutas, Trilladas y Economía:** Desgaste progresivo de terreno por pisadas continuas (`grid.recordFootstep`); caminar sobre trilladas consolidadas (`ELEM.ROAD`) otorga +20% de velocidad y reduce el gasto calórico.
   - **Energía Vital, Fatiga y Descanso:** Las labores consumen energía. Si la energía desciende de 20%, el NPC entra en estado de descanso/sueño (`💤`) junto a fogatas o chozas, recuperando energía y salud.

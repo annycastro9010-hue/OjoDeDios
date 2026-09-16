@@ -412,7 +412,10 @@ export class CivilizationSystem {
       this.addResource('knowledge', 0.15 * thinkers.length);
     }
 
-    // 4. Construcción Orgánica de Edificios según Avance Tecnológico
+    // 4. Asignación Orgánica de Hogares a Familias y Ciudadanos
+    this.assignHomesToCitizens(npcs);
+
+    // 5. Construcción Orgánica de Edificios según Avance Tecnológico
     this.buildTimer++;
     if (this.buildTimer < 180) return;
     this.buildTimer = 0;
@@ -423,6 +426,50 @@ export class CivilizationSystem {
       this.planBuilding(grid, npcs, 'granary');
     } else if (this.level >= 2 && this.stone >= 25 && !this.hasBuildingType('altar')) {
       this.planBuilding(grid, npcs, 'altar');
+    }
+  }
+
+  // Distribución de casas: parejas e hijos comparten la misma vivienda
+  assignHomesToCitizens(npcs) {
+    const houses = this.villages.filter(v => v.type === 'house');
+    if (houses.length === 0 || !npcs || npcs.length === 0) return;
+
+    for (const npc of npcs) {
+      if (!npc.brain) continue;
+
+      // Si ya tiene casa asignada válida, comprobar si su pareja o hijos necesitan unirse a ella
+      if (npc.brain.home) {
+        // Asignar misma casa a su pareja
+        if (npc.partnerId) {
+          const partner = npcs.find(n => n.id === npc.partnerId);
+          if (partner && partner.brain && !partner.brain.home) {
+            partner.brain.home = npc.brain.home;
+            partner.brain.bedPosition = { x: npc.brain.home.x + 3, y: npc.brain.home.y + 2 };
+          }
+        }
+        // Asignar misma casa a sus hijos
+        const children = npcs.filter(n => n.parentId === npc.id && n.brain && !n.brain.home);
+        for (const child of children) {
+          child.brain.home = npc.brain.home;
+          child.brain.bedPosition = { x: npc.brain.home.x + 2, y: npc.brain.home.y + 3 };
+        }
+        continue;
+      }
+
+      // Si no tiene casa, buscar una casa con espacio (máximo 4 ocupantes)
+      for (const house of houses) {
+        const occupants = npcs.filter(n => n.brain?.home === house);
+        if (occupants.length < 4) {
+          npc.brain.home = house;
+          const slot = occupants.length;
+          npc.brain.bedPosition = {
+            x: house.x + 2 + (slot % 2),
+            y: house.y + 2 + Math.floor(slot / 2)
+          };
+          npc.brain.setThoughtBubble(`🏡 ¡Me he mudado a ${house.name}!`, 140);
+          break;
+        }
+      }
     }
   }
 
