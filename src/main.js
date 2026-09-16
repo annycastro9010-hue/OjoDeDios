@@ -645,6 +645,8 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
       notify("⏭️ Evolución Rápida (5x)");
     } else if (timeSpeed === 10) {
       notify("⚡ Velocidad Cósmica de los Dioses (10x)");
+    } else if (timeSpeed === 25) {
+      notify("🚀 Reloj de los Siglos WorldBox (25x): ¡Los años y siglos pasan en segundos!");
     }
   });
 });
@@ -1248,7 +1250,7 @@ function gameLoop() {
 
   // 6. Renderizado
   const worldMouse = camera.screenToWorld(mousePos.x, mousePos.y);
-  renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius, currentEra);
+  renderer.render(grid, npcs, animals, camera, possessedNpc, worldMouse, currentTool, brushRadius, currentEra, timeSpeed);
 
   // 7. Actualización de Estadísticas cada 25 frames
   if (frameCount % 25 === 0 && mode === 'god') {

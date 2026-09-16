@@ -51,16 +51,20 @@ export class SocialSystem {
     const bA = a.brain;
     const bB = b.brain;
 
-    // 1. Si ya son pareja, posibilidad de tener un bebé (Crianza)
+    // 1. Si ya son pareja, posibilidad de tener hijos (Crianza generacional)
     if (a.partnerId === b.id && b.partnerId === a.id) {
-      if (!a.hasChild && !b.hasChild && Math.random() < 0.25) {
+      // Pueden tener hasta 3 hijos por pareja si la aldea tiene comida
+      const childrenCountA = a.childrenCount || 0;
+      if (childrenCountA < 3 && Math.random() < 0.3) {
+        a.childrenCount = childrenCountA + 1;
+        b.childrenCount = (b.childrenCount || 0) + 1;
         a.hasChild = true;
         b.hasChild = true;
-        a.brain.setThoughtBubble(`👶 ¡Vamos a tener un hijo, ${bB.name}!`, 180);
-        b.brain.setThoughtBubble(`👶 ¡Qué felicidad más grande!`, 180);
+        a.brain.setThoughtBubble(`👶 ¡Vamos a tener otro hijo, ${bB.name}!`, 180);
+        b.brain.setThoughtBubble(`👶 ¡Nuestra familia crece, ${bA.name}!`, 180);
 
-        const babyX = (a.x + b.x) / 2;
-        const babyY = (a.y + b.y) / 2;
+        const babyX = (a.x + b.x) / 2 + (Math.random() - 0.5) * 8;
+        const babyY = (a.y + b.y) / 2 + (Math.random() - 0.5) * 8;
         if (onSpawnBaby) {
           onSpawnBaby(babyX, babyY, a, b);
         }

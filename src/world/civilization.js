@@ -2,6 +2,7 @@ import { ELEM } from '../sim/elements.js';
 import { chronicles } from '../social/relations.js';
 import { sound } from '../audio/soundFX.js';
 import { vfx } from '../render/fx.js';
+import { dayCycle } from '../sim/time.js';
 
 export class CivilizationSystem {
   constructor() {
@@ -227,8 +228,8 @@ export class CivilizationSystem {
       chronicles.add('🛡️ ¡DEFENSA MILITAR! Empalizadas y torres protegen la ciudadela de amenazas.', 'evolution');
     }
 
-    // Evolución de la Época de la Civilización
-    if (this.level === 1 && this.knowledge >= 40 && this.wood >= 40) {
+    // Evolución de la Época de la Civilización (Basada en Conocimiento, Materiales y Años Transcurridos)
+    if (this.level === 1 && (this.knowledge >= 40 && this.wood >= 40 || dayCycle.year >= 3)) {
       this.level = 2;
       this.stageName = 'Aldea Floreciente';
       if (this.governmentType === 'tribal') {
@@ -236,8 +237,8 @@ export class CivilizationSystem {
         this.governmentName = 'Teocracia Sagrada del Pueblo';
       }
       sound.playAscend();
-      chronicles.add('👑 ¡EVOLUCIÓN! La tribu primitiva ha florecido en una Aldea Organizada con gobierno propio.', 'evolution');
-    } else if (this.level === 2 && this.knowledge >= 90 && this.stone >= 50) {
+      chronicles.add(`👑 ¡EVOLUCIÓN HISTÓRICA (Año ${dayCycle.year})! La tribu primitiva ha florecido en una Aldea Organizada con gobierno propio.`, 'evolution');
+    } else if (this.level === 2 && (this.knowledge >= 90 && this.stone >= 50 || dayCycle.year >= 8)) {
       this.level = 3;
       this.stageName = 'Reino Próspero';
       if (this.governmentType === 'theocracy' && !this.discoveries.law_code) {
@@ -245,7 +246,19 @@ export class CivilizationSystem {
         this.governmentName = 'Monarquía y Corona Real';
       }
       sound.playAscend();
-      chronicles.add('🏰 ¡EVOLUCIÓN SUPREMA! La aldea se corona como un Reino Próspero con leyes y reyes.', 'evolution');
+      chronicles.add(`🏰 ¡EVOLUCIÓN SUPREMA (Año ${dayCycle.year})! La aldea se corona como un Reino Próspero con leyes y cortes reales.`, 'evolution');
+    } else if (this.level === 3 && (this.knowledge >= 140 && this.villages.length >= 4 || dayCycle.year >= 15)) {
+      this.level = 4;
+      this.stageName = 'Gran Imperio Dinástico';
+      this.governmentName = 'Imperio Imperial de las Tierras Sagradas';
+      sound.playAscend();
+      chronicles.add(`🏛️ ¡ERA IMPERIAL (Año ${dayCycle.year})! El reino se consolida como un Gran Imperio Dinástico con múltiples ciudades y calzadas.`, 'evolution');
+    } else if (this.level === 4 && (this.knowledge >= 200 || dayCycle.year >= 25)) {
+      this.level = 5;
+      this.stageName = 'Civilización Cósmica de los Dioses';
+      this.governmentName = 'Panteón Armónico de la Creación';
+      sound.playAscend();
+      chronicles.add(`✨ ¡EDAD DE ORO CÓSMICA (Año ${dayCycle.year})! Los mortales han alcanzado la iluminación suprema en comunión con el Creador.`, 'evolution');
     }
   }
 
@@ -367,9 +380,40 @@ export class CivilizationSystem {
     }
   }
 
+  // Evolución natural y espontánea de la Religión según la era cósmica y la devoción de los profetas
+  checkNaturalReligiousEvolution(npcs) {
+    if (!this.religion) return;
+
+    // Si hay profetas y templos erigidos, la fe y dogmas se enriquecen con el paso de los años
+    const prophets = npcs.filter(n => n.type === 'prophet' || n.brain?.trait?.id === 'mistico');
+    if (prophets.length > 0 && Math.random() < 0.05) {
+      this.religion.faith = Math.min(100, this.religion.faith + 0.1 * prophets.length);
+    }
+
+    // Religiones que emergen según las Eras Cósmicas del tiempo
+    if (dayCycle.worldEra === 'Era del Sol Dorado' && this.religion.name !== 'Culto del Sol Radiante') {
+      this.religion.name = 'Culto del Sol Radiante';
+      this.religion.deityTitle = 'El Ojo Dorado de los Cielos';
+      this.religion.dogma = 'Agradeced la luz solar que madura los frutos y aleja la penumbra de los hogares.';
+      chronicles.add(`🕊️ ¡NUEVA RELIGIÓN HISTÓRICA (Año ${dayCycle.year})! Los sacerdotes fundan el "${this.religion.name}".`, 'divine');
+    } else if (dayCycle.worldEra === 'Era de la Luna Sagrada' && this.religion.name !== 'Hermandad de la Dama Nocturna') {
+      this.religion.name = 'Hermandad de la Dama Nocturna';
+      this.religion.deityTitle = 'La Guardiana de los Sueños';
+      this.religion.dogma = 'En el silencio de la noche reposan las almas justas bajo el manto celestial.';
+      chronicles.add(`🌙 ¡CISMA SAGRADO (Año ${dayCycle.year})! Surge la mística "${this.religion.name}".`, 'divine');
+    } else if (dayCycle.worldEra === 'Era de la Sabiduría' && this.religion.name !== 'Orden de la Razón Sagrada') {
+      this.religion.name = 'Orden de la Razón Sagrada';
+      this.religion.deityTitle = 'El Arquitecto Universal';
+      this.religion.dogma = 'Conocer las leyes de la naturaleza es el mayor acto de veneración a Dios.';
+      chronicles.add(`✨ ¡NUEVA TEOLOGÍA (Año ${dayCycle.year})! Los sabios instauran la "${this.religion.name}".`, 'divine');
+    }
+  }
+
   update(grid, npcs, animals = []) {
     // Actualizar civilizaciones animales
     this.updateAnimalSocieties(animals);
+    // Evolución religiosa natural con el paso de los años
+    this.checkNaturalReligiousEvolution(npcs);
     // 1. Contador de Elección y Sucesión de Liderazgo (cada ~15 segundos)
     this.electionTimer++;
     if (this.electionTimer > 900 || !npcs.some(n => n.id === this.leaderId)) {
@@ -406,25 +450,38 @@ export class CivilizationSystem {
       this.electLeader(npcs);
     }
 
-    // 3. Sabios generando ciencia e investigación pasiva
+    // 3. Generación autónoma de recursos por trabajo de la población y sabios
+    const cultivators = npcs.filter(n => n.type === 'cultivator' || n.type === 'child');
+    if (cultivators.length > 0 && Math.random() < 0.15) {
+      this.addResource('food', 0.25 * cultivators.length);
+      this.addResource('wood', 0.18 * cultivators.length);
+      this.addResource('stone', 0.12 * cultivators.length);
+    }
+
     const thinkers = npcs.filter(n => n.brain && (n.brain.trait?.id === 'curioso' || n.brain.wisdom >= 50));
     if (thinkers.length > 0 && Math.random() < 0.25) {
-      this.addResource('knowledge', 0.15 * thinkers.length);
+      this.addResource('knowledge', 0.20 * thinkers.length);
     }
+
+    // Comprobar evolución histórica periódicamente
+    this.checkEvolution();
 
     // 4. Asignación Orgánica de Hogares a Familias y Ciudadanos
     this.assignHomesToCitizens(npcs);
 
-    // 5. Construcción Orgánica de Edificios según Avance Tecnológico
+    // 5. Construcción Orgánica de Edificios según Avance Tecnológico y Nivel de Civilización
     this.buildTimer++;
-    if (this.buildTimer < 180) return;
+    if (this.buildTimer < 150) return;
     this.buildTimer = 0;
 
-    if (this.wood >= 18 && this.villages.length < 8) {
+    const maxHouses = 6 + this.level * 4; // Aldea: 10 casas, Reino: 14 casas, Imperio: 18 casas
+    if (this.wood >= 18 && this.villages.filter(v => v.type === 'house').length < maxHouses) {
       this.planBuilding(grid, npcs, 'house');
     } else if (this.discoveries.granary && this.wood >= 25 && !this.hasBuildingType('granary')) {
       this.planBuilding(grid, npcs, 'granary');
     } else if (this.level >= 2 && this.stone >= 25 && !this.hasBuildingType('altar')) {
+      this.planBuilding(grid, npcs, 'altar');
+    } else if (this.level >= 3 && this.stone >= 35 && this.villages.filter(v => v.type === 'altar').length < 2) {
       this.planBuilding(grid, npcs, 'altar');
     }
   }

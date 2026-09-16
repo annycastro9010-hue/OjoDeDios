@@ -37,6 +37,7 @@ export class NPC {
     this.partnerId = null;
     this.rivalId = null;
     this.hasChild = false;
+    this.childrenCount = 0;
     this.parentId = null;
     // Habilidades físicas naturales y biomas
     this.canSwim = (type === 'fisherman' || type === 'prophet' || type === 'musician' || Math.random() < 0.35);

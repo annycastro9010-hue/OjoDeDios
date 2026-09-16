@@ -254,15 +254,21 @@ export class NPCBrain {
     // Regulación de emociones con el tiempo
     if (this.fear > 5) this.fear -= 0.05;
 
-    // --- ENVEJECIMIENTO HUMANO GRADUAL ---
-    this.birthdayTimer++;
-    if (this.birthdayTimer >= 4500) { // Cada varios minutos de simulación cumple un año
-      this.birthdayTimer = 0;
-      this.ageYears++;
-      if (this.ageYears === 18 && npc.type === 'child') {
+    // --- ENVEJECIMIENTO HUMANO DIRECTAMENTE SINCRONIZADO CON EL AÑO MUNDIAL ---
+    if (this.lastRecordedYear === undefined) {
+      this.lastRecordedYear = dayCycle.year;
+    } else if (dayCycle.year > this.lastRecordedYear) {
+      const yearsElapsed = dayCycle.year - this.lastRecordedYear;
+      this.lastRecordedYear = dayCycle.year;
+      this.ageYears += yearsElapsed;
+      if (this.ageYears >= 18 && npc.type === 'child') {
         npc.type = 'cultivator';
         this.title = this.calculateTitle('cultivator');
-        this.setThoughtBubble("🎉 ¡He cumplido 18 años! Ya soy un adulto con oficio.", 180);
+        this.setThoughtBubble(`🎉 ¡He cumplido ${this.ageYears} años! Ya soy un adulto productivo.`, 180);
+      } else if (this.ageYears === 50) {
+        this.title = this.calculateTitle(npc.type);
+        this.wisdom = Math.min(100, this.wisdom + 20);
+        this.setThoughtBubble("👴 50 años en esta tierra... la experiencia es el mejor maestro.", 160);
       }
     }
 

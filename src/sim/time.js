@@ -5,6 +5,10 @@ export class DayNightCycle {
   constructor() {
     this.time = 8.0; // Inicia a las 8:00 AM (inicio de jornada laboral)
     this.day = 1;
+    this.month = 1;
+    this.year = 1;
+    this.eraCycleTimer = 0;
+    this.worldEra = 'Era de la Esperanza'; // 'Era de la Esperanza', 'Era de la Fertilidad', 'Era del Sol Dorado', 'Era de la Luna Sagrada', 'Era de las Tormentas'
     this.speedMultiplier = 0.0035; // ~1 minuto real = 1 día a velocidad 1x
   }
 
@@ -15,6 +19,34 @@ export class DayNightCycle {
     if (this.time >= 24.0) {
       this.time -= 24.0;
       this.day++;
+
+      // Cada 30 días avanza 1 mes
+      if (this.day > 30) {
+        this.day = 1;
+        this.month++;
+        // Cada 12 meses avanza 1 año
+        if (this.month > 12) {
+          this.month = 1;
+          this.year++;
+          this.onNewYear();
+        }
+      }
+    }
+  }
+
+  onNewYear() {
+    // Cambio cíclico de eras cósmicas tipo WorldBox cada 5 o 10 años
+    if (this.year % 5 === 0) {
+      const ERAS_LIST = [
+        'Era de la Esperanza',
+        'Era de la Fertilidad',
+        'Era del Sol Dorado',
+        'Era de la Luna Sagrada',
+        'Era del Trueno Divino',
+        'Era de la Sabiduría',
+        'Era de la Abundancia'
+      ];
+      this.worldEra = ERAS_LIST[(Math.floor(this.year / 5)) % ERAS_LIST.length];
     }
   }
 
@@ -26,7 +58,7 @@ export class DayNightCycle {
     return Math.floor((this.time - Math.floor(this.time)) * 60);
   }
 
-  // Retorna string formateado de hora (ej: "☀️ 08:30 AM (Día 1)")
+  // Retorna string formateado de reloj y calendario estilo WorldBox (ej: "👑 Año 24 • Mes 4 • Día 12 ☀️ 08:30 AM")
   getFormattedTime() {
     const h = this.getHour();
     const m = this.getMinute();
@@ -34,7 +66,7 @@ export class DayNightCycle {
     const displayH = h % 12 === 0 ? 12 : h % 12;
     const padM = m < 10 ? `0${m}` : m;
     const icon = this.isNight() ? '🌙' : (this.isDawn() ? '🌅' : (this.isDusk() ? '🌇' : '☀️'));
-    return `${icon} ${displayH}:${padM} ${period} • Día ${this.day}`;
+    return `⏳ Año ${this.year} • Mes ${this.month} • Día ${this.day} [${this.worldEra}] ${icon} ${displayH}:${padM} ${period}`;
   }
 
   // Fases del día para la rutina humana
@@ -73,11 +105,15 @@ export class DayNightCycle {
   }
 
   // Color e intensidad de luz ambiental para el canvas (efecto Minish Cap)
-  getAmbientOverlay() {
+  // Color e intensidad de luz ambiental para el canvas (efecto Minish Cap)
+  getAmbientOverlay(timeSpeed = 1) {
     const t = this.time;
+    // Si la velocidad es 5x o 10x, suavizar el oscurecimiento nocturno para evitar parpadeos molestos al avanzar años velozmente
+    const maxAlpha = (timeSpeed >= 5) ? 0.22 : 0.58;
+
     // 00:00 - 05:00: Noche profunda azul oscuro
     if (t < 5.0) {
-      return { r: 5, g: 15, b: 45, a: 0.58 };
+      return { r: 5, g: 15, b: 45, a: maxAlpha };
     }
     // 05:00 - 07:00: Amanecer dorado/rosado
     if (t < 7.0) {
@@ -86,7 +122,7 @@ export class DayNightCycle {
         r: Math.round(5 + (240 - 5) * (1 - progress)),
         g: Math.round(15 + (160 - 15) * progress),
         b: Math.round(45 + (120 - 45) * progress),
-        a: 0.58 * (1 - progress) + 0.15 * Math.sin(progress * Math.PI)
+        a: maxAlpha * (1 - progress) + 0.12 * Math.sin(progress * Math.PI)
       };
     }
     // 07:00 - 17:00: Pleno día (luz solar cristalina)
@@ -100,7 +136,7 @@ export class DayNightCycle {
         r: 245,
         g: 140,
         b: 40,
-        a: 0.28 * progress
+        a: (maxAlpha * 0.5) * progress
       };
     }
     // 19.5 - 21.5: Crepúsculo morado hacia noche
@@ -110,11 +146,11 @@ export class DayNightCycle {
         r: Math.round(245 * (1 - progress) + 15 * progress),
         g: Math.round(140 * (1 - progress) + 20 * progress),
         b: Math.round(40 * (1 - progress) + 70 * progress),
-        a: 0.28 + (0.58 - 0.28) * progress
+        a: (maxAlpha * 0.5) + (maxAlpha - (maxAlpha * 0.5)) * progress
       };
     }
     // 21.5 - 24.0: Noche profunda
-    return { r: 5, g: 15, b: 45, a: 0.58 };
+    return { r: 5, g: 15, b: 45, a: maxAlpha };
   }
 }
 

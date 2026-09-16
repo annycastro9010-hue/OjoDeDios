@@ -12,7 +12,7 @@ export class GameRenderer {
     this.waterTime = 0;
   }
 
-  render(grid, npcs, animals = [], camera, possessedNpc, mouseWorldPos, currentTool, brushRadius, currentEra = null) {
+  render(grid, npcs, animals = [], camera, possessedNpc, mouseWorldPos, currentTool, brushRadius, currentEra = null, timeSpeed = 1) {
     const ctx = this.ctx;
     this.waterTime += 0.05;
     const eraId = currentEra?.id || 'biblical';
@@ -727,7 +727,7 @@ export class GameRenderer {
     }
 
     // 🌅 FILTRO ATMOSFÉRICO CIRCADIANO DÍA / ATARDECER / NOCHE (Estilo Minish Cap)
-    const amb = dayCycle.getAmbientOverlay();
+    const amb = dayCycle.getAmbientOverlay(timeSpeed);
     if (amb && amb.a > 0.01) {
       ctx.fillStyle = `rgba(${amb.r}, ${amb.g}, ${amb.b}, ${amb.a.toFixed(3)})`;
       ctx.fillRect(-camera.x - 200, -camera.y - 200, this.canvas.width * 3, this.canvas.height * 3);
